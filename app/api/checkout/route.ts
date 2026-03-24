@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
-import { createPaymentIntent, type CheckoutRequestBody } from '@/lib/stripe';
+import { createPreference } from '@/lib/mercadopago';
 
 export const runtime = 'nodejs';
+
+export type CheckoutRequestBody = {
+  items: Array<{
+    productId: string;
+    productName: string;
+    productImage: string;
+    quantity: number;
+    price: number;
+  }>;
+  buyerEmail: string;
+  buyerName: string;
+  buyerPhone: string;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  couponCode?: string;
+  subtotal: number;
+  shippingCost: number;
+  discount: number;
+  total: number;
+};
+
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,14 +114,92 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create Stripe PaymentIntent
-    const paymentIntentResponse = await createPaymentIntent(body);
+    // Create pending order record
+    const { data: order, error: orderError } = await supabaseServer
+      .from('orders')
+      .insert({
+        buyer_email: body.buyerEmail,
+        buyer_name: body.buyerName,
+        buyer_phone: body.buyerPhone,
+        shipping_address: body.shippingAddress,
+        items: body.items.map((item) => ({
+          product_id: item.productId,
+          product_name: item.productName,
+          product_image: item.productImage,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal: body.subtotal,
+        shipping_cost: body.shippingCost,
+        discount: body.discount,
+        total: body.total,
+        payment_method: 'mercadopago',
+        payment_status: 'pending',
+        order_status: 'pending',
+        coupon_code: body.couponCode || null,
+      })
+      .select()
+      .single();
+
+    if (orderError || !order) {
+      return NextResponse.json(
+        { error: 'Unable to create order' },
+        { status: 500 }
+      );
+    }
+
+    // Build Mercado Pago preference payload
+    const items = body.items.map((item) => ({
+      title: item.productName,
+      quantity: item.quantity,
+      unit_price: item.price,
+      currency_id: 'USD',
+      picture_url: item.productImage,
+    }));
+
+    if (body.shippingCost > 0) {
+      items.push({
+        title: 'Shipping',
+        quantity: 1,
+        unit_price: body.shippingCost,
+        currency_id: 'USD',
+      });
+    }
+
+    if (body.discount > 0) {
+      items.push({
+        title: 'Discount',
+        quantity: 1,
+        unit_price: -Math.abs(body.discount),
+        currency_id: 'USD',
+      });
+    }
+
+    const preference = await createPreference({
+      items,
+      payer: {
+        name: body.buyerName,
+        email: body.buyerEmail,
+      },
+      back_urls: {
+        success: `${appUrl}/order-confirmation?order=${order.id}`,
+        failure: `${appUrl}/checkout?status=failure&order=${order.id}`,
+        pending: `${appUrl}/checkout?status=pending&order=${order.id}`,
+      },
+      notification_url: `${appUrl}/api/webhooks/mercadopago`,
+      auto_return: 'approved',
+      external_reference: order.id,
+      metadata: {
+        order_id: order.id,
+        buyer_email: body.buyerEmail,
+        coupon_code: body.couponCode || '',
+      },
+    });
 
     return NextResponse.json({
-      clientSecret: paymentIntentResponse.clientSecret,
-      paymentIntentId: paymentIntentResponse.paymentIntentId,
-      amount: body.total,
-      currency: 'usd',
+      preferenceId: preference.id,
+      initPoint: preference.init_point || preference.sandbox_init_point,
+      orderId: order.id,
     });
   } catch (error) {
     console.error('Checkout error:', error);

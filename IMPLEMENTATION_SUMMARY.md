@@ -66,15 +66,15 @@ Production-ready test data:
 
 **Files:**
 
-- `.env.local.example`
+- `.env.example`
 - `lib/supabase.ts`
-- `lib/stripe.ts`
+- `lib/mercadopago.ts`
 
 Environment setup:
 
 - ✅ All required environment variables documented
 - ✅ Supabase client with TypeScript types
-- ✅ Stripe client configuration
+- ✅ Mercado Pago client configuration
 - ✅ Proper type definitions for database
 - ✅ Server-side and client-side Supabase clients
 
@@ -84,9 +84,11 @@ Environment setup:
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
+SUPABASE_DB_URL
+NEXT_PUBLIC_MP_PUBLIC_KEY
+MERCADOPAGO_ACCESS_TOKEN
+MERCADOPAGO_WEBHOOK_SECRET
+MERCADOPAGO_INTEGRATOR_ID
 RESEND_API_KEY
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
@@ -96,41 +98,27 @@ NEXT_PUBLIC_APP_URL
 
 ---
 
-### TASK 4 ✅ - Stripe Payment Integration
+### TASK 4 ✅ - Mercado Pago Payment Integration
 
 **Files:**
 
 - `app/api/checkout/route.ts` (POST endpoint)
-- `app/api/webhooks/stripe/route.ts` (Webhook handler)
-- `components/checkout/StripePaymentForm.tsx`
-- `lib/stripe.ts`
+- `app/api/webhooks/mercadopago/route.ts` (Webhook handler)
+- `lib/mercadopago.ts`
 
 Checkout API Features:
 
-- ✅ POST /api/checkout - Creates PaymentIntent
+- ✅ POST /api/checkout - Creates Mercado Pago preference and returns hosted checkout URL
 - ✅ Stock validation before payment
 - ✅ Coupon code validation
 - ✅ Coupon expiration and minimum order checks
-- ✅ Returns clientSecret for frontend
+- ✅ Creates pending order before redirect
 
-Stripe Webhook (payment_intent.succeeded):
+Mercado Pago Webhook (approved/rejected):
 
-- ✅ Creates/updates order in database
-- ✅ Decrements product stock
-- ✅ Sends confirmation email via Resend
-- ✅ Links order to user if registered buyer
+- ✅ Updates order/payment status and stock
+- ✅ Sends confirmation or failure email via Resend
 - ✅ Increments coupon usage count
-
-Stripe Webhook (payment_intent.payment_failed):
-
-- ✅ Updates order status to failed
-- ✅ Sends failure notification email
-
-Payment Form Component:
-
-- ✅ CardElement for secure card input
-- ✅ Error display and handling
-- ✅ Loading state with spinner
 - ✅ Order summary display
 - ✅ Success confirmation
 - ✅ Redirect to order-confirmation on success
@@ -281,10 +269,10 @@ Test Coverage (93 total tests):
 
 **API Checkout Tests (25):**
 
-- ✅ Valid checkout returns clientSecret
-- ✅ PaymentIntent creation
+- ✅ Valid checkout returns init_point
+- ✅ Preference creation (Mercado Pago)
 - ✅ Response format validation
-- ✅ Amount and currency included
+- ✅ Preference id included
 - ✅ Out of stock rejection
 - ✅ Insufficient stock error
 - ✅ Exact stock quantity allowed
@@ -299,7 +287,7 @@ Test Coverage (93 total tests):
 - ✅ Expired coupon rejection
 - ✅ Coupon max uses limit
 - ✅ Database error handling
-- ✅ Stripe API error handling
+- ✅ Mercado Pago API error handling
 - ✅ 500 error for server errors
 - ✅ JSON response validation
 - ✅ Email format validation
@@ -315,7 +303,7 @@ Jest Configuration:
 - ✅ Coverage collection setup
 - ✅ Mock setup (window.matchMedia)
 - ✅ Supabase mocks
-- ✅ Stripe mocks
+- ✅ Mercado Pago mocks
 
 Running Tests:
 
@@ -352,12 +340,11 @@ pnpm test -- --coverage  # Coverage report
   - `npm run type-check` - TypeScript check
   - `npm run db:push` - Push schema
   - `npm run db:seed` - Load seed data
-- ✅ All dependencies added:
+- ✅ Key dependencies:
   - @supabase/supabase-js
-  - @stripe/js, @stripe/react-stripe-js
-  - stripe (server)
   - resend
   - cloudinary
+  - mercadopago integration (custom helper)
   - jest, @testing-library/react
   - All dev dependencies
 
@@ -369,7 +356,7 @@ pnpm test -- --coverage  # Coverage report
 - ✅ Prerequisites
 - ✅ 8-step local setup guide
 - ✅ Step-by-step Supabase setup
-- ✅ Stripe configuration
+- ✅ Mercado Pago configuration
 - ✅ Cloudinary setup
 - ✅ Resend email setup
 - ✅ Running tests
@@ -379,7 +366,7 @@ pnpm test -- --coverage  # Coverage report
 - ✅ Custom domain setup
 - ✅ Project structure documentation
 - ✅ Test credentials and sample data
-- ✅ Stripe test cards
+- ✅ Mercado Pago test setup notes
 - ✅ Contributing guidelines
 - ✅ Security notes
 - ✅ Resource links
@@ -400,7 +387,7 @@ pnpm test -- --coverage  # Coverage report
 - ✅ Security (8 items)
 - ✅ Performance (8 items)
 - ✅ Vercel Deployment (8 items)
-- ✅ Stripe Webhook (6 items)
+- ✅ Mercado Pago Webhook (6 items)
 - ✅ Custom Domain (5 items)
 - ✅ Monitoring & Maintenance (8 items)
 - ✅ Final checks (8 items)
@@ -421,18 +408,17 @@ pnpm test -- --coverage  # Coverage report
 ### Utility Files
 
 - `lib/supabase.ts` - Supabase client setup with types
-- `lib/stripe.ts` - Stripe utilities and types
+- `lib/mercadopago.ts` - Mercado Pago utilities and types
 - `lib/i18n.ts` - Internationalization with 50+ translations (ES/EN)
 
 ### API Routes
 
 - `app/api/checkout/route.ts` - Checkout API with validation
-- `app/api/webhooks/stripe/route.ts` - Stripe webhook handler
+- `app/api/webhooks/mercadopago/route.ts` - Mercado Pago webhook handler
 - `app/api/upload/route.ts` - Cloudinary image upload
 
 ### Components
 
-- `components/checkout/StripePaymentForm.tsx` - Secure card payment form
 - `components/checkout/ImageUploadZone.tsx` - Drag & drop image uploader
 
 ### Directory Structure Created
@@ -448,13 +434,13 @@ BeautyTherapist/
 │   └── api/webhooks/     [✅ Webhooks]
 ├── lib/
 │   ├── supabase.ts       [✅ Supabase client]
-│   ├── stripe.ts         [✅ Stripe utils]
+│   ├── mercadopago.ts    [✅ Mercado Pago utils]
 │   └── i18n.ts           [✅ Translations]
 ├── components/checkout/  [✅ Components]
 ├── __tests__/            [✅ All test files]
 ├── jest.config.ts        [✅ Jest config]
 ├── jest.setup.ts         [✅ Test setup]
-├── .env.local.example    [✅ Env template]
+├── .env.example          [✅ Env template]
 ├── vercel.json           [✅ Deployment config]
 ├── README.md             [✅ Documentation]
 ├── DEPLOY_CHECKLIST.md   [✅ Deployment guide]
@@ -504,7 +490,7 @@ BeautyTherapist/
 
 - ✅ Guest checkout
 - ✅ Registered user checkout
-- ✅ Stripe payment processing
+- ✅ Mercado Pago payment processing
 - ✅ Coupon/discount codes
 - ✅ Stock validation
 - ✅ Order confirmation
@@ -543,27 +529,20 @@ BeautyTherapist/
 
 ## 📝 Sample Test Data
 
-**Test Seller:**
+**Test Accounts (create locally, do not commit passwords):**
 
-- Email: `angebae@beautytherapist.com`
-- Password: `AngeBae2024!`
-- Brand: AngeBae (Skincare & Makeup)
+- Create seller and buyer users via Supabase Auth dashboard/CLI.
+- Keep passwords in your private env or password manager; never store in git.
+- Seed data references the emails for relational links; set passwords outside the repo.
 
-**Test Buyer:**
-
-- Email: `testbuyer@gmail.com`
-- Password: `TestBuyer2024!`
-
-**Active Coupons:**
+**Active Coupons (demo):**
 
 - `WELCOME10` - 10% off, minimum $25
 - `SKIN20` - 20% off, minimum $40
 
-**Test Stripe Cards (TEST MODE ONLY):**
+**Mercado Pago Testing:**
 
-- Success: `4242 4242 4242 4242`
-- Decline: `4000 0000 0000 0002`
-- Expired: `4000 0000 0000 0069`
+- Use Mercado Pago sandbox/test users and cards from the developer dashboard (configure via env, not in repo).
 
 ---
 
@@ -578,8 +557,8 @@ BeautyTherapist/
 2. **Setup Environment Variables**
 
    ```bash
-   cp .env.local.example .env.local
-   # Edit .env with real keys from Supabase, Stripe, etc.
+   cp .env.example .env.local
+   # Edit .env with real keys from Supabase, Mercado Pago, etc.
    ```
 
 3. **Initialize Database**
@@ -608,7 +587,7 @@ BeautyTherapist/
    - Connect GitHub repo
    - Add environment variables
    - Deploy
-   - Configure Stripe webhook
+   - Configure Mercado Pago webhook
 
 ---
 
@@ -618,7 +597,7 @@ This implementation includes:
 
 - ✅ **Authentication**: Secure buyer/seller auth
 - ✅ **Database**: Full PostgreSQL schema with RLS
-- ✅ **Payments**: Stripe integration with webhooks
+- ✅ **Payments**: Mercado Pago integration with webhooks
 - ✅ **Emails**: Transactional emails via Resend
 - ✅ **Images**: Cloudinary optimization
 - ✅ **Testing**: 93 tests with Jest
@@ -634,7 +613,7 @@ This implementation includes:
 ## 📞 Support Resources
 
 - Supabase Docs: https://supabase.com/docs
-- Stripe Docs: https://stripe.com/docs
+- Mercado Pago Docs: https://www.mercadopago.com/developers/en/docs
 - Next.js Docs: https://nextjs.org/docs
 - Cloudinary Docs: https://cloudinary.com/documentation
 - Resend Docs: https://resend.com/docs

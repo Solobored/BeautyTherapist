@@ -73,13 +73,13 @@ describe('Checkout', () => {
   describe('Payment Processing', () => {
     it('should handle successful payment and redirect to confirmation', async () => {
       const mockRouter = { push: jest.fn() };
-      const paymentIntentId = 'pi_test_123';
+      const preferenceId = 'pref_test_123';
 
       // Simulate successful payment
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // In real implementation: router.push(`/order-confirmation?orderId=${orderId}`)
-      mockRouter.push(`/order-confirmation?orderId=${paymentIntentId}`);
+      mockRouter.push(`/order-confirmation?orderId=${preferenceId}`);
 
       expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining('/order-confirmation'));
     });

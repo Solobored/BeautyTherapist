@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { CreditCard, Building2, ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
+import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -14,14 +13,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
-import { useAuth, type Coupon, type Address } from '@/contexts/auth-context'
+import { useAuth, type Coupon } from '@/contexts/auth-context'
 import Link from 'next/link'
 
 export default function CheckoutPage() {
   const { language, t } = useLanguage()
-  const { items, subtotal, clearCart } = useCart()
+  const { items, subtotal } = useCart()
   const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
-  const router = useRouter()
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -33,7 +31,6 @@ export default function CheckoutPage() {
     zip: '',
     country: '',
     deliveryMethod: 'standard',
-    paymentMethod: 'card',
     createAccount: false
   })
   
@@ -43,6 +40,7 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState('')
   const [showSavedCoupons, setShowSavedCoupons] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
+  const [submitError, setSubmitError] = useState<string | null>(null)
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -167,16 +165,59 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Generate order number
-    const orderNumber = `BT-${Date.now().toString(36).toUpperCase()}`
-    
-    // Clear cart and redirect
-    clearCart()
-    router.push(`/order-confirmation?order=${orderNumber}`)
+    setSubmitError(null)
+
+    try {
+      const payload = {
+        items: items.map((item) => ({
+          productId: item.id,
+          productName: language === 'es' ? item.nameEs : item.name,
+          productImage: item.image,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        buyerEmail: formData.email,
+        buyerName: formData.fullName,
+        buyerPhone: formData.phone,
+        shippingAddress: {
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+          country: formData.country,
+        },
+        couponCode: appliedCoupon?.code || couponCode || undefined,
+        subtotal,
+        shippingCost,
+        discount,
+        total,
+      }
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Checkout failed')
+      }
+
+      const data = await res.json()
+
+      if (data?.initPoint) {
+        // Redirect to Mercado Pago hosted checkout
+        window.location.href = data.initPoint
+      } else {
+        throw new Error('Payment link not received')
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred'
+      setSubmitError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
   
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -366,62 +407,14 @@ export default function CheckoutPage() {
                 {/* Payment Method */}
                 <section className="bg-card rounded-2xl p-6 border border-border/50">
                   <h2 className="font-serif text-xl font-semibold mb-6">{t('checkout.payment')}</h2>
-                  
-                  <RadioGroup
-                    value={formData.paymentMethod}
-                    onValueChange={(value) => handleInputChange('paymentMethod', value)}
-                    className="space-y-3"
-                  >
-                    <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                      <RadioGroupItem value="card" id="card" />
-                      <CreditCard className="h-5 w-5 text-muted-foreground" />
-                      <span className="font-medium">{t('checkout.creditCard')}</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                      <RadioGroupItem value="paypal" id="paypal" />
-                      <svg className="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.774.774 0 0 1 .763-.643h6.82c2.258 0 3.94.527 5 1.568.509.5.857 1.082 1.035 1.729.186.673.216 1.477.09 2.39-.405 2.918-2.687 4.57-6.45 4.57h-1.63a.774.774 0 0 0-.763.644l-.7 4.44a.641.641 0 0 1-.633.54l-.4.379z"/>
-                      </svg>
-                      <span className="font-medium">{t('checkout.paypal')}</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                      <span className="font-medium">{t('checkout.bankTransfer')}</span>
-                    </label>
-                  </RadioGroup>
-                  
-                  {/* Card Details (shown when card is selected) */}
-                  {formData.paymentMethod === 'card' && (
-                    <div className="mt-6 space-y-4">
-                      <div>
-                        <Label htmlFor="cardNumber">Card Number</Label>
-                        <Input
-                          id="cardNumber"
-                          placeholder="4242 4242 4242 4242"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="expiry">Expiry Date</Label>
-                          <Input
-                            id="expiry"
-                            placeholder="MM/YY"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="cvc">CVC</Label>
-                          <Input
-                            id="cvc"
-                            placeholder="123"
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+
+                  <div className="p-4 rounded-xl border border-accent/40 bg-accent/5">
+                    <p className="font-semibold mb-1">Mercado Pago</p>
+                    <p className="text-sm text-muted-foreground">
+                      You will be redirected to Mercado Pago to complete your payment securely
+                      with cards, debit, or local wallets. We never store your card details.
+                    </p>
+                  </div>
                 </section>
                 
                 {/* Create Account Option - only show if not logged in */}
@@ -575,6 +568,9 @@ export default function CheckoutPage() {
                   >
                     {isSubmitting ? t('common.loading') : t('checkout.placeOrder')}
                   </Button>
+                  {submitError && (
+                    <p className="text-sm text-destructive mt-3 text-center">{submitError}</p>
+                  )}
                 </div>
               </div>
             </div>
