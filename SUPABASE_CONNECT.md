@@ -1,12 +1,14 @@
 # Supabase VS Code Extension - Connection Guide
 
 ## ✅ What's Done
+
 - ✅ Supabase CLI installed locally (`npm install --save-dev supabase`)
 - ✅ Project initialized (`supabase init` - creates supabase.json)
 
 ## Next: Create Supabase Access Token
 
 ### Step 1: Get Your Access Token
+
 1. Go to: https://app.supabase.com/account/tokens
 2. Click "**Generate new token**"
 3. Name it something like: `BeautyTherapist-Dev`
@@ -22,6 +24,7 @@ $env:SUPABASE_ACCESS_TOKEN = "YOUR_TOKEN"
 ```
 
 Or add to your system permanently:
+
 - Right-click "This PC" → Properties
 - Advanced System Settings → Environment Variables
 - Click "New" and add:
@@ -72,6 +75,7 @@ npx supabase start
 ## Environment Files
 
 Your `.env.local` is already set up with:
+
 - `NEXT_PUBLIC_SUPABASE_URL` ✅
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` ✅
 - `SUPABASE_SERVICE_ROLE_KEY` - Update with your real key from:
@@ -80,21 +84,26 @@ Your `.env.local` is already set up with:
 ## Troubleshooting
 
 **Issue:** "Access token not provided"
+
 - Solution: Set `SUPABASE_ACCESS_TOKEN` environment variable (see Step 2)
 
 **Issue:** Extension doesn't show project
+
 - Solution: Restart VS Code after linking
 - Check: `supabase status`
 
 **Issue:** "Cannot connect to database"
+
 - Solution: Make sure your Supabase project is active at https://app.supabase.com
 
 **Issue:** Database password wrong
+
 - Solution: Reset at https://app.supabase.com → Settings → Database
 
 ## Next Steps
 
 Once connected:
+
 1. Explore your database in VS Code
 2. Review `supabase/schema.sql` and `supabase/seed.sql`
 3. Create migrations for changes
