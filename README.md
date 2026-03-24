@@ -101,6 +101,7 @@ supabase db seed
 ```
 
 This creates:
+
 - Database tables with proper relationships
 - Row-level security (RLS) policies
 - Sample AngeBae seller with 10 products
@@ -156,6 +157,7 @@ pnpm test -- --coverage
 ```
 
 Test files are in `__tests__/`:
+
 - `auth.test.ts` - Authentication flows
 - `cart.test.ts` - Shopping cart functionality
 - `checkout.test.ts` - Checkout process
@@ -203,7 +205,6 @@ pnpm start
    ```
 
 2. **Connect to Vercel**
-
    - Go to [vercel.com](https://vercel.com)
    - Click "Import Project"
    - Connect your GitHub repository
@@ -228,20 +229,17 @@ pnpm start
    ```
 
 4. **Deploy**
-
    - Click "Deploy"
    - Wait for build to complete
    - Test your deployed site
 
 5. **Setup Stripe Webhook for Production**
-
    - In Stripe Dashboard, add a new webhook endpoint
    - Endpoint: `https://your-domain.vercel.app/api/webhooks/stripe`
    - Select events: `payment_intent.succeeded` and `payment_intent.payment_failed`
    - Update `STRIPE_WEBHOOK_SECRET` in Vercel environment variables
 
 6. **Configure Custom Domain (Optional)**
-
    - In Vercel project settings, go to Domains
    - Add your custom domain
    - Update DNS records as instructed
@@ -299,18 +297,22 @@ BeautyTherapist/
 ## 🧪 Test Sample Data
 
 **Seller Account:**
+
 - Email: `angebae@beautytherapist.com`
 - Password: `AngeBae2024!`
 
 **Buyer Account:**
+
 - Email: `testbuyer@gmail.com`
 - Password: `TestBuyer2024!`
 
 **Available Coupons:**
+
 - `WELCOME10` - 10% off (min $25)
 - `SKIN20` - 20% off skincare (min $40)
 
 **Stripe Test Cards:**
+
 - Success: `4242 4242 4242 4242`
 - Decline: `4000 0000 0000 0002`
 - Expired: `4000 0000 0000 0069`
@@ -329,6 +331,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 💬 Support
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Contact: support@beautytherapist.com
 

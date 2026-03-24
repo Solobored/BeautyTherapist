@@ -18,6 +18,7 @@ pnpm install
 ## 2. Setup Services (8 min)
 
 ### Supabase
+
 1. Go to [supabase.com](https://supabase.com)
 2. Create free project
 3. Go → Settings → API → Copy these to `.env.local`:
@@ -26,6 +27,7 @@ pnpm install
    - SUPABASE_SERVICE_ROLE_KEY
 
 ### Stripe
+
 1. Go to [stripe.com](https://stripe.com)
 2. Create account
 3. Switch to **Test Mode**
@@ -38,6 +40,7 @@ pnpm install
    - Copy STRIPE_WEBHOOK_SECRET
 
 ### Cloudinary
+
 1. Go to [cloudinary.com](https://cloudinary.com)
 2. Dashboard → Copy to `.env.local`:
    - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
@@ -45,6 +48,7 @@ pnpm install
    - CLOUDINARY_API_SECRET
 
 ### Resend
+
 1. Go to [resend.com](https://resend.com)
 2. Copy API key to `.env.local`: RESEND_API_KEY
 
@@ -131,12 +135,14 @@ supabase/            # Database schema & seeds
 ## Common Tasks
 
 ### Add a new product manually
+
 1. Go to seller dashboard: `/seller/dashboard`
 2. Click "Add Product"
 3. Fill form and upload images
 4. Click Save
 
 ### Test a payment
+
 1. Add product to cart
 2. Go to checkout
 3. Use test card: `4242 4242 4242 4242`
@@ -144,30 +150,33 @@ supabase/            # Database schema & seeds
 5. CVC: any 3 digits
 
 ### View orders
+
 - Buyer: `/account/orders`
 - Seller: `/seller/dashboard` (Orders tab)
 
 ### Check database
+
 1. Go to [supabase.com](https://supabase.com)
 2. Select your project
 3. SQL Editor → Run queries
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Build error | Run `pnpm install` again |
-| Env vars not working | Restart dev server after changing `.env.local` |
-| Database not connected | Check NEXT_PUBLIC_SUPABASE_URL and keys |
-| Images not uploading | Check Cloudinary API keys |
-| Emails not sending | Check RESEND_API_KEY |
-| Tests failing | Run `pnpm test -- --clearCache` |
+| Problem                | Solution                                       |
+| ---------------------- | ---------------------------------------------- |
+| Build error            | Run `pnpm install` again                       |
+| Env vars not working   | Restart dev server after changing `.env.local` |
+| Database not connected | Check NEXT_PUBLIC_SUPABASE_URL and keys        |
+| Images not uploading   | Check Cloudinary API keys                      |
+| Emails not sending     | Check RESEND_API_KEY                           |
+| Tests failing          | Run `pnpm test -- --clearCache`                |
 
 ## Next: Deploy to Production
 
 Follow [DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md)
 
 ### Quick deploy summary:
+
 1. Push code to GitHub
 2. Connect repo to Vercel
 3. Add environment variables

@@ -341,8 +341,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerBuyer = async (data: Omit<Buyer, 'id' | 'type' | 'addresses' | 'wishlist' | 'coupons' | 'orders' | 'beautyPreferences'> & { password: string }): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 500))
     
+    // Generate IDs only when called (client-side only)
+    const generateId = (prefix: string) => {
+      if (typeof window === 'undefined') return `${prefix}-temp`
+      return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
+    }
+    
     const newBuyer: Buyer = {
-      id: `buyer-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateId('buyer'),
       type: 'buyer',
       fullName: data.fullName,
       email: data.email,
@@ -353,7 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       wishlist: [],
       coupons: [
         {
-          id: `coupon-${Math.random().toString(36).substr(2, 9)}`,
+          id: generateId('coupon'),
           code: 'WELCOME10',
           discount: 10,
           type: 'percentage',
@@ -375,8 +381,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerSeller = async (data: Omit<Seller, 'id' | 'type'> & { password: string }): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 500))
     
+    const generateId = (prefix: string) => {
+      if (typeof window === 'undefined') return `${prefix}-temp`
+      return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
+    }
+    
     const newSeller: Seller = {
-      id: `seller-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateId('seller'),
       type: 'seller',
       brandName: data.brandName,
       ownerName: data.ownerName,
@@ -405,9 +416,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const addAddress = (address: Omit<Address, 'id'>) => {
     if (user?.type === 'buyer') {
+      const generateId = (prefix: string) => {
+        if (typeof window === 'undefined') return `${prefix}-temp`
+        return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
+      }
+      
       const newAddress: Address = {
         ...address,
-        id: `addr-${Math.random().toString(36).substr(2, 9)}`
+        id: generateId('addr')
       }
       if (address.isDefault) {
         const updatedAddresses = user.addresses.map(a => ({ ...a, isDefault: false }))
@@ -469,24 +485,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return []
   }
   
+  // Add register method to match interface
+  const register = async (email: string, password: string, type: 'buyer' | 'seller', data?: any): Promise<boolean> => {
+    if (type === 'buyer') {
+      return await registerBuyer({ email, password, ...data })
+    } else {
+      return await registerSeller({ email, password, ...data })
+    }
+  }
+
+  // Always provide context value, even during server render and before hydration
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    userType: user?.type || null,
+    login,
+    register,
+    registerBuyer,
+    registerSeller,
+    logout,
+    updateBuyerProfile,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    toggleWishlist,
+    isInWishlist,
+    applyCoupon,
+    getAvailableCoupons
+  }
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      userType: user?.type || null,
-      login,
-      registerBuyer,
-      registerSeller,
-      logout,
-      updateBuyerProfile,
-      addAddress,
-      updateAddress,
-      deleteAddress,
-      toggleWishlist,
-      isInWishlist,
-      applyCoupon,
-      getAvailableCoupons
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

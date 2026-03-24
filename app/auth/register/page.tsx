@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2, ShoppingBag, Store, Upload, X } from 'lucide-react'
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 
 type AccountType = 'buyer' | 'seller'
 
-export default function RegisterPage() {
+function RegisterContent() {
   const { language } = useLanguage()
   const { registerBuyer, registerSeller } = useAuth()
   const router = useRouter()
@@ -538,5 +538,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <RegisterContent />
+    </Suspense>
   )
 }

@@ -89,22 +89,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   
+  // Always provide context value, even during server render and before hydration
+  const contextValue: CartContextType = {
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    isOpen,
+    setIsOpen,
+    subtotal,
+    itemCount
+  }
+  
   return (
-    <CartContext.Provider value={{
-      items,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      isOpen,
-      setIsOpen,
-      subtotal,
-      itemCount
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   )
 }
+
 
 export function useCart() {
   const context = useContext(CartContext)

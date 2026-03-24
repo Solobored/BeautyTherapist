@@ -233,14 +233,14 @@ vercel logs
 
 ## 🆘 Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Build fails | Check build logs in Vercel dashboard |
-| Env vars not working | Verify in Vercel Settings → Environment Variables |
-| Stripe webhook not firing | Check webhook URL and secret in Vercel |
-| Emails not sending | Check Resend API key and sender domain |
-| Images not loading | Check Cloudinary configuration |
-| Database connection error | Verify Supabase connection string |
+| Issue                     | Solution                                          |
+| ------------------------- | ------------------------------------------------- |
+| Build fails               | Check build logs in Vercel dashboard              |
+| Env vars not working      | Verify in Vercel Settings → Environment Variables |
+| Stripe webhook not firing | Check webhook URL and secret in Vercel            |
+| Emails not sending        | Check Resend API key and sender domain            |
+| Images not loading        | Check Cloudinary configuration                    |
+| Database connection error | Verify Supabase connection string                 |
 
 ## ✨ Done!
 
@@ -248,7 +248,8 @@ Once all items are checked, your deployment is ready to go live! 🚀
 
 **Deployed at:** `https://your-domain.vercel.app`
 
-**Monitor at:** 
+**Monitor at:**
+
 - Vercel Dashboard: https://vercel.com
 - Stripe Dashboard: https://dashboard.stripe.com
 - Supabase Dashboard: https://app.supabase.com

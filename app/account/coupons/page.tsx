@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Ticket, ArrowLeft, Copy, Check, Clock, Tag } from 'lucide-react'
@@ -17,6 +17,11 @@ export default function CouponsPage() {
   const { user, isAuthenticated, userType } = useAuth()
   const router = useRouter()
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   
   useEffect(() => {
     if (!isAuthenticated || userType !== 'buyer') {
@@ -24,7 +29,7 @@ export default function CouponsPage() {
     }
   }, [isAuthenticated, userType, router])
   
-  if (!user || user.type !== 'buyer') {
+  if (!user || user.type !== 'buyer' || !isHydrated) {
     return null
   }
   
@@ -44,7 +49,7 @@ export default function CouponsPage() {
   }
   
   const CouponCard = ({ coupon, status }: { coupon: Coupon; status: 'active' | 'used' | 'expired' }) => {
-    const daysLeft = getDaysUntilExpiry(coupon.expiryDate)
+    const daysLeft = useMemo(() => getDaysUntilExpiry(coupon.expiryDate), [coupon.expiryDate])
     const isActive = status === 'active'
     
     return (
