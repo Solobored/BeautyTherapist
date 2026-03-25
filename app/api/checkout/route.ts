@@ -3,6 +3,7 @@ import { supabaseServer } from '@/lib/supabase';
 import { createPreference } from '@/lib/mercadopago';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export type CheckoutRequestBody = {
   items: Array<{
@@ -208,4 +209,11 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST to create a checkout.' },
+    { status: 405 }
+  );
 }

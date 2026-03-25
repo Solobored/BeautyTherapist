@@ -2,13 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
 export const runtime = 'nodejs';
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -94,4 +89,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST to upload files.' },
+    { status: 405 }
+  );
 }

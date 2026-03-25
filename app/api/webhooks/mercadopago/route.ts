@@ -4,6 +4,7 @@ import { getPayment, verifyWebhookSignature } from '@/lib/mercadopago';
 import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -154,4 +155,11 @@ async function handlePaymentFailed(orderId: string, buyerEmail?: string) {
       console.error('Error sending failure email:', emailError);
     }
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST for webhooks.' },
+    { status: 405 }
+  );
 }
