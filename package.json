@@ -12,7 +12,16 @@
     "type-check": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:seed": "supabase db seed",
-    "postinstall": "patch-package"
+    "postinstall": "echo 'Using npm overrides for dependency resolution'"
+  },
+  "overrides": {
+    "@react-email/render": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@testing-library/react": {
+      "react": "$react"
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
