@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
-import { createPreference } from '@/lib/mercadopago';
+// import { createPreference } from '@/lib/mercadopago'; // TODO: Uncomment when Mercado Pago is configured
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build Mercado Pago preference payload
+    // TODO: Re-enable after implementing Mercado Pago integration
     const items = body.items.map((item) => ({
       title: item.productName,
       quantity: item.quantity,
@@ -176,31 +177,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const preference = await createPreference({
-      items,
-      payer: {
-        name: body.buyerName,
-        email: body.buyerEmail,
-      },
-      back_urls: {
-        success: `${appUrl}/order-confirmation?order=${order.id}`,
-        failure: `${appUrl}/checkout?status=failure&order=${order.id}`,
-        pending: `${appUrl}/checkout?status=pending&order=${order.id}`,
-      },
-      notification_url: `${appUrl}/api/webhooks/mercadopago`,
-      auto_return: 'approved',
-      external_reference: order.id,
-      metadata: {
-        order_id: order.id,
-        buyer_email: body.buyerEmail,
-        coupon_code: body.couponCode || '',
-      },
-    });
+    // TODO: Uncomment when Mercado Pago is configured
+    // const preference = await createPreference({
+    //   items,
+    //   payer: {
+    //     name: body.buyerName,
+    //     email: body.buyerEmail,
+    //   },
+    //   back_urls: {
+    //     success: `${appUrl}/order-confirmation?order=${order.id}`,
+    //     failure: `${appUrl}/checkout?status=failure&order=${order.id}`,
+    //     pending: `${appUrl}/checkout?status=pending&order=${order.id}`,
+    //   },
+    //   notification_url: `${appUrl}/api/webhooks/mercadopago`,
+    //   auto_return: 'approved',
+    //   external_reference: order.id,
+    //   metadata: {
+    //     order_id: order.id,
+    //     buyer_email: body.buyerEmail,
+    //     coupon_code: body.couponCode || '',
+    //   },
+    // });
 
+    // Placeholder response - Mercado Pago integration disabled
+    console.warn('Mercado Pago integration is disabled. Order created but payment integration not available.');
+    
     return NextResponse.json({
-      preferenceId: preference.id,
-      initPoint: preference.init_point || preference.sandbox_init_point,
+      preferenceId: `placeholder-${order.id}`,
+      initPoint: null,
       orderId: order.id,
+      message: 'Order created. Payment integration will be available soon.',
     });
   } catch (error) {
     console.error('Checkout error:', error);

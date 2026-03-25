@@ -1,12 +1,11 @@
 import crypto from 'node:crypto';
 
-const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const mpIntegratorId = process.env.MERCADOPAGO_INTEGRATOR_ID;
-const mpWebhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+const mpIntegratorId = process.env.MERCADOPAGO_INTEGRATOR_ID || '';
+const mpWebhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
 
-if (!mpAccessToken) {
-  throw new Error('MERCADOPAGO_ACCESS_TOKEN is not defined');
-}
+// Note: Mercado Pago integration disabled for now
+// Enable by setting environment variables and uncommenting code
 
 const MP_API_BASE = 'https://api.mercadopago.com';
 
