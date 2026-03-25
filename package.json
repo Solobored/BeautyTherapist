@@ -20,7 +20,12 @@
       "react-dom": "$react-dom"
     },
     "@testing-library/react": {
-      "react": "$react"
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@floating-ui/react-dom": {
+      "react": "$react",
+      "react-dom": "$react-dom"
     }
   },
   "dependencies": {
