@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useLanguage } from '@/contexts/language-context'
-import { products } from '@/lib/data'
+import { useProducts } from '@/hooks/use-products'
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular'
 
 export default function ShopPage() {
   const { language, t } = useLanguage()
+  const { products, loading } = useProducts()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState<string[]>([])

@@ -11,11 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
-import { products } from '@/lib/data'
+import { useProducts } from '@/hooks/use-products'
 
 export default function SellerProductsPage() {
   const { language, t } = useLanguage()
   const { seller, isAuthenticated, logout } = useAuth()
+  const { products, loading } = useProducts()
   const router = useRouter()
   
   useEffect(() => {

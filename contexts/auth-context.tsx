@@ -102,175 +102,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Mock buyer data
-const mockBuyers: (Buyer & { password: string })[] = [
-  {
-    id: 'buyer-1',
-    type: 'buyer',
-    fullName: 'Maria Santos',
-    email: 'maria@example.com',
-    password: 'password123',
-    phone: '+1 555 987 6543',
-    birthday: '1992-05-15',
-    profilePhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    addresses: [
-      {
-        id: 'addr-1',
-        label: 'Home',
-        fullName: 'Maria Santos',
-        street: '123 Main Street, Apt 4B',
-        city: 'Miami',
-        state: 'FL',
-        zipCode: '33101',
-        country: 'United States',
-        phone: '+1 555 987 6543',
-        isDefault: true
-      },
-      {
-        id: 'addr-2',
-        label: 'Work',
-        fullName: 'Maria Santos',
-        street: '456 Business Ave, Suite 200',
-        city: 'Miami',
-        state: 'FL',
-        zipCode: '33102',
-        country: 'United States',
-        phone: '+1 555 987 6543',
-        isDefault: false
-      }
-    ],
-    wishlist: ['1', '3', '5'],
-    coupons: [
-      {
-        id: 'coupon-1',
-        code: 'WELCOME10',
-        discount: 10,
-        type: 'percentage',
-        expiryDate: '2024-06-30',
-        used: false
-      },
-      {
-        id: 'coupon-2',
-        code: 'SKIN20',
-        discount: 20,
-        type: 'percentage',
-        expiryDate: '2024-03-31',
-        applicableCategories: ['skincare'],
-        used: false
-      }
-    ],
-    orders: [
-      {
-        id: 'order-001',
-        date: '2024-01-20',
-        status: 'delivered',
-        items: [
-          { productId: '1', name: 'Radiance Glow Serum', quantity: 2, price: 68, image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&h=600&fit=crop' }
-        ],
-        total: 136,
-        shippingAddress: {
-          id: 'addr-1',
-          label: 'Home',
-          fullName: 'Maria Santos',
-          street: '123 Main Street, Apt 4B',
-          city: 'Miami',
-          state: 'FL',
-          zipCode: '33101',
-          country: 'United States',
-          phone: '+1 555 987 6543',
-          isDefault: true
-        }
-      },
-      {
-        id: 'order-002',
-        date: '2024-01-25',
-        status: 'shipped',
-        items: [
-          { productId: '2', name: 'Velvet Rose Moisturizer', quantity: 1, price: 54, image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&h=600&fit=crop' },
-          { productId: '5', name: 'Petal Soft Lip Tint', quantity: 2, price: 24, image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&h=600&fit=crop' }
-        ],
-        total: 102,
-        shippingAddress: {
-          id: 'addr-1',
-          label: 'Home',
-          fullName: 'Maria Santos',
-          street: '123 Main Street, Apt 4B',
-          city: 'Miami',
-          state: 'FL',
-          zipCode: '33101',
-          country: 'United States',
-          phone: '+1 555 987 6543',
-          isDefault: true
-        }
-      }
-    ],
-    beautyPreferences: {
-      skinType: 'combination',
-      concerns: ['hyperpigmentation', 'fine lines']
-    }
-  },
-  {
-    id: 'buyer-2',
-    type: 'buyer',
-    fullName: 'Elena Torres',
-    email: 'elena@example.com',
-    password: 'password123',
-    phone: '+1 555 456 7890',
-    profilePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
-    addresses: [
-      {
-        id: 'addr-3',
-        label: 'Home',
-        fullName: 'Elena Torres',
-        street: '789 Oak Lane',
-        city: 'Los Angeles',
-        state: 'CA',
-        zipCode: '90001',
-        country: 'United States',
-        phone: '+1 555 456 7890',
-        isDefault: true
-      }
-    ],
-    wishlist: ['2', '4'],
-    coupons: [
-      {
-        id: 'coupon-3',
-        code: 'BIRTHDAY15',
-        discount: 15,
-        type: 'percentage',
-        expiryDate: '2024-04-15',
-        used: false
-      }
-    ],
-    orders: [
-      {
-        id: 'order-003',
-        date: '2024-01-17',
-        status: 'delivered',
-        items: [
-          { productId: '4', name: 'Midnight Recovery Eye Cream', quantity: 3, price: 48, image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600&h=600&fit=crop' }
-        ],
-        total: 144,
-        shippingAddress: {
-          id: 'addr-3',
-          label: 'Home',
-          fullName: 'Elena Torres',
-          street: '789 Oak Lane',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90001',
-          country: 'United States',
-          phone: '+1 555 456 7890',
-          isDefault: true
-        }
-      }
-    ],
-    beautyPreferences: {
-      skinType: 'dry',
-      concerns: ['dark circles', 'dryness']
-    }
-  }
-]
+// Mock buyer data - Empty, buyers should register via Supabase
+const mockBuyers: (Buyer & { password: string })[] = []
 
 // Mock seller data
 const mockSellers: (Seller & { password: string })[] = [
@@ -278,13 +111,13 @@ const mockSellers: (Seller & { password: string })[] = [
     id: 'seller-1',
     type: 'seller',
     brandName: 'AngeBae',
-    ownerName: 'Angela Rodriguez',
-    email: 'angela@angebae.com',
+    ownerName: 'Angelica Baeriswyl',
+    email: 'angebae@gmail.com',
     password: 'password123',
     phone: '+1 555 123 4567',
     country: 'United States',
     brandLogo: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
-    brandDescription: 'Premium skincare and makeup crafted with love. Our products combine natural ingredients with innovative formulas.',
+    brandDescription: 'Skincare y maquillaje premium elaborado con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras.',
     category: 'both'
   }
 ]
@@ -499,6 +332,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     userType: user?.type || null,
+    seller: user?.type === 'seller' ? (user as Seller) : undefined,
+    buyer: user?.type === 'buyer' ? (user as Buyer) : undefined,
     login,
     register,
     registerBuyer,

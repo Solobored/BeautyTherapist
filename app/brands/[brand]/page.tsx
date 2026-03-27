@@ -8,12 +8,14 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
 import { useLanguage } from '@/contexts/language-context'
-import { brands, products } from '@/lib/data'
+import { brands } from '@/lib/data'
+import { useProducts } from '@/hooks/use-products'
 import { notFound } from 'next/navigation'
 
 export default function BrandPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: brandSlug } = use(params)
   const { language, t } = useLanguage()
+  const { products, loading } = useProducts()
   
   const brand = brands.find(b => b.slug === brandSlug)
   

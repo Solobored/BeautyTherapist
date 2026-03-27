@@ -22,7 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
-import { dashboardMetrics, mockOrders, products } from '@/lib/data'
+import { dashboardMetrics, mockOrders } from '@/lib/data'
+import { useProducts } from '@/hooks/use-products'
 import { 
   LineChart, 
   Line, 
@@ -44,6 +45,7 @@ const statusColors = {
 export default function SellerDashboardPage() {
   const { language, t } = useLanguage()
   const { seller, isAuthenticated, logout } = useAuth()
+  const { products, loading } = useProducts()
   const router = useRouter()
   
   useEffect(() => {
@@ -53,6 +55,14 @@ export default function SellerDashboardPage() {
   }, [isAuthenticated, router])
   
   if (!isAuthenticated || !seller) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>{t('common.loading')}</p>
+      </div>
+    )
+  }
+  
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>

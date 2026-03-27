@@ -7,6 +7,7 @@ export const translations = {
   common: {
     appName: { es: 'Beauty Therapist', en: 'Beauty Therapist' },
     loading: { es: 'Cargando...', en: 'Loading...' },
+    usingLocalData: { es: 'Usando datos locales temporalmente', en: 'Using local data temporarily' },
     error: { es: 'Error', en: 'Error' },
     success: { es: 'Éxito', en: 'Success' },
     warning: { es: 'Advertencia', en: 'Warning' },
@@ -62,6 +63,7 @@ export const translations = {
 
   products: {
     allProducts: { es: 'Todos los Productos', en: 'All Products' },
+    noProducts: { es: 'No hay productos disponibles', en: 'No products available' },
     featured: { es: 'Destacados', en: 'Featured' },
     newArrivals: { es: 'Nuevos Lanzamientos', en: 'New Arrivals' },
     category: { es: 'Categoría', en: 'Category' },
