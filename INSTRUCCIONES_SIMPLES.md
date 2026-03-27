@@ -3,16 +3,19 @@
 ## PASO 1: Ejecutar SQL en Supabase (Copy-Paste)
 
 ### 1.1 Abre Supabase
+
 ```
 🔗 https://app.supabase.com
 ```
 
 ### 1.2 Selecciona Proyecto
+
 ```
 Beauty Therapist
 ```
 
 ### 1.3 Abre SQL Editor
+
 ```
 SQL Editor > New Query
 ```
@@ -35,7 +38,7 @@ WITH angelica_seller AS (
   SELECT id FROM profiles WHERE email = 'angebae@gmail.com'
 )
 INSERT INTO brands (owner_id, brand_name, brand_slug, description, logo_url, category, is_active)
-SELECT 
+SELECT
     angelica_seller.id,
     'AngeBae',
     'angebae',
@@ -57,11 +60,13 @@ npm run dev
 ```
 
 **Abre el navegador:**
+
 ```
 http://localhost:3000
 ```
 
 **Verifica que ves:**
+
 - ✅ Tienda vacía (dice "No hay productos disponibles")
 - ✅ Brand page de AngeBae también vacía
 
@@ -70,17 +75,20 @@ http://localhost:3000
 ## PASO 3: Login como Angelica
 
 ### URL del login
+
 ```
 http://localhost:3000/seller/login
 ```
 
 ### Credenciales
+
 ```
 Email: angebae@gmail.com
 Password: password123
 ```
 
 ### Click en Dashboard
+
 ```
 Presiona "Seller Dashboard" después de login
 ```
@@ -94,6 +102,7 @@ Presiona "Seller Dashboard" después de login
 Tu tienda está PREPARADA para que **Angelica Baeriswyl** agregue sus productos.
 
 ### Cuando Angelica agregue su primer producto:
+
 1. Aparecerá en "Featured Products"
 2. Aparecerá en la tienda (/shop)
 3. Aparecerá en su brand page

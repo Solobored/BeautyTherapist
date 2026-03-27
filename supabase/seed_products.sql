@@ -14,7 +14,6 @@ VALUES (
     '+1 555 123 4567',
     'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop'
   ) ON CONFLICT (email) DO NOTHING;
-
 -- Get AngeBae seller ID for inserting brand
 WITH angebae_seller AS (
   SELECT id
@@ -38,7 +37,6 @@ SELECT angebae_seller.id,
   'both',
   true
 FROM angebae_seller ON CONFLICT (brand_slug) DO NOTHING;
-
 -- Insert AngeBae products
 WITH angebae_brand AS (
   SELECT id
@@ -59,9 +57,11 @@ INSERT INTO products (
     category,
     status
   )
-VALUES 
-  (
-    (SELECT id FROM angebae_brand),
+VALUES (
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Sérum Resplandor Radiante',
     'Radiance Glow Serum',
     'Un lujoso sérum de vitamina C que ilumina y unifica el tono de la piel mientras proporciona una poderosa protección antioxidante. Formulado con 15% de vitamina C estabilizada y ácido hialurónico para una tez luminosa e hidratada.',
@@ -75,7 +75,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Hidratante Rosa de Terciopelo',
     'Velvet Rose Moisturizer',
     'Una crema ultra-rica infusionada con aceite de rosa mosqueta y péptidos para una hidratación profunda y beneficios anti-edad. Perfecta para pieles secas y maduras.',
@@ -89,7 +92,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Base de Seda SPF 30',
     'Silk Foundation SPF 30',
     'Una base ligera y modulable con acabado natural y protección solar. Infusionada con ingredientes de skincare para nutrir mientras la usas.',
@@ -103,7 +109,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Crema de Ojos Recuperación Nocturna',
     'Midnight Recovery Eye Cream',
     'Un tratamiento intensivo para ojos que trabaja durante la noche para reducir ojeras, hinchazón y líneas finas. Formulado con cafeína y retinol.',
@@ -117,7 +126,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Tinte de Labios Pétalo Suave',
     'Petal Soft Lip Tint',
     'Un tinte labial hidratante que proporciona un color de aspecto natural con acabado húmedo. Enriquecido con rosa mosqueta y vitamina E.',
@@ -131,7 +143,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Bruma Facial Hidra-Relleno',
     'Hydra-Plump Face Mist',
     'Una bruma facial refrescante que hidrata instantáneamente y revive la piel cansada. Perfecta para fijar el maquillaje o refrescar durante el día.',
@@ -145,7 +160,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Máscara de Pestañas Lujosa',
     'Lash Luxe Mascara',
     'Una máscara de pestañas que alarga y da volumen con fórmula modulable. Crea pestañas dramáticas sin grumos ni descamación.',
@@ -159,7 +177,10 @@ VALUES
     'active'
   ),
   (
-    (SELECT id FROM angebae_brand),
+    (
+      SELECT id
+      FROM angebae_brand
+    ),
     'Limpiador en Espuma Suave',
     'Gentle Foam Cleanser',
     'Un limpiador en espuma con pH equilibrado que elimina el maquillaje y las impurezas sin resecar la piel. Apto para todo tipo de pieles.',
@@ -172,68 +193,124 @@ VALUES
     'skincare',
     'active'
   );
-
 -- Insert product images for each product
 -- Images for product 1 (Radiance Glow Serum)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Radiance Glow Serum'
+SELECT id,
+  'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Radiance Glow Serum'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1617897903246-719242758050?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Radiance Glow Serum';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1617897903246-719242758050?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Radiance Glow Serum';
 -- Images for product 2 (Velvet Rose Moisturizer)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Velvet Rose Moisturizer'
+SELECT id,
+  'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Velvet Rose Moisturizer'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Velvet Rose Moisturizer';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Velvet Rose Moisturizer';
 -- Images for product 3 (Silk Foundation SPF 30)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Silk Foundation SPF 30'
+SELECT id,
+  'https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Silk Foundation SPF 30'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Silk Foundation SPF 30';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Silk Foundation SPF 30';
 -- Images for product 4 (Midnight Recovery Eye Cream)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Midnight Recovery Eye Cream'
+SELECT id,
+  'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Midnight Recovery Eye Cream'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Midnight Recovery Eye Cream';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Midnight Recovery Eye Cream';
 -- Images for product 5 (Petal Soft Lip Tint)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Petal Soft Lip Tint'
+SELECT id,
+  'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Petal Soft Lip Tint'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1619451334792-150fd785ee74?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Petal Soft Lip Tint';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1619451334792-150fd785ee74?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Petal Soft Lip Tint';
 -- Images for product 6 (Hydra-Plump Face Mist)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Hydra-Plump Face Mist'
+SELECT id,
+  'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Hydra-Plump Face Mist'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Hydra-Plump Face Mist';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Hydra-Plump Face Mist';
 -- Images for product 7 (Lash Luxe Mascara)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1631214540553-ff044a3ff1ea?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Lash Luxe Mascara'
+SELECT id,
+  'https://images.unsplash.com/photo-1631214540553-ff044a3ff1ea?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Lash Luxe Mascara'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Lash Luxe Mascara';
-
+SELECT id,
+  'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Lash Luxe Mascara';
 -- Images for product 8 (Gentle Foam Cleanser)
 INSERT INTO product_images (product_id, url, position, is_primary)
-SELECT id, 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop', 1, true
-FROM products WHERE name_en = 'Gentle Foam Cleanser'
+SELECT id,
+  'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop',
+  1,
+  true
+FROM products
+WHERE name_en = 'Gentle Foam Cleanser'
 UNION ALL
-SELECT id, 'https://images.unsplash.com/photo-1570194065650-d99fb4b38b15?w=600&h=600&fit=crop', 2, false
-FROM products WHERE name_en = 'Gentle Foam Cleanser';
+SELECT id,
+  'https://images.unsplash.com/photo-1570194065650-d99fb4b38b15?w=600&h=600&fit=crop',
+  2,
+  false
+FROM products
+WHERE name_en = 'Gentle Foam Cleanser';

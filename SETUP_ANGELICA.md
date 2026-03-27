@@ -14,12 +14,14 @@
 ## 📋 Qué He Hecho
 
 ### Cambios en la Base de Datos
+
 - ✅ Creado `supabase/seed_clean.sql` con SOLO:
   - Perfil: Angelica Baeriswyl
   - Marca: AngeBae
   - **SIN PRODUCTOS**
 
 ### Cambios en la Aplicación
+
 - ✅ Actualizado nombre a "Angelica Baeriswyl" en `auth-context.tsx`
 - ✅ Actualizado componentes para mostrar "No hay productos" cuando está vacío:
   - Featured Products
@@ -103,6 +105,7 @@ npm run dev
 ```
 
 **Verifica:**
+
 - ✅ Tienda muestra "No hay productos disponibles" (vacía)
 - ✅ Brand page muestra "No products available from this brand yet"
 - ✅ Login funciona:
@@ -128,6 +131,7 @@ npm run dev
 ## ➕ Cómo Angelica Agrega Productos
 
 **En el Dashboard:**
+
 1. Click en **"+ Add Product"** (botón verde)
 2. Completa el formulario:
    - Nombre del producto
@@ -161,11 +165,13 @@ Tienda Para Compradores:
 ## 📁 Archivos a Ejecutar
 
 **SOLO NECESITAS EJECUTAR ESTO EN SUPABASE:**
+
 ```
 supabase/seed_clean.sql ← EL ARCHIVO DEFINITIVO
 ```
 
 **Archivos anteriores (YA NO USES):**
+
 - ⚠️ `supabase/seed_products.sql` ← DESCARTA (tiene productos de prueba)
 
 ---
@@ -194,13 +200,13 @@ git push origin main
 
 ## 💡 Resumen
 
-| Elemento | Status | Notas |
-|----------|--------|-------|
-| Perfil de Angelica | ✅ | angebae@gmail.com |
-| Marca AngeBae | ✅ | Listo para productos |
-| Productos iniciales | ❌ | Vacío (Angelica agrega) |
-| Dashboard seller | ✅ | Funcional |
-| Tienda pública | ✅ | Vacía (esperando productos) |
+| Elemento            | Status | Notas                       |
+| ------------------- | ------ | --------------------------- |
+| Perfil de Angelica  | ✅     | angebae@gmail.com           |
+| Marca AngeBae       | ✅     | Listo para productos        |
+| Productos iniciales | ❌     | Vacío (Angelica agrega)     |
+| Dashboard seller    | ✅     | Funcional                   |
+| Tienda pública      | ✅     | Vacía (esperando productos) |
 
 ---
 
@@ -209,6 +215,7 @@ git push origin main
 **Tu tienda está LISTA para que Angelica comience a vender. Sin datos de prueba que contaminen la experiencia real.**
 
 Cuando Angelica agregue sus primeros productos, aparecerán automáticamente en:
+
 1. Featured Products (homepage)
 2. Shop page
 3. Brand page (AngeBae)
@@ -219,6 +226,7 @@ Cuando Angelica agregue sus primeros productos, aparecerán automáticamente en:
 ---
 
 **Próximas acciones:**
+
 1. Ejecutar SQL en Supabase (este documento)
 2. Deploy a Vercel
 3. Angelica accede y empieza a subir productos

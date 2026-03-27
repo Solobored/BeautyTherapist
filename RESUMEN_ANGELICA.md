@@ -16,6 +16,7 @@
 ## ✅ Lo Que He Hecho
 
 ### 1. Base de Datos Limpia
+
 - ✅ Creado `seed_clean.sql` con:
   - Perfil: **Angelica Baeriswyl**
   - Email: **angebae@gmail.com**
@@ -24,12 +25,14 @@
   - Productos: **NINGUNO** (vacío)
 
 ### 2. Aplicación Preparada
+
 - ✅ Nombre actualizado a "Angelica Baeriswyl"
 - ✅ Tienda muestra "No hay productos" (normal)
 - ✅ Dashboard de Angelica funciona
 - ✅ Botón "Add Product" visible
 
 ### 3. Mock Data Removida
+
 - ❌ Los 8 productos de ejemplo fueron reemplazados
 - ✅ Ahora solo hay datos reales de Angelica
 
@@ -38,6 +41,7 @@
 ## 🚀 CÓMO HACER FUNCIONAR (3 Pasos Simples)
 
 ### PASO 1: Ejecutar SQL en Supabase
+
 ```
 1. Abre: https://app.supabase.com
 2. SQL Editor > New Query
@@ -48,6 +52,7 @@
 ✅ Resultado: Angelica lista para entrar
 
 ### PASO 2: Verificar que todo está vacío
+
 ```bash
 npm run dev
 # http://localhost:3000
@@ -55,6 +60,7 @@ npm run dev
 ```
 
 ### PASO 3: Deploy
+
 ```bash
 git add .
 git commit -m "Setup: Angelica Baeriswyl, clean DB"
@@ -86,11 +92,13 @@ TIENDA PÚBLICA:
 ## 📁 ARCHIVOS A EJECUTAR
 
 **SOLO NECESITAS ESTE:**
+
 ```
 ✅ supabase/seed_clean.sql
 ```
 
 **NO USES ESTO:**
+
 ```
 ❌ supabase/seed_products.sql (tiene ejemplos)
 ```

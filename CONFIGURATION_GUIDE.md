@@ -5,6 +5,7 @@
 He realizado los siguientes cambios en tu aplicación:
 
 ### ✅ Completado:
+
 1. **Cuentas de Usuario Limpias**
    - ❌ Eliminada: maria@example.com / password123
    - ❌ Eliminada: elena@example.com / password123
@@ -41,10 +42,12 @@ Ve a tu dashboard de Supabase:
 Supabase > Beauty Therapist Project > SQL Editor > New Query
 ```
 
-**Copia y ejecuta el contenido de:** 
+**Copia y ejecuta el contenido de:**
+
 - `supabase/seed_products.sql`
 
 Este script:
+
 - Crea el perfil de angebae@gmail.com
 - Crea la marca AngeBae
 - Inserta los 8 productos con todas sus imágenes
@@ -53,6 +56,7 @@ Este script:
 ### 2️⃣ **Verificar Conexión a Supabase**
 
 Asegúrate de que tu `.env.local` tiene:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://cntumaksbvnfqscixyxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_sJggJG9A6JHa1srs1ThZHw_jHbMSeSS
@@ -62,6 +66,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### 3️⃣ **Configuración de Mercado Pago**
 
 Tu `.env.local` ya tiene:
+
 ```
 NEXT_PUBLIC_MP_PUBLIC_KEY=TEST-a6bd8b5a-667f-46b1-832f-490041584b22
 MERCADOPAGO_ACCESS_TOKEN=TEST-8594693705475488-032717-40f5591ddf766f8f18bdd9058fdc5dee-1853433854
@@ -70,6 +75,7 @@ MERCADOPAGO_INTEGRATOR_ID=1853433854
 ```
 
 **Para PRODUCCIÓN, necesitas:**
+
 - Cambiar claves de TEST a LIVE en Mercado Pago Dashboard
 - Actualizar `.env.production`:
   ```
@@ -103,11 +109,12 @@ git push origin main
 ### 5️⃣ **Test de Login (Temporalmente Local)**
 
 Para testing, usa:
+
 - **Email:** angebae@gmail.com
 - **Password:** password123
 - **Role:** Seller
 
-*Nota: Los datos se cargan desde Supabase si está conectado, sino de datos locales como fallback*
+_Nota: Los datos se cargan desde Supabase si está conectado, sino de datos locales como fallback_
 
 ---
 
@@ -120,6 +127,7 @@ Antes de hacer público:
    - Verificar que `auto_return` está habilitado
 
 2. **Borrar Datos de Prueba en Supabase:**
+
    ```sql
    DELETE FROM products WHERE brand_id NOT IN (
      SELECT id FROM brands WHERE brand_slug = 'angebae'
@@ -152,18 +160,22 @@ Antes de hacer público:
 ## 🆘 Troubleshooting
 
 ### Los productos no aparecen
+
 - Verifica que el script SQL se ejecutó correctamente
 - Revisa la consola de Supabase para errores
 
 ### Dashboard sigue cargando
+
 - Limpia el localStorage: `localStorage.clear()`
 - Verifica que `isAuthenticated` es true después del login
 
 ### Mercado Pago no funciona
+
 - Verifica claves en .env.local
 - Comprueba que los items tienen `unit_price` > 0
 
 ### Vercel dice "Build Failed"
+
 - Verifica tipos TypeScript: `npm run type-check`
 - Lee los logs de Vercel en detalle
 
@@ -175,6 +187,7 @@ Todos los cambios se han documentado en los archivos editados.
 Revisa los comentarios en el código para más detalles.
 
 **Archivos principales modificados:**
+
 - `contexts/auth-context.tsx` - Cuentas de usuario
 - `hooks/use-products.ts` - Nuevo hook para productos
 - `supabase/seed_products.sql` - SQL para insertar datos

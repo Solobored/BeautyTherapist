@@ -2,16 +2,20 @@
 
 ## ¿Qué he hecho?
 
-### 1. **Limpieza de Cuentas de Prueba** 
+### 1. **Limpieza de Cuentas de Prueba**
+
 He eliminado las cuentas de prueba inseguras y dejé solo:
+
 - **Email:** angebae@gmail.com
 - **Password:** password123
 - **Role:** Seller (creadora de productos)
 
 ### 2. **Arreglado el Dashboard que no cargaba**
+
 El problema era que el contexto de autenticación no exponía la información del seller correctamente. Ahora el dashboard carga sin problemas.
 
 ### 3. **Migración a Base de Datos (Supabase)**
+
 Antes: Los productos estaban hardcodeados en `lib/data.ts` (mock data)
 Ahora: Los productos vienen de Supabase, con fallback a datos locales
 
@@ -35,6 +39,7 @@ Ahora: Los productos vienen de Supabase, con fallback a datos locales
 ```
 
 Esto insertará:
+
 - El usuario angebae@gmail.com
 - La marca AngeBae
 - Los 8 productos con imágenes
@@ -46,6 +51,7 @@ npm run dev
 ```
 
 Ve a http://localhost:3000 y verifica:
+
 - [ ] La tienda muestra los 8 productos
 - [ ] Los precios son correctos
 - [ ] Las imágenes cargan
@@ -58,6 +64,7 @@ Password: password123
 ```
 
 Deberías poder:
+
 - [ ] Entrar al dashboard
 - [ ] Ver los productos
 - [ ] Crear nuevos productos
@@ -78,11 +85,13 @@ https://vercel.com/your-dashboard
 ## 💰 Mercado Pago (Ya está funcionando)
 
 Tu .env.local ya tiene las claves de TEST:
+
 - Usa tarjeta: `4242 4242 4242 4242`
 - Cualquier fecha futura: 12/25
 - CVC: 123
 
 Para PRODUCTION:
+
 1. Ve a mercadopago.com/settings/credentials
 2. Copia las claves LIVE
 3. Actualiza `.env.production`
@@ -121,14 +130,14 @@ Para PRODUCTION:
 
 ## ✨ Resumen de Lo Que Funciona
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Tienda (productos) | ✅ | Desde Supabase con fallback local |
-| Login seller | ✅ | angebae@gmail.com / password123 |
-| Dashboard seller | ✅ | Arreglado el loading infinito |
-| Checkout (Mercado Pago) | ✅ | En TEST, cambiar a LIVE para producción |
-| Crear productos | ⏳ | Listo pero sin GUI, use SQL directo |
-| Imágenes | ✅ | Todas almacenadas en URLs |
+| Funcionalidad           | Estado | Notas                                   |
+| ----------------------- | ------ | --------------------------------------- |
+| Tienda (productos)      | ✅     | Desde Supabase con fallback local       |
+| Login seller            | ✅     | angebae@gmail.com / password123         |
+| Dashboard seller        | ✅     | Arreglado el loading infinito           |
+| Checkout (Mercado Pago) | ✅     | En TEST, cambiar a LIVE para producción |
+| Crear productos         | ⏳     | Listo pero sin GUI, use SQL directo     |
+| Imágenes                | ✅     | Todas almacenadas en URLs               |
 
 ---
 

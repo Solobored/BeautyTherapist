@@ -48,27 +48,30 @@ git push origin main
 
 ### Si Algo Falla
 
-| Problema | Solución |
-|----------|----------|
-| Productos no aparecen | Verifica SQL en Supabase ejecutó sin errores |
-| Dashboard aún atascado | `localStorage.clear()` en consola |
-| Imágenes no cargan | Verifica URLs en DB (Unsplash funciona) |
-| Login falla | Verifica perfil en Supabase > profiles |
-| Mercado Pago error | Usa tarjeta TEST `4242 4242 4242 4242` |
+| Problema               | Solución                                     |
+| ---------------------- | -------------------------------------------- |
+| Productos no aparecen  | Verifica SQL en Supabase ejecutó sin errores |
+| Dashboard aún atascado | `localStorage.clear()` en consola            |
+| Imágenes no cargan     | Verifica URLs en DB (Unsplash funciona)      |
+| Login falla            | Verifica perfil en Supabase > profiles       |
+| Mercado Pago error     | Usa tarjeta TEST `4242 4242 4242 4242`       |
 
 ---
 
 ## 🔐 Seguridad: Verificar Cambios
 
 **Cuentas Eliminadas:**
+
 - ❌ maria@example.com (test buyer)
-- ❌ elena@example.com (test buyer)  
+- ❌ elena@example.com (test buyer)
 - ❌ angela@angebae.com (test seller)
 
 **Cuentas Activas:**
+
 - ✅ angebae@gmail.com (seller production)
 
 **Verificar:**
+
 ```
 Supabase > profiles > Revisa que solo existe angebae@gmail.com
 ```
@@ -127,6 +130,7 @@ Después de deploy, verifica:
 **ANTES de hacer público:**
 
 ### Cambiar a LIVE
+
 ```
 1. Mercado Pago Dashboard > Credentials
 2. Selecciona LIVE (no TEST)
@@ -137,6 +141,7 @@ Después de deploy, verifica:
 ```
 
 ### Configurar Webhook
+
 ```
 Mercado Pago > Webhooks > Add:
 ├─ URL: https://tudominio.com/api/webhooks/mercadopago
@@ -145,6 +150,7 @@ Mercado Pago > Webhooks > Add:
 ```
 
 ### Forzar HTTPS
+
 ```
 Vercel > Settings > Security:
 ├─ Force HTTPS: ✅
@@ -167,29 +173,32 @@ Vercel > Settings > Security:
 
 ## ✨ Resumen de Cambios
 
-| Antes | Ahora |
-|-------|-------|
-| 3 cuentas test expuestas | 1 cuenta protegida |
-| Dashboard atascado infinito | ✅ Dashboard funciona |
-| Productos en mock data | ✅ Productos en Supabase |
-| No escalable | ✅ Completamente escalable |
-| No auditado | ✅ Auditable en Supabase |
+| Antes                       | Ahora                      |
+| --------------------------- | -------------------------- |
+| 3 cuentas test expuestas    | 1 cuenta protegida         |
+| Dashboard atascado infinito | ✅ Dashboard funciona      |
+| Productos en mock data      | ✅ Productos en Supabase   |
+| No escalable                | ✅ Completamente escalable |
+| No auditado                 | ✅ Auditable en Supabase   |
 
 ---
 
 ## 🎯 Próximas Metas (Opcional)
 
 ### Corto Plazo (Próxima semana)
+
 - [ ] Agregar más productos en Supabase
 - [ ] Crear dashboard para seller (crear productos)
 - [ ] Set up email notifications
 
 ### Mediano Plazo (Próximo mes)
+
 - [ ] Agregar más vendedores
 - [ ] Implementar ratings/reviews
 - [ ] Analytics y dashboards
 
 ### Largo Plazo (Próximo trimestre)
+
 - [ ] Mobile app
 - [ ] AI recommendations
 - [ ] Subscription model
@@ -220,6 +229,7 @@ R: Sí, la app es responsive. Todos los cambios funcionan en mobile
 Si hay problemas:
 
 1. **Revisa los logs:**
+
    ```bash
    npm run dev
    # Abre DevTools (F12) > Console
@@ -252,6 +262,6 @@ Si hay problemas:
 
 **Status:** 🟢 READY TO GO  
 **Next Action:** Abre Supabase y ejecuta el SQL  
-**Estimated Time:** 5 minutos para todo  
+**Estimated Time:** 5 minutos para todo
 
 ¡Listo! 🚀
