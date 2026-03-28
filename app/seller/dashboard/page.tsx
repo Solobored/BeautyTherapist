@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { SellerProfileEditor } from '@/components/seller-profile-editor'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { mockOrders } from '@/lib/data'
@@ -51,6 +52,8 @@ export default function SellerDashboardPage() {
   const { seller, isAuthenticated, logout } = useAuth()
   const { products, loading } = useProducts()
   const router = useRouter()
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -168,12 +171,42 @@ export default function SellerDashboardPage() {
       </header>
       
       <main className="container mx-auto px-4 py-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-lg bg-green-100 text-green-700 border border-green-200">
+            {successMessage}
+          </div>
+        )}
+        
         {/* Welcome */}
         <div className="mb-8">
           <h1 className="font-serif text-3xl font-semibold text-foreground">
             {t('dashboard.welcome')}, {seller.brandName}
           </h1>
           <p className="text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
+        </div>
+        
+        {/* Brand Profile Editor */}
+        <div className="mb-8 max-w-2xl">
+          <SellerProfileEditor
+            brandName={seller.brandName}
+            brandLogo={seller.brandLogo}
+            brandBanner={seller.brandBanner}
+            brandDescription={seller.brandDescription}
+            onSave={async (data) => {
+              setIsLoadingProfile(true)
+              try {
+                await new Promise(resolve => setTimeout(resolve, 500))
+                // Here you would normally call an update function
+                // updateSellerProfile(data)
+                setSuccessMessage(language === 'es' ? '¡Marca actualizada!' : 'Brand updated!')
+                setTimeout(() => setSuccessMessage(''), 3000)
+              } finally {
+                setIsLoadingProfile(false)
+              }
+            }}
+            isLoading={isLoadingProfile}
+          />
         </div>
         
         {/* Metrics Cards */}

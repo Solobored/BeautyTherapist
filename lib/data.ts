@@ -89,7 +89,7 @@ export const brands: Brand[] = [
 
 export const products: Product[] = [
   {
-    id: '1',
+    id: 'e1abd814-c1ec-44ce-abc8-4f89eed2aaa5',
     name: 'Radiance Glow Serum',
     nameEs: 'Sérum Resplandor Radiante',
     brand: 'AngeBae',
@@ -112,7 +112,7 @@ export const products: Product[] = [
     status: 'active'
   },
   {
-    id: '2',
+    id: 'a2bcd914-d2ed-55df-bbd9-5e9affe3bbb6',
     name: 'Velvet Rose Moisturizer',
     nameEs: 'Hidratante Rosa de Terciopelo',
     brand: 'AngeBae',
@@ -134,7 +134,7 @@ export const products: Product[] = [
     status: 'active'
   },
   {
-    id: '3',
+    id: 'b3cde025-e3fe-66ef-cce0-6f0bfff4ccc7',
     name: 'Silk Foundation SPF 30',
     nameEs: 'Base de Seda SPF 30',
     brand: 'AngeBae',
@@ -156,7 +156,7 @@ export const products: Product[] = [
     status: 'active'
   },
   {
-    id: '4',
+    id: 'c4deff36-f4af-77af-ddf1-7a1caffa5ddd8',
     name: 'Midnight Recovery Eye Cream',
     nameEs: 'Crema de Ojos Recuperación Nocturna',
     brand: 'AngeBae',
@@ -178,7 +178,7 @@ export const products: Product[] = [
     status: 'active'
   },
   {
-    id: '5',
+    id: 'd5efaa47-a5a8-88a8-eea2-8a2daaa6eee9',
     name: 'Petal Soft Lip Tint',
     nameEs: 'Tinte de Labios Pétalo Suave',
     brand: 'AngeBae',

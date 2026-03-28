@@ -57,6 +57,8 @@ export interface Buyer {
   phone?: string
   birthday?: string
   profilePhoto?: string
+  backgroundPhoto?: string
+  description?: string
   addresses: Address[]
   wishlist: string[]
   coupons: Coupon[]
@@ -73,6 +75,7 @@ export interface Seller {
   phone: string
   country: string
   brandLogo?: string
+  brandBanner?: string
   brandDescription?: string
   category: 'skincare' | 'makeup' | 'both'
 }
