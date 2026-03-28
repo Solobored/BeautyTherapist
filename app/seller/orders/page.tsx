@@ -8,10 +8,23 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { sellerApiHeaders } from '@/hooks/use-seller-products'
 import { formatClp } from '@/lib/utils'
+import { toast } from 'sonner'
 
 type SellerOrder = {
   id: string
@@ -44,6 +57,9 @@ export default function SellerOrdersPage() {
   const [orders, setOrders] = useState<SellerOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<SellerOrder | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelBusy, setCancelBusy] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -86,6 +102,35 @@ export default function SellerOrdersPage() {
   const handleLogout = () => {
     logout()
     router.push('/seller/login')
+  }
+
+  const submitCancelOrder = async () => {
+    if (!seller || !cancelTarget) return
+    setCancelBusy(true)
+    try {
+      const res = await fetch(`/api/seller/orders/${cancelTarget.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          ...sellerApiHeaders(seller),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: cancelReason }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'No se pudo anular el pedido')
+      toast.success(
+        json.refunded
+          ? 'Pedido anulado. Se solicitó reembolso en Mercado Pago y se avisó al comprador por correo.'
+          : 'Pedido anulado. Se notificó al comprador por correo.'
+      )
+      setOrders((prev) => prev.filter((o) => o.id !== cancelTarget.id))
+      setCancelTarget(null)
+      setCancelReason('')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error')
+    } finally {
+      setCancelBusy(false)
+    }
   }
 
   return (
@@ -148,11 +193,25 @@ export default function SellerOrdersPage() {
                       {new Date(order.createdAt).toLocaleString('es-CL')}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge className={statusClass[order.orderStatus] ?? 'bg-secondary'}>
                       {order.orderStatus}
                     </Badge>
                     <Badge variant="outline">{order.paymentStatus}</Badge>
+                    {order.orderStatus !== 'cancelled' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                        onClick={() => {
+                          setCancelTarget(order)
+                          setCancelReason('')
+                        }}
+                      >
+                        Anular pedido
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -230,6 +289,46 @@ export default function SellerOrdersPage() {
           </div>
         )}
       </main>
+
+      <AlertDialog open={cancelTarget != null} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anular pedido</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-left">
+                <p>
+                  Si el pago ya fue aprobado en Mercado Pago, se solicitará un{' '}
+                  <strong>reembolso automático</strong> y se devolverá stock de los productos de tu marca. El comprador
+                  recibirá un correo en <strong>{cancelTarget?.buyerEmail}</strong>.
+                </p>
+                <div className="space-y-1">
+                  <Label htmlFor="cancel-reason">Motivo (opcional)</Label>
+                  <Textarea
+                    id="cancel-reason"
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Ej: producto agotado, dirección no cubierta..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBusy}>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelBusy}
+              onClick={(e) => {
+                e.preventDefault()
+                void submitCancelOrder()
+              }}
+            >
+              {cancelBusy ? 'Procesando…' : 'Confirmar anulación'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

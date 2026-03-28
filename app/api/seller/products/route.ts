@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
         stock,
         category,
         status,
+        net_content_ml,
+        grams_per_ml,
+        weight_override_g,
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
@@ -78,6 +81,12 @@ type CreateBody = {
   stock: number
   status: 'active' | 'draft' | 'inactive'
   images: { url: string; position: number }[]
+  /** ml netos por unidad (cosmética); opcional si usas peso directo. */
+  netContentMl?: number | null
+  /** g/ml; por defecto 1. */
+  gramsPerMl?: number | null
+  /** Peso por unidad en g; si se envía, anula el cálculo por ml. */
+  weightOverrideG?: number | null
 }
 
 export async function POST(request: NextRequest) {
@@ -109,6 +118,21 @@ export async function POST(request: NextRequest) {
     const ing = body.ingredients?.trim() ?? ''
     const how = body.howToUse?.trim() ?? ''
 
+    const gramsPerMl =
+      body.gramsPerMl != null && Number.isFinite(body.gramsPerMl) && body.gramsPerMl > 0
+        ? body.gramsPerMl
+        : 1
+    const netContentMl =
+      body.netContentMl != null && Number.isFinite(body.netContentMl) && body.netContentMl >= 0
+        ? body.netContentMl
+        : null
+    const weightOverrideG =
+      body.weightOverrideG != null &&
+      Number.isFinite(body.weightOverrideG) &&
+      body.weightOverrideG > 0
+        ? body.weightOverrideG
+        : null
+
     const status =
       body.status === 'draft' || body.status === 'inactive' || body.status === 'active'
         ? body.status
@@ -129,6 +153,9 @@ export async function POST(request: NextRequest) {
         stock: Math.max(0, Math.floor(body.stock)),
         category: body.category,
         status,
+        net_content_ml: netContentMl,
+        grams_per_ml: gramsPerMl,
+        weight_override_g: weightOverrideG,
       })
       .select('id')
       .single()

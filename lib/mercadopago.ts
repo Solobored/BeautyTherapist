@@ -28,7 +28,8 @@ type PreferencePayload = {
     failure: string;
     pending: string;
   };
-  notification_url: string;
+  /** Must be https and publicly reachable in production for MP to call it. */
+  notification_url?: string;
   auto_return?: 'approved' | 'all';
   external_reference?: string;
   metadata?: Record<string, any>;
@@ -68,16 +69,47 @@ function authHeaders() {
   };
 }
 
+function preferenceBodyFromPayload(payload: PreferencePayload): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    items: payload.items,
+    payer: payload.payer,
+    back_urls: payload.back_urls,
+  };
+  if (payload.external_reference) body.external_reference = payload.external_reference;
+  if (payload.metadata && Object.keys(payload.metadata).length > 0) body.metadata = payload.metadata;
+  if (payload.notification_url?.trim()) body.notification_url = payload.notification_url.trim();
+  if (payload.auto_return) body.auto_return = payload.auto_return;
+  return body;
+}
+
 export async function createPreference(payload: PreferencePayload): Promise<PreferenceResponse> {
   const res = await fetch(`${MP_API_BASE}/checkout/preferences`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(preferenceBodyFromPayload(payload)),
   });
 
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Mercado Pago preference error: ${res.status} ${text}`);
+  }
+
+  return res.json();
+}
+
+export type RefundResponse = { id: number; payment_id: number; amount: number; status?: string };
+
+export async function createRefund(paymentId: string, amount?: number): Promise<RefundResponse> {
+  const jsonBody = amount != null && amount > 0 ? JSON.stringify({ amount }) : JSON.stringify({});
+  const res = await fetch(`${MP_API_BASE}/v1/payments/${encodeURIComponent(paymentId)}/refunds`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: jsonBody,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Mercado Pago refund error: ${res.status} ${text}`);
   }
 
   return res.json();

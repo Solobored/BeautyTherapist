@@ -70,6 +70,9 @@ export type Database = {
           stock: number;
           category: string;
           status: 'active' | 'inactive' | 'draft';
+          net_content_ml: number | null;
+          grams_per_ml: number | null;
+          weight_override_g: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -121,6 +124,9 @@ export type Database = {
           payment_status: 'pending' | 'completed' | 'failed' | 'cancelled';
           order_status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
           coupon_code: string | null;
+          mercadopago_preference_id?: string | null;
+          mercadopago_payment_id?: string | null;
+          mercadopago_refund_id?: string | null;
           created_at: string;
           updated_at: string;
         };

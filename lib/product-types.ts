@@ -18,4 +18,10 @@ export interface StoreProduct {
   reviewCount: number
   stock: number
   status: 'active' | 'draft' | 'inactive'
+  /** Contenido neto (ml) para calcular peso de envío en Chile. */
+  netContentMl?: number | null
+  /** Gramos por ml (ej. ~1 para acuosos; aceites ~0,92). */
+  gramsPerMl?: number
+  /** Si está definido, peso por unidad en gramos (anula ml × g/ml). */
+  weightOverrideG?: number | null
 }

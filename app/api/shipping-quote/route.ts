@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  distanceQuoteEnabled,
-  isChileCountry,
-  nationalFlatClp,
-  quoteNationalDistanceClp,
-} from '@/lib/shipping'
+import { isChileCountry } from '@/lib/shipping'
+import { getChileShippingQuoteDetails } from '@/lib/shipping-checkout-server'
+import type { ChileDeliveryChannel } from '@/lib/chile-shipping'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,45 +9,51 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const city = String(body.city ?? '').trim()
-    const state = String(body.state ?? '').trim()
-    const country = String(body.country ?? '').trim()
-
-    if (!distanceQuoteEnabled()) {
-      return NextResponse.json({
-        enabled: false,
-        shippingClp: nationalFlatClp(),
-        message: 'Distance quote disabled on server',
-      })
-    }
+    const country = String(body.country ?? 'Chile').trim()
+    const regionCode = String(body.chileRegionCode ?? '').trim()
+    const channel = body.chileDeliveryChannel === 'punto' ? 'punto' : ('domicilio' as ChileDeliveryChannel)
+    const items = (body.items ?? []) as { productId?: string; quantity?: number }[]
 
     if (!isChileCountry(country)) {
       return NextResponse.json(
-        { error: 'La estimación por distancia solo aplica a envíos dentro de Chile.' },
+        { error: 'Cotización por peso/región solo aplica a Chile.' },
         { status: 400 }
       )
     }
 
-    if (!city || !state) {
-      return NextResponse.json({ error: 'Indica ciudad y región para calcular.' }, { status: 400 })
+    if (!regionCode) {
+      return NextResponse.json({ error: 'Indica la región de destino.' }, { status: 400 })
     }
 
-    const quote = await quoteNationalDistanceClp(city, state, country)
+    const cartItems = items
+      .filter((i) => i.productId && i.quantity && i.quantity > 0)
+      .map((i) => ({ productId: String(i.productId), quantity: Math.floor(Number(i.quantity)) }))
+
+    if (cartItems.length === 0) {
+      return NextResponse.json({ error: 'Sin productos para cotizar.' }, { status: 400 })
+    }
+
+    const { quote, totalGrams } = await getChileShippingQuoteDetails({
+      chileRegionCode: regionCode,
+      chileDeliveryChannel: channel,
+      cartItems,
+    })
+
     if (!quote) {
-      return NextResponse.json({
-        shippingClp: nationalFlatClp(),
-        fallback: true,
-        message: 'No se pudo geolocalizar; se usa tarifa nacional plana.',
-      })
+      return NextResponse.json({ error: 'Región no válida.' }, { status: 400 })
     }
 
     return NextResponse.json({
-      enabled: true,
-      shippingClp: quote.shippingClp,
-      distanceKm: quote.distanceKm,
+      shippingClp: quote.clp,
+      totalGrams,
+      parcel: quote.parcel,
+      regionLabel: quote.region.label,
+      zone: quote.region.zone,
+      eta: quote.region.eta,
+      channel,
     })
   } catch (e) {
     console.error('shipping-quote', e)
-    return NextResponse.json({ error: 'Error al calcular envío' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al cotizar envío' }, { status: 500 })
   }
 }

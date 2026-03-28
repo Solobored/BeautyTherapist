@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
@@ -16,10 +17,24 @@ import { useCart } from '@/contexts/cart-context'
 import { useAuth, type Coupon } from '@/contexts/auth-context'
 import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
+import type { MapPinValue } from '@/components/checkout/AddressMapPicker'
+import { CHILE_SHIPPING_REGIONS } from '@/lib/chile-shipping'
 
-const NATIONAL_CLP = Number(process.env.NEXT_PUBLIC_SHIPPING_NATIONAL_CLP ?? '5000')
+const AddressMapPicker = dynamic(
+  () => import('@/components/checkout/AddressMapPicker').then((m) => m.AddressMapPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[240px] rounded-xl border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground">
+        Cargando mapa…
+      </div>
+    ),
+  }
+)
+
 const INTERNATIONAL_CLP = Number(process.env.NEXT_PUBLIC_SHIPPING_INTERNATIONAL_CLP ?? '25000')
-const DISTANCE_QUOTE_UI = process.env.NEXT_PUBLIC_ENABLE_SHIPPING_DISTANCE_QUOTE === 'true'
+/** Preview si el comprador elige “Nacional” pero el país no es Chile (el servidor aplica la misma lógica). */
+const NATIONAL_NON_CHILE_CLP = Number(process.env.NEXT_PUBLIC_SHIPPING_NATIONAL_CLP ?? '5000')
 
 function normCountry(s: string) {
   return s.trim().toLowerCase()
@@ -38,9 +53,10 @@ export default function CheckoutPage() {
     city: '',
     state: '',
     zip: '',
-    country: '',
+    country: 'Chile',
     shippingKind: 'national' as 'national' | 'international',
-    nationalMode: 'flat' as 'flat' | 'distance',
+    chileRegionCode: '',
+    chileDeliveryChannel: 'domicilio' as 'domicilio' | 'punto',
     createAccount: false
   })
   
@@ -51,9 +67,16 @@ export default function CheckoutPage() {
   const [showSavedCoupons, setShowSavedCoupons] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [distanceQuoteClp, setDistanceQuoteClp] = useState<number | null>(null)
-  const [distanceQuoteLoading, setDistanceQuoteLoading] = useState(false)
-  const [distanceQuoteNote, setDistanceQuoteNote] = useState<string | null>(null)
+  const [chileQuoteClp, setChileQuoteClp] = useState<number | null>(null)
+  const [chileQuoteLoading, setChileQuoteLoading] = useState(false)
+  const [chileQuoteNote, setChileQuoteNote] = useState<string | null>(null)
+  const [chileQuoteDetail, setChileQuoteDetail] = useState<{
+    totalGrams: number
+    parcelLabel: string
+    eta: string
+    regionLabel: string
+  } | null>(null)
+  const [mapPin, setMapPin] = useState<MapPinValue | null>(null)
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -91,84 +114,85 @@ export default function CheckoutPage() {
     if (formData.shippingKind === 'international') {
       return Number.isFinite(INTERNATIONAL_CLP) ? INTERNATIONAL_CLP : 25000
     }
-    if (formData.nationalMode === 'distance' && distanceQuoteClp != null) {
-      return distanceQuoteClp
+    if (isChile && formData.shippingKind === 'national') {
+      return chileQuoteClp ?? 0
     }
-    return Number.isFinite(NATIONAL_CLP) ? NATIONAL_CLP : 5000
-  }, [formData.shippingKind, formData.nationalMode, distanceQuoteClp])
+    return Number.isFinite(NATIONAL_NON_CHILE_CLP) ? NATIONAL_NON_CHILE_CLP : 5000
+  }, [formData.shippingKind, isChile, chileQuoteClp])
 
-  const fetchDistanceQuote = useCallback(async () => {
-    if (!DISTANCE_QUOTE_UI || formData.nationalMode !== 'distance' || !isChile) return
-    if (!formData.city.trim() || !formData.state.trim()) {
-      setDistanceQuoteNote('Completa ciudad y región para estimar el envío.')
+  const cartLines = useMemo(
+    () => items.map((i) => ({ productId: i.id, quantity: i.quantity })),
+    [items]
+  )
+
+  const fetchChileShippingQuote = useCallback(async () => {
+    if (formData.shippingKind !== 'national' || !isChile) return
+    if (!formData.chileRegionCode.trim()) {
+      setChileQuoteClp(null)
+      setChileQuoteDetail(null)
+      setChileQuoteNote('Selecciona la región de destino en Chile.')
       return
     }
-    setDistanceQuoteLoading(true)
-    setDistanceQuoteNote(null)
+    setChileQuoteLoading(true)
+    setChileQuoteNote(null)
     try {
       const res = await fetch('/api/shipping-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          city: formData.city,
-          state: formData.state,
           country: formData.country || 'Chile',
+          chileRegionCode: formData.chileRegionCode,
+          chileDeliveryChannel: formData.chileDeliveryChannel,
+          items: cartLines,
         }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setDistanceQuoteClp(null)
-        setDistanceQuoteNote(data.error || 'No se pudo calcular el envío.')
+        setChileQuoteClp(null)
+        setChileQuoteDetail(null)
+        setChileQuoteNote(data.error || 'No se pudo cotizar el envío.')
         return
       }
       if (typeof data.shippingClp === 'number') {
-        setDistanceQuoteClp(data.shippingClp)
-        if (data.distanceKm != null) {
-          setDistanceQuoteNote(`Distancia aprox. ${data.distanceKm} km desde bodega.`)
-        } else if (data.fallback) {
-          setDistanceQuoteNote(data.message || 'Se aplica tarifa plana nacional.')
-        } else {
-          setDistanceQuoteNote(null)
-        }
+        setChileQuoteClp(data.shippingClp)
+        setChileQuoteDetail({
+          totalGrams: data.totalGrams,
+          parcelLabel: data.parcel?.label ?? '',
+          eta: data.eta ?? '',
+          regionLabel: data.regionLabel ?? '',
+        })
+        setChileQuoteNote(
+          `~${data.totalGrams} g totales · ${data.parcel?.label ?? ''} · ${data.eta ?? ''}`
+        )
       }
     } catch {
-      setDistanceQuoteNote('Error de red al calcular envío.')
-      setDistanceQuoteClp(null)
+      setChileQuoteNote('Error de red al cotizar envío.')
+      setChileQuoteClp(null)
+      setChileQuoteDetail(null)
     } finally {
-      setDistanceQuoteLoading(false)
+      setChileQuoteLoading(false)
     }
   }, [
-    formData.city,
-    formData.state,
+    formData.shippingKind,
     formData.country,
-    formData.nationalMode,
+    formData.chileRegionCode,
+    formData.chileDeliveryChannel,
     isChile,
+    cartLines,
   ])
 
   useEffect(() => {
-    if (formData.shippingKind !== 'national' || formData.nationalMode !== 'distance' || !isChile) {
-      setDistanceQuoteClp(null)
-      setDistanceQuoteNote(null)
-      return
-    }
-    if (!formData.city.trim() || !formData.state.trim()) {
-      setDistanceQuoteClp(null)
-      setDistanceQuoteNote('Completa ciudad y región para estimar el envío.')
+    if (formData.shippingKind !== 'national' || !isChile) {
+      setChileQuoteClp(null)
+      setChileQuoteDetail(null)
+      setChileQuoteNote(null)
       return
     }
     const timer = window.setTimeout(() => {
-      void fetchDistanceQuote()
-    }, 600)
+      void fetchChileShippingQuote()
+    }, 450)
     return () => window.clearTimeout(timer)
-  }, [
-    formData.shippingKind,
-    formData.nationalMode,
-    formData.city,
-    formData.state,
-    formData.country,
-    isChile,
-    fetchDistanceQuote,
-  ])
+  }, [formData.shippingKind, isChile, fetchChileShippingQuote])
   
   // Calculate discount
   let discount = 0
@@ -258,17 +282,15 @@ export default function CheckoutPage() {
     }
   }
   
-  const distanceShippingBlocked =
+  const chileShippingBlocked =
     formData.shippingKind === 'national' &&
-    formData.nationalMode === 'distance' &&
     isChile &&
-    DISTANCE_QUOTE_UI &&
-    (distanceQuoteLoading || distanceQuoteClp == null)
+    (chileQuoteLoading || chileQuoteClp == null || !formData.chileRegionCode.trim())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (distanceShippingBlocked) {
-      setSubmitError('Espera a que se calcule el envío o elige tarifa plana nacional.')
+    if (chileShippingBlocked) {
+      setSubmitError('Selecciona región y tipo de entrega y espera la cotización de envío.')
       return
     }
     setIsSubmitting(true)
@@ -292,9 +314,13 @@ export default function CheckoutPage() {
           state: formData.state,
           zip: formData.zip,
           country: formData.country,
+          ...(mapPin ? { lat: mapPin.lat, lng: mapPin.lng } : {}),
         },
         shippingKind: formData.shippingKind,
-        nationalMode: formData.shippingKind === 'national' ? formData.nationalMode : 'flat',
+        chileRegionCode:
+          formData.shippingKind === 'national' && isChile ? formData.chileRegionCode : undefined,
+        chileDeliveryChannel:
+          formData.shippingKind === 'national' && isChile ? formData.chileDeliveryChannel : undefined,
         couponCode: appliedCoupon?.code || couponCode || undefined,
         subtotal,
         shippingCost,
@@ -485,11 +511,27 @@ export default function CheckoutPage() {
                         className="mt-1"
                       />
                     </div>
+
+                    <div className="md:col-span-2 space-y-2 pt-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label className="text-foreground">Ubicación en el mapa (opcional)</Label>
+                        {mapPin != null && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setMapPin(null)}>
+                            Quitar marcador
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Haz clic en el mapa para marcar el punto de entrega (ayuda al repartidor; el costo del envío se
+                        calcula por peso total del pedido y región).
+                      </p>
+                      <AddressMapPicker value={mapPin} onChange={setMapPin} />
+                    </div>
                   </div>
                   
-                  {/* Envío nacional / internacional */}
-                  <div className="mt-6">
-                    <Label className="mb-3 block">Tipo de envío</Label>
+                  {/* Envío: Chile por peso / región / Blue Express */}
+                  <div className="mt-6 space-y-4">
+                    <Label className="mb-1 block">Ámbito del envío</Label>
                     <RadioGroup
                       value={formData.shippingKind}
                       onValueChange={(value) =>
@@ -500,9 +542,9 @@ export default function CheckoutPage() {
                       <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
                         <RadioGroupItem value="national" id="ship-national" />
                         <div className="flex-1">
-                          <p className="font-medium">Nacional (Chile)</p>
+                          <p className="font-medium">Chile</p>
                           <p className="text-sm text-muted-foreground">
-                            Desde {formatClp(Number.isFinite(NATIONAL_CLP) ? NATIONAL_CLP : 5000)}
+                            Tarifa según región, tipo de entrega y peso del carrito (ml → gramos por producto).
                           </p>
                         </div>
                       </label>
@@ -511,44 +553,95 @@ export default function CheckoutPage() {
                         <div className="flex-1">
                           <p className="font-medium">Internacional</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatClp(Number.isFinite(INTERNATIONAL_CLP) ? INTERNATIONAL_CLP : 25000)}
+                            {formatClp(Number.isFinite(INTERNATIONAL_CLP) ? INTERNATIONAL_CLP : 25000)} envío estimado
                           </p>
                         </div>
                       </label>
                     </RadioGroup>
 
-                    {formData.shippingKind === 'national' && DISTANCE_QUOTE_UI && isChile && (
-                      <div className="mt-4 pl-1 space-y-2">
-                        <Label className="text-sm text-muted-foreground">Modalidad dentro de Chile</Label>
-                        <RadioGroup
-                          value={formData.nationalMode}
-                          onValueChange={(value) =>
-                            handleInputChange('nationalMode', value as 'flat' | 'distance')
-                          }
-                          className="space-y-2"
-                        >
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <RadioGroupItem value="flat" id="nat-flat" />
-                            <span className="text-sm">Tarifa plana nacional</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <RadioGroupItem value="distance" id="nat-distance" />
-                            <span className="text-sm">Estimación por distancia (ciudad/región)</span>
-                          </label>
-                        </RadioGroup>
-                        {formData.nationalMode === 'distance' && (
-                          <div className="text-sm text-muted-foreground pt-1">
-                            {distanceQuoteLoading && <p>Calculando envío…</p>}
-                            {distanceQuoteNote && <p>{distanceQuoteNote}</p>}
-                          </div>
-                        )}
+                    {formData.shippingKind === 'national' && isChile && (
+                      <div className="space-y-4 rounded-xl border border-border/60 p-4 bg-muted/30">
+                        <div>
+                          <Label className="mb-2 block">Región de destino</Label>
+                          <Select
+                            value={formData.chileRegionCode || undefined}
+                            onValueChange={(code) => {
+                              const row = CHILE_SHIPPING_REGIONS.find((r) => r.code === code)
+                              setFormData((prev) => ({
+                                ...prev,
+                                chileRegionCode: code,
+                                state: row?.label ?? prev.state,
+                              }))
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona región" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[280px]">
+                              {CHILE_SHIPPING_REGIONS.map((r) => (
+                                <SelectItem key={r.code} value={r.code}>
+                                  {r.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Zona logística:{' '}
+                            {formData.chileRegionCode
+                              ? CHILE_SHIPPING_REGIONS.find((x) => x.code === formData.chileRegionCode)?.zone ?? '—'
+                              : '—'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label className="mb-2 block">Tipo de entrega (Chile)</Label>
+                          <RadioGroup
+                            value={formData.chileDeliveryChannel}
+                            onValueChange={(value) =>
+                              handleInputChange('chileDeliveryChannel', value as 'domicilio' | 'punto')
+                            }
+                            className="space-y-2"
+                          >
+                            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-transparent p-2 has-[:checked]:border-accent has-[:checked]:bg-background">
+                              <RadioGroupItem value="domicilio" id="del-dom" />
+                              <span className="text-sm">Despacho a domicilio</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-transparent p-2 has-[:checked]:border-accent has-[:checked]:bg-background">
+                              <RadioGroupItem value="punto" id="del-punto" />
+                              <span className="text-sm">Retiro en punto (Blue Express u operador asociado)</span>
+                            </label>
+                          </RadioGroup>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Bulto XS hasta 0,5 kg; S hasta 3 kg. Si superas 3 kg se cotizan varios bultos S. Asegúrate
+                            de que cada producto tenga ml y conversión a gramos cargados en la tienda.
+                          </p>
+                        </div>
+
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          {chileQuoteLoading && <p>Cotizando envío…</p>}
+                          {!chileQuoteLoading && chileQuoteNote && <p>{chileQuoteNote}</p>}
+                          {!chileQuoteLoading && chileQuoteClp != null && chileQuoteDetail && (
+                            <p className="text-foreground font-medium">
+                              Envío: {formatClp(chileQuoteClp)}{' '}
+                              <span className="font-normal text-muted-foreground">
+                                · {chileQuoteDetail.parcelLabel}
+                              </span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
 
+                    {formData.shippingKind === 'national' && !isChile && (
+                      <p className="text-sm text-muted-foreground">
+                        Envío nacional fuera de Chile (país distinto): tarifa plana estimada{' '}
+                        {formatClp(NATIONAL_NON_CHILE_CLP)}. Verifica el país en el formulario.
+                      </p>
+                    )}
+
                     {formData.shippingKind === 'international' && (
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        El envío internacional usa tarifa fija. Asegúrate de indicar el país correcto en el
-                        formulario.
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        El envío internacional usa tarifa fija en esta tienda. Indica país y dirección completos.
                       </p>
                     )}
                   </div>
@@ -714,7 +807,7 @@ export default function CheckoutPage() {
                   <Button 
                     type="submit" 
                     className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground"
-                    disabled={isSubmitting || distanceShippingBlocked}
+                    disabled={isSubmitting || chileShippingBlocked}
                   >
                     {isSubmitting ? t('common.loading') : t('checkout.placeOrder')}
                   </Button>

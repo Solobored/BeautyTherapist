@@ -39,6 +39,9 @@ CREATE TABLE products (
   stock INT NOT NULL DEFAULT 0,
   category TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'draft')),
+  net_content_ml NUMERIC(10, 2),
+  grams_per_ml NUMERIC(10, 4) NOT NULL DEFAULT 1,
+  weight_override_g NUMERIC(10, 2),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -92,6 +95,9 @@ CREATE TABLE orders (
       )
     ),
     coupon_code TEXT,
+    mercadopago_preference_id TEXT,
+    mercadopago_payment_id TEXT,
+    mercadopago_refund_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -59,6 +59,9 @@ export async function GET(
         stock,
         category,
         status,
+        net_content_ml,
+        grams_per_ml,
+        weight_override_g,
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
@@ -88,6 +91,9 @@ type PatchBody = {
   stock?: number
   status?: 'active' | 'draft' | 'inactive'
   images?: { url: string; position: number }[]
+  netContentMl?: number | null
+  gramsPerMl?: number | null
+  weightOverrideG?: number | null
 }
 
 export async function PATCH(
@@ -136,6 +142,26 @@ export async function PATCH(
     if (body.comparePrice !== undefined) patch.compare_at_price = body.comparePrice
     if (body.stock !== undefined) patch.stock = Math.max(0, Math.floor(body.stock))
     if (body.status !== undefined) patch.status = body.status
+    if (body.netContentMl !== undefined) {
+      patch.net_content_ml =
+        body.netContentMl != null && Number.isFinite(body.netContentMl) && body.netContentMl >= 0
+          ? body.netContentMl
+          : null
+    }
+    if (body.gramsPerMl !== undefined) {
+      patch.grams_per_ml =
+        body.gramsPerMl != null && Number.isFinite(body.gramsPerMl) && body.gramsPerMl > 0
+          ? body.gramsPerMl
+          : 1
+    }
+    if (body.weightOverrideG !== undefined) {
+      patch.weight_override_g =
+        body.weightOverrideG != null &&
+        Number.isFinite(body.weightOverrideG) &&
+        body.weightOverrideG > 0
+          ? body.weightOverrideG
+          : null
+    }
 
     if (Object.keys(patch).length > 0) {
       patch.updated_at = new Date().toISOString()

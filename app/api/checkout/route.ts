@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { createPreference } from '@/lib/mercadopago'
-import { resolveShippingClp, type NationalMode, type ShippingKind } from '@/lib/shipping'
+import { type ShippingKind } from '@/lib/shipping'
+import { resolveServerShippingClp } from '@/lib/shipping-checkout-server'
+import type { ChileDeliveryChannel } from '@/lib/chile-shipping'
+import { buildMercadoPagoCheckoutUrls, mercadoPagoAllowsAutoReturn } from '@/lib/mp-public-url'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,17 +26,20 @@ export type CheckoutRequestBody = {
     state: string
     zip: string
     country: string
+    lat?: number
+    lng?: number
   }
   shippingKind?: ShippingKind
-  nationalMode?: NationalMode
+  /** Envío Chile: región de destino (código) */
+  chileRegionCode?: string
+  /** domicilio | punto (Blue Express / retiro) */
+  chileDeliveryChannel?: ChileDeliveryChannel
   couponCode?: string
   subtotal: number
   shippingCost: number
   discount: number
   total: number
 }
-
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 function mpInitPoint(pref: { init_point?: string; sandbox_init_point?: string }): string | null {
   const useSandbox = process.env.MERCADOPAGO_USE_SANDBOX === 'true'
@@ -69,13 +75,25 @@ export async function POST(request: NextRequest) {
     }
 
     const shippingKind: ShippingKind = body.shippingKind === 'international' ? 'international' : 'national'
-    const nationalMode: NationalMode = body.nationalMode === 'distance' ? 'distance' : 'flat'
+    const chileChannel: ChileDeliveryChannel | undefined =
+      body.chileDeliveryChannel === 'punto' ? 'punto' : body.chileDeliveryChannel === 'domicilio' ? 'domicilio' : undefined
 
-    const { clp: serverShipping } = await resolveShippingClp({
+    const shippingResolved = await resolveServerShippingClp({
       shippingKind,
-      nationalMode,
       shippingAddress: body.shippingAddress,
+      chileRegionCode: body.chileRegionCode,
+      chileDeliveryChannel: chileChannel,
+      cartItems: body.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
     })
+
+    if (!shippingResolved.ok) {
+      return NextResponse.json({ error: shippingResolved.error }, { status: 400 })
+    }
+
+    const serverShipping = shippingResolved.clp
 
     if (Math.abs(Math.round(body.shippingCost) - serverShipping) > 2) {
       return NextResponse.json(
@@ -149,17 +167,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const lat = body.shippingAddress.lat
+    const lng = body.shippingAddress.lng
+    const cleanAddress = {
+      ...body.shippingAddress,
+      ...(typeof lat === 'number' && Number.isFinite(lat) && typeof lng === 'number' && Number.isFinite(lng)
+        ? { lat, lng }
+        : {}),
+      shipping_kind: shippingKind,
+      chile_region_code: body.chileRegionCode?.trim() ?? null,
+      chile_delivery_channel: chileChannel ?? null,
+    }
+
     const { data: order, error: orderError } = await supabaseServer
       .from('orders')
       .insert({
         buyer_email: body.buyerEmail,
         buyer_name: body.buyerName,
         buyer_phone: body.buyerPhone,
-        shipping_address: {
-          ...body.shippingAddress,
-          shipping_kind: shippingKind,
-          national_mode: nationalMode,
-        },
+        shipping_address: cleanAddress,
         items: body.items.map((item) => ({
           product_id: item.productId,
           product_name: item.productName,
@@ -219,6 +245,10 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      const urls = buildMercadoPagoCheckoutUrls(order.id)
+      const notifyIsHttps = urls.notification.startsWith('https://')
+      const useAutoReturn = mercadoPagoAllowsAutoReturn(urls.success)
+
       const preference = await createPreference({
         items: mpItems,
         payer: {
@@ -226,12 +256,12 @@ export async function POST(request: NextRequest) {
           email: body.buyerEmail,
         },
         back_urls: {
-          success: `${appUrl}/order-confirmation?order=${order.id}`,
-          failure: `${appUrl}/checkout?status=failure&order=${order.id}`,
-          pending: `${appUrl}/checkout?status=pending&order=${order.id}`,
+          success: urls.success,
+          failure: urls.failure,
+          pending: urls.pending,
         },
-        notification_url: `${appUrl}/api/webhooks/mercadopago`,
-        auto_return: 'approved',
+        ...(notifyIsHttps ? { notification_url: urls.notification } : {}),
+        ...(useAutoReturn ? { auto_return: 'approved' as const } : {}),
         external_reference: order.id,
         metadata: {
           order_id: order.id,
@@ -239,6 +269,12 @@ export async function POST(request: NextRequest) {
           coupon_code: body.couponCode || '',
         },
       })
+
+      const { error: prefMetaErr } = await supabaseServer
+        .from('orders')
+        .update({ mercadopago_preference_id: preference.id, updated_at: new Date().toISOString() })
+        .eq('id', order.id)
+      if (prefMetaErr) console.warn('mercadopago_preference_id update failed', prefMetaErr)
 
       const initPoint = mpInitPoint(preference)
       if (!initPoint) {

@@ -105,7 +105,7 @@ export async function quoteNationalDistanceClp(
 export async function resolveShippingClp(input: {
   shippingKind: ShippingKind
   nationalMode?: NationalMode
-  shippingAddress: { city: string; state: string; country: string }
+  shippingAddress: { city: string; state: string; country: string; lat?: number; lng?: number }
 }): Promise<{ clp: number; mode: string }> {
   const { shippingKind, nationalMode = 'flat', shippingAddress } = input
 
@@ -114,6 +114,16 @@ export async function resolveShippingClp(input: {
   }
 
   if (nationalMode === 'distance' && isChileCountry(shippingAddress.country)) {
+    if (distanceQuoteEnabled()) {
+      const lat = shippingAddress.lat
+      const lng = shippingAddress.lng
+      if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+        const wh = warehouseCoords()
+        const km = haversineKm(wh.lat, wh.lng, lat, lng)
+        return { clp: shippingFromDistanceKm(km), mode: 'national_distance_pin' }
+      }
+    }
+
     const q = await quoteNationalDistanceClp(
       shippingAddress.city,
       shippingAddress.state,

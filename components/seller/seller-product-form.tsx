@@ -36,6 +36,9 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
   const [price, setPrice] = useState('')
   const [comparePrice, setComparePrice] = useState('')
   const [stock, setStock] = useState('')
+  const [netContentMl, setNetContentMl] = useState('')
+  const [gramsPerMl, setGramsPerMl] = useState('1')
+  const [weightOverrideG, setWeightOverrideG] = useState('')
   const [active, setActive] = useState(false)
   const [images, setImages] = useState<UploadedImage[]>([])
   const [loading, setLoading] = useState(mode === 'edit')
@@ -61,6 +64,11 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
         setPrice(String(Math.round(Number(p.price))))
         setComparePrice(p.comparePrice != null ? String(Math.round(Number(p.comparePrice))) : '')
         setStock(String(p.stock ?? 0))
+        setNetContentMl(p.netContentMl != null ? String(p.netContentMl) : '')
+        setGramsPerMl(
+          p.gramsPerMl != null && Number(p.gramsPerMl) > 0 ? String(p.gramsPerMl) : '1'
+        )
+        setWeightOverrideG(p.weightOverrideG != null ? String(p.weightOverrideG) : '')
         setActive(p.status === 'active')
         setImages(
           (p.images ?? []).map((url: string, i: number) => ({
@@ -106,6 +114,24 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
       return
     }
 
+    const gramsPerMlNum = gramsPerMl.trim() === '' ? 1 : parseFloat(gramsPerMl.replace(',', '.'))
+    if (!Number.isFinite(gramsPerMlNum) || gramsPerMlNum <= 0) {
+      toast.error('Gramos por ml debe ser un número mayor que 0')
+      return
+    }
+    const netMlNum =
+      netContentMl.trim() === '' ? null : parseFloat(netContentMl.replace(',', '.'))
+    if (netMlNum != null && (!Number.isFinite(netMlNum) || netMlNum < 0)) {
+      toast.error('Contenido neto (ml) no válido')
+      return
+    }
+    const overrideG =
+      weightOverrideG.trim() === '' ? null : parseFloat(weightOverrideG.replace(',', '.'))
+    if (overrideG != null && (!Number.isFinite(overrideG) || overrideG <= 0)) {
+      toast.error('Peso directo (g) debe ser mayor que 0 si lo indicas')
+      return
+    }
+
     setSubmitting(true)
     try {
       const payload = {
@@ -119,6 +145,9 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
         stock: stockNum,
         status: active ? 'active' : 'draft',
         images: images.map((img, i) => ({ url: img.url, position: i })),
+        netContentMl: netMlNum,
+        gramsPerMl: gramsPerMlNum,
+        weightOverrideG: overrideG,
       }
 
       if (mode === 'create') {
@@ -159,6 +188,16 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
 
   const previewPrice = parseInt(price, 10)
   const showPreview = !Number.isNaN(previewPrice) && previewPrice >= 0
+
+  const previewGramsPerMl = parseFloat(gramsPerMl.replace(',', '.'))
+  const previewNetMl = parseFloat(netContentMl.replace(',', '.'))
+  const previewOverride = parseFloat(weightOverrideG.replace(',', '.'))
+  const previewUnitGrams =
+    Number.isFinite(previewOverride) && previewOverride > 0
+      ? previewOverride
+      : Number.isFinite(previewNetMl) && previewNetMl > 0 && Number.isFinite(previewGramsPerMl) && previewGramsPerMl > 0
+        ? Math.round(previewNetMl * previewGramsPerMl * 100) / 100
+        : null
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
@@ -302,6 +341,66 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
                 required
                 className="mt-1"
               />
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 border border-border/50">
+            <h2 className="font-semibold mb-4">Peso para envío (Chile)</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Se usa para cotizar XS/S (hasta 0,5 kg / 3 kg). Indica el contenido en ml y gramos por ml
+              (≈1 en productos acuosos), o un peso en gramos por unidad si prefieres fijarlo a mano (incluye
+              envase si quieres).
+            </p>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="netContentMl">Contenido neto (ml por unidad)</Label>
+                <Input
+                  id="netContentMl"
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={netContentMl}
+                  onChange={(e) => setNetContentMl(e.target.value)}
+                  className="mt-1"
+                  placeholder="Ej. 30"
+                />
+              </div>
+              <div>
+                <Label htmlFor="gramsPerMl">Gramos por 1 ml</Label>
+                <Input
+                  id="gramsPerMl"
+                  type="number"
+                  min={0.01}
+                  step={0.01}
+                  value={gramsPerMl}
+                  onChange={(e) => setGramsPerMl(e.target.value)}
+                  className="mt-1"
+                  placeholder="1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="weightOverrideG">Peso por unidad (g), opcional</Label>
+                <Input
+                  id="weightOverrideG"
+                  type="number"
+                  min={0.01}
+                  step={0.1}
+                  value={weightOverrideG}
+                  onChange={(e) => setWeightOverrideG(e.target.value)}
+                  className="mt-1"
+                  placeholder="Anula ml × g/ml"
+                />
+              </div>
+              {previewUnitGrams != null && (
+                <p className="text-xs text-muted-foreground">
+                  Peso estimado por unidad en checkout: ~{previewUnitGrams} g
+                </p>
+              )}
+              {previewUnitGrams == null && (
+                <p className="text-xs text-muted-foreground">
+                  Si no indicas ml ni peso directo, el sistema asume un peso mínimo por unidad para cotizar.
+                </p>
+              )}
             </div>
           </div>
 
