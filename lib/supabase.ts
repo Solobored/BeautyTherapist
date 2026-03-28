@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+// createClient throws if url or key is empty ("supabaseUrl is required"). That breaks
+// SSR and the whole app on hosts (e.g. Vercel) before env vars are set. Use placeholders
+// so the module loads; queries fail gracefully and hooks fall back to mock data.
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || 'https://placeholder.supabase.co';
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || 'placeholder-anon-key';
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || 'placeholder-service-role-key';
 
 // Client for browser/frontend use
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
