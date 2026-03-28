@@ -3,6 +3,7 @@
 ## ✅ Lo que se implementó
 
 ### 1. **Endpoint API Optimizado** (`app/api/upload/route.ts`)
+
 ```
 ✅ Compresión automática: quality: 'auto:eco'
 ✅ Auto formato: f_auto (WebP para navegadores modernos)
@@ -12,6 +13,7 @@
 ```
 
 ### 2. **Componente de Upload Mejorado** (`components/checkout/ImageUploadZone.tsx`)
+
 ```
 ✅ Interfaz en español
 ✅ Muestra % de compresión en toast: "Comprimida -72% (2.50MB ahorrados)"
@@ -22,6 +24,7 @@
 ```
 
 ### 3. **Librería de Utilidades** (`lib/cloudinary.ts`)
+
 ```
 ✅ getProductCardImageUrl() - URLs para tarjetas (500x500)
 ✅ getHeroImageUrl() - URLs para banners (1200x600)
@@ -31,7 +34,8 @@
 ✅ estimateCompressionSavings() - Calcula ahorros
 ```
 
-### 4. **Documentación** 
+### 4. **Documentación**
+
 ```
 ✅ CLOUDINARY_SETUP.md - Guía completa de configuración
 ✅ CLOUDINARY_EXAMPLES.md - Ejemplos de uso en 6+ componentes
@@ -42,6 +46,7 @@
 ### Paso 1: Configurar Variables de Entorno
 
 En `.env.local`:
+
 ```env
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=tu-cloud-name
 CLOUDINARY_API_KEY=tu-api-key
@@ -53,6 +58,7 @@ Obtén estas desde: https://cloudinary.com/
 ### Paso 2: Usuario Sube Imágenes
 
 El usuario:
+
 1. Arrastra/selecciona imágenes en el formulario
 2. El componente muestra: "Subiendo y comprimiendo en la nube..."
 3. Cloudinary comprime automáticamente en segundo plano
@@ -61,24 +67,27 @@ El usuario:
 ### Paso 3: Obtener URLs Optimizadas
 
 En tus componentes:
-```typescript
-import { getProductCardImageUrl } from '@/lib/cloudinary'
 
-const imageUrl = getProductCardImageUrl(product.images[0])
+```typescript
+import { getProductCardImageUrl } from "@/lib/cloudinary";
+
+const imageUrl = getProductCardImageUrl(product.images[0]);
 ```
 
 ## 📊 Resultados Esperados
 
 ### Ahorro de Espacio
-| Tipo | Antes | Después | Ahorro |
-|------|-------|---------|--------|
-| JPEG 3MB | 3.0MB | 0.8MB | **73%** |
-| PNG 4MB | 4.0MB | 0.6MB | **85%** |
-| WebP 2MB | 2.0MB | 0.5MB | **75%** |
+
+| Tipo     | Antes | Después | Ahorro  |
+| -------- | ----- | ------- | ------- |
+| JPEG 3MB | 3.0MB | 0.8MB   | **73%** |
+| PNG 4MB  | 4.0MB | 0.6MB   | **85%** |
+| WebP 2MB | 2.0MB | 0.5MB   | **75%** |
 
 Con 100 productos × 8 imágenes = **750 MB ahorrados** vs sin compresión
 
 ### Beneficios
+
 ✅ **60-75% menos espacio** en base de datos
 ✅ **Carga 3-5x más rápida** (WebP + compresión)
 ✅ **Menor consumo de ancho de banda**
@@ -88,21 +97,25 @@ Con 100 productos × 8 imágenes = **750 MB ahorrados** vs sin compresión
 ## ✅ Checklist de Verificación
 
 ### Variables de Entorno
+
 - [ ] NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME configurada
 - [ ] CLOUDINARY_API_KEY configurada
 - [ ] CLOUDINARY_API_SECRET configurada
 
 ### Endpoint API
+
 - [ ] `/api/upload` acepta POST
 - [ ] Retorna: url, publicId, size, format
 - [ ] Aplicada compresión eco-auto
 
 ### Componentes
+
 - [ ] ImageUploadZone muestra feedback de compresión
 - [ ] Elementos muestran badge "-XX%"
 - [ ] Toast muestra "Comprimida -XX%"
 
 ### URLs Optimizadas
+
 - [ ] getProductCardImageUrl() genera URLs válidas
 - [ ] Imágenes cargan en navegador
 - [ ] WebP se sirve cuando es posible
@@ -110,6 +123,7 @@ Con 100 productos × 8 imágenes = **750 MB ahorrados** vs sin compresión
 ## 🧪 Test Manual
 
 ### 1. Sube una imagen
+
 ```
 1. Ve a: http://localhost:3000/seller/products/new (o donde uses ImageUploadZone)
 2. Suelta/selecciona una imagen JPG/PNG (2-5MB)
@@ -118,6 +132,7 @@ Con 100 productos × 8 imágenes = **750 MB ahorrados** vs sin compresión
 ```
 
 ### 2. Verifica la compresión
+
 ```
 // En consola del navegador:
 const img = document.querySelector('img')
@@ -128,6 +143,7 @@ console.log('Size:', img.naturalWidth, 'x', img.naturalHeight)
 ```
 
 ### 3. Verifica base de datos
+
 ```
 // Las imágenes deben almacenarse como:
 "https://res.cloudinary.com/tu-cloud-name/image/upload/..."
@@ -139,16 +155,21 @@ console.log('Size:', img.naturalWidth, 'x', img.naturalHeight)
 ## 🔍 Troubleshooting
 
 ### Problema: "CORS error" al subir
+
 **Solución:** Verifica que `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` es correcto en `.env.local`
 
 ### Problema: Imágenes no aparecen en preview
+
 **Solución:** Asegúrate que la URL de Cloudinary es pública (sin `api_secret`)
 
 ### Problema: No se ve compresión en toast
+
 **Solución:** Verifica que `response.json()` incluya `size` del archivo
 
 ### Problema: WebP no se sirve
+
 **Solución:** Cloudinary lo hace automáticamente, pero verifica:
+
 ```
 // En Network tab del DevTools:
 // Content-Type debería ser: image/webp
@@ -158,28 +179,33 @@ console.log('Size:', img.naturalWidth, 'x', img.naturalHeight)
 ## 📈 Monitoreo
 
 ### Dashboard de Cloudinary
+
 1. Ve a https://cloudinary.com/console
 2. Mira: **Media Library** → Todas tus imágenes
 3. Mira: **Analytics** → Bandwitch y transformaciones usadas
 4. Mira: **Account** → Espacio total utilizado
 
 ### Estadísticas de Compresión
+
 Cloudinary te mostará:
+
 - Imágenes subidas
-- Transformaciones aplicadas  
+- Transformaciones aplicadas
 - Datos transferidos
 - Ahorros estimados
 
 ## 🎯 Próximos Pasos Opcionales
 
 1. **Agregar Lazy Loading**
+
    ```typescript
    <img loading="lazy" src={imageUrl} />
    ```
 
 2. **Agregar Carga Progresiva**
+
    ```typescript
-   <img 
+   <img
      src={getThumbnailUrl(id)}
      onLoad={() => setSrc(getProductCardImageUrl(id))}
    />
@@ -190,16 +216,17 @@ Cloudinary te mostará:
 
 4. **Usar Signed URLs** (si imágenes privadas)
    ```typescript
-   import { v2 as cloudinary } from 'cloudinary'
+   import { v2 as cloudinary } from "cloudinary";
    const signedUrl = cloudinary.url(publicId, {
      sign_url: true,
-     type: 'authenticated'
-   })
+     type: "authenticated",
+   });
    ```
 
 ## ✅ Confirmación de Éxito
 
 Si ves esto cuando subes una imagen:
+
 ```
 ✅ image.jpg - Comprimida -68% (1.92MB ahorrados)
 ```
@@ -207,6 +234,7 @@ Si ves esto cuando subes una imagen:
 **¡Está funcionando perfectamente!** 🎉
 
 Ahora:
+
 1. Los usuarios solo suben fotos
 2. Cloudinary comprime automáticamente en segundo plano
 3. Se ahorran 60-75% de espacio en BD
