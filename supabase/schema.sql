@@ -148,18 +148,22 @@ CREATE TABLE blog_posts (
 CREATE TABLE product_reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  reviewer_name TEXT NOT NULL,
-  reviewer_email TEXT,
-  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  title TEXT,
-  content TEXT NOT NULL,
-  verified_purchase BOOLEAN DEFAULT false,
-  helpful_count INT DEFAULT 0,
-  unhelpful_count INT DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  user_id UUID REFERENCES profiles(id) ON DELETE
+  SET NULL,
+    reviewer_name TEXT NOT NULL,
+    reviewer_email TEXT,
+    rating INT NOT NULL CHECK (
+      rating >= 1
+      AND rating <= 5
+    ),
+    title TEXT,
+    content TEXT NOT NULL,
+    verified_purchase BOOLEAN DEFAULT false,
+    helpful_count INT DEFAULT 0,
+    unhelpful_count INT DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 -- Indexes
 CREATE INDEX idx_profiles_email ON profiles(email);
@@ -294,7 +298,10 @@ SELECT USING (status = 'approved');
 CREATE POLICY "Users can read their own reviews" ON product_reviews FOR
 SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create reviews" ON product_reviews FOR
-INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+INSERT WITH CHECK (
+    auth.uid() = user_id
+    OR user_id IS NULL
+  );
 CREATE POLICY "Users can update their own reviews" ON product_reviews FOR
 UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own reviews" ON product_reviews FOR DELETE USING (auth.uid() = user_id);
