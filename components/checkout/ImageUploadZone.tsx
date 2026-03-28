@@ -19,12 +19,15 @@ interface ImageUploadZoneProps {
   onImagesChange: (images: UploadedImage[]) => void;
   maxImages?: number;
   initialImages?: UploadedImage[];
+  /** Solo WebP (recomendado para panel vendedor). */
+  webpOnly?: boolean;
 }
 
 export function ImageUploadZone({
   onImagesChange,
   maxImages = 8,
   initialImages = [],
+  webpOnly = false,
 }: ImageUploadZoneProps) {
   const [images, setImages] = useState<UploadedImage[]>(initialImages);
   const [loading, setLoading] = useState(false);
@@ -48,10 +51,14 @@ export function ImageUploadZone({
         return;
       }
 
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      const allowedTypes = webpOnly ? ['image/webp'] : ['image/jpeg', 'image/png', 'image/webp'];
       const filesToProcess = Array.from(files).filter((file) => {
         if (!allowedTypes.includes(file.type)) {
-          toast.error(`${file.name} is not a supported image format`);
+          toast.error(
+            webpOnly
+              ? `${file.name}: solo se permiten imágenes WebP`
+              : `${file.name} is not a supported image format`
+          );
           return false;
         }
         if (file.size > 5 * 1024 * 1024) {
@@ -75,6 +82,7 @@ export function ImageUploadZone({
 
           const formData = new FormData();
           formData.append('file', file);
+          if (webpOnly) formData.append('webpOnly', 'true');
 
           const response = await fetch('/api/upload', {
             method: 'POST',
@@ -107,7 +115,7 @@ export function ImageUploadZone({
         setLoading(false);
       }
     },
-    [images, maxImages, onImagesChange]
+    [images, maxImages, onImagesChange, webpOnly]
   );
 
   const handleDrop = (e: React.DragEvent) => {
@@ -171,7 +179,7 @@ export function ImageUploadZone({
           <input
             type="file"
             multiple
-            accept="image/jpeg,image/png,image/webp"
+            accept={webpOnly ? 'image/webp' : 'image/jpeg,image/png,image/webp'}
             onChange={handleChange}
             disabled={loading}
             className="hidden"
@@ -194,7 +202,7 @@ export function ImageUploadZone({
                   Drag and drop images here, or click to select
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  JPG, PNG, or WebP up to 5MB each
+                  {webpOnly ? 'Solo WebP hasta 5MB c/u' : 'JPG, PNG, or WebP up to 5MB each'}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Max {maxImages} images

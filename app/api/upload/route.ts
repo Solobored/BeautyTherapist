@@ -19,10 +19,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const webpOnly = formData.get('webpOnly') === 'true';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+
+    const allowedTypes = webpOnly ? ['image/webp'] : ALLOWED_TYPES;
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
@@ -35,10 +38,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error: `Invalid file type. Allowed types: ${ALLOWED_TYPES.join(', ')}`,
+          error: webpOnly
+            ? 'Solo se permiten archivos WebP'
+            : `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`,
         },
         { status: 400 }
       );

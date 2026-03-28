@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
 import { type Product } from '@/lib/data'
-import { cn } from '@/lib/utils'
+import { cn, formatClp } from '@/lib/utils'
 
 interface ProductCardProps {
   product: Product
@@ -95,9 +95,9 @@ export function ProductCard({ product }: ProductCardProps) {
           
           {/* Price */}
           <div className="flex items-center gap-2 mt-2">
-            <span className="font-semibold text-foreground">${product.price.toFixed(2)}</span>
+            <span className="font-semibold text-foreground">{formatClp(product.price)}</span>
             {product.comparePrice && (
-              <span className="text-sm text-muted-foreground line-through">${product.comparePrice.toFixed(2)}</span>
+              <span className="text-sm text-muted-foreground line-through">{formatClp(product.comparePrice)}</span>
             )}
           </div>
           

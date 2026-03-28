@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useLanguage } from '@/contexts/language-context'
 import { useProducts } from '@/hooks/use-products'
+import { formatClp } from '@/lib/utils'
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular'
 
@@ -21,7 +22,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState<string[]>([])
-  const [priceRange, setPriceRange] = useState([0, 100])
+  const [priceRange, setPriceRange] = useState([0, 200_000])
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
@@ -73,18 +74,24 @@ export default function ShopPage() {
     }
     
     return result
-  }, [searchQuery, selectedCategory, selectedBrand, priceRange, minRating, sortBy])
+  }, [products, searchQuery, selectedCategory, selectedBrand, priceRange, minRating, sortBy])
   
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedCategory([])
     setSelectedBrand([])
-    setPriceRange([0, 100])
+    setPriceRange([0, 200_000])
     setMinRating(0)
     setSortBy('newest')
   }
   
-  const hasActiveFilters = searchQuery || selectedCategory.length > 0 || selectedBrand.length > 0 || minRating > 0 || priceRange[0] > 0 || priceRange[1] < 100
+  const hasActiveFilters =
+    searchQuery ||
+    selectedCategory.length > 0 ||
+    selectedBrand.length > 0 ||
+    minRating > 0 ||
+    priceRange[0] > 0 ||
+    priceRange[1] < 200_000
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -197,13 +204,13 @@ export default function ShopPage() {
                     value={priceRange}
                     onValueChange={setPriceRange}
                     min={0}
-                    max={100}
-                    step={5}
+                    max={200000}
+                    step={5000}
                     className="mb-2"
                   />
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                    <span>{formatClp(priceRange[0])}</span>
+                    <span>{formatClp(priceRange[1])}</span>
                   </div>
                 </div>
                 

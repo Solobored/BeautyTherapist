@@ -14,7 +14,9 @@ import {
   Store,
   LogOut,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  FileText,
+  ClipboardList
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +26,8 @@ import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { dashboardMetrics, mockOrders } from '@/lib/data'
 import { useProducts } from '@/hooks/use-products'
+import { brandNameToSlug } from '@/lib/seller-utils'
+import { formatClp } from '@/lib/utils'
 import { 
   LineChart, 
   Line, 
@@ -90,11 +94,29 @@ export default function SellerDashboardPage() {
               Beauty Therapist
             </Link>
             
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <Button asChild variant="outline" size="sm">
-                <Link href={`/brands/${seller.brandName.toLowerCase().replace(/\s+/g, '-')}`}>
+                <Link href={`/brands/${brandNameToSlug(seller.brandName)}`}>
                   <Store className="h-4 w-4 mr-2" />
                   {t('dashboard.viewStore')}
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/seller/products">
+                  <Package className="h-4 w-4 mr-2" />
+                  Productos
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/seller/orders">
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Pedidos
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/seller/blog">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Blog
                 </Link>
               </Button>
               <Button asChild size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -252,7 +274,7 @@ export default function SellerDashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t('dashboard.recentOrders')}</CardTitle>
               <Link href="/seller/orders" className="text-sm text-accent hover:underline">
-                View all
+                Ver todos
               </Link>
             </CardHeader>
             <CardContent>
@@ -272,7 +294,7 @@ export default function SellerDashboardPage() {
                       <TableCell className="font-mono text-sm">{order.id}</TableCell>
                       <TableCell>{order.customerName}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{order.product}</TableCell>
-                      <TableCell>${order.total}</TableCell>
+                      <TableCell>{formatClp(order.total)}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={statusColors[order.status]}>
                           {order.status}

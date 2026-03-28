@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth, type Coupon } from '@/contexts/auth-context'
 import Link from 'next/link'
+import { formatClp } from '@/lib/utils'
 
 export default function CheckoutPage() {
   const { language, t } = useLanguage()
@@ -72,7 +73,7 @@ export default function CheckoutPage() {
   
   const availableCoupons = isAuthenticated && userType === 'buyer' ? getAvailableCoupons() : []
   
-  const shippingCost = formData.deliveryMethod === 'express' ? 15 : 5
+  const shippingCost = formData.deliveryMethod === 'express' ? 15000 : 5000
   
   // Calculate discount
   let discount = 0
@@ -390,14 +391,14 @@ export default function CheckoutPage() {
                         <RadioGroupItem value="standard" id="standard" />
                         <div className="flex-1">
                           <p className="font-medium">{t('checkout.standard')}</p>
-                          <p className="text-sm text-muted-foreground">$5.00</p>
+                          <p className="text-sm text-muted-foreground">{formatClp(5000)}</p>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
                         <RadioGroupItem value="express" id="express" />
                         <div className="flex-1">
                           <p className="font-medium">{t('checkout.express')}</p>
-                          <p className="text-sm text-muted-foreground">$15.00</p>
+                          <p className="text-sm text-muted-foreground">{formatClp(15000)}</p>
                         </div>
                       </label>
                     </RadioGroup>
@@ -450,7 +451,7 @@ export default function CheckoutPage() {
                           <p className="text-sm font-medium truncate">{language === 'es' ? item.nameEs : item.name}</p>
                           <p className="text-xs text-muted-foreground">{item.brand}</p>
                           <p className="text-sm mt-1">
-                            {item.quantity} x ${item.price.toFixed(2)}
+                            {item.quantity} x {formatClp(item.price)}
                           </p>
                         </div>
                       </li>
@@ -470,7 +471,7 @@ export default function CheckoutPage() {
                           <Check className="h-4 w-4 text-green-600" />
                           <span className="font-mono font-medium text-green-700">{appliedCoupon.code}</span>
                           <span className="text-sm text-green-600">
-                            (-{appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : `$${appliedCoupon.discount}`})
+                            (-{appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : formatClp(appliedCoupon.discount)})
                           </span>
                         </div>
                         <button 
@@ -522,7 +523,7 @@ export default function CheckoutPage() {
                                     <div className="flex items-center justify-between">
                                       <span className="font-mono font-medium">{coupon.code}</span>
                                       <span className="text-sm text-accent">
-                                        {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `$${coupon.discount} OFF`}
+                                        {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `${formatClp(coupon.discount)} OFF`}
                                       </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -542,21 +543,21 @@ export default function CheckoutPage() {
                   <div className="space-y-2 border-t border-border pt-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{t('cart.subtotal')}</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span>{formatClp(subtotal)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{t('cart.shipping')}</span>
-                      <span>${shippingCost.toFixed(2)}</span>
+                      <span>{formatClp(shippingCost)}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex items-center justify-between text-sm text-green-600">
                         <span>{language === 'es' ? 'Descuento' : 'Discount'}</span>
-                        <span>-${discount.toFixed(2)}</span>
+                        <span>-{formatClp(discount)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between font-semibold text-lg pt-2 border-t border-border">
                       <span>{t('cart.total')}</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatClp(total)}</span>
                     </div>
                   </div>
                   

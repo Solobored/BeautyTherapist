@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { SellerProductForm, SellerProductFormHeader } from '@/components/seller/seller-product-form'
 
-export default function NewProductPage() {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { t } = useLanguage()
   const { seller, isAuthenticated } = useAuth()
   const router = useRouter()
@@ -27,9 +28,9 @@ export default function NewProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SellerProductFormHeader seller={seller} title={t('products.addNew')} />
+      <SellerProductFormHeader seller={seller} title="Editar producto" />
       <main className="container mx-auto px-4 py-8">
-        <SellerProductForm seller={seller} mode="create" />
+        <SellerProductForm seller={seller} mode="edit" productId={id} />
       </main>
     </div>
   )

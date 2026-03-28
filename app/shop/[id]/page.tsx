@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import { products, reviews } from '@/lib/data'
+import { formatClp } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -132,9 +133,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               
               {/* Price */}
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl font-semibold text-foreground">${product.price.toFixed(2)}</span>
+                <span className="text-3xl font-semibold text-foreground">{formatClp(product.price)}</span>
                 {product.comparePrice && (
-                  <span className="text-xl text-muted-foreground line-through">${product.comparePrice.toFixed(2)}</span>
+                  <span className="text-xl text-muted-foreground line-through">{formatClp(product.comparePrice)}</span>
                 )}
               </div>
               

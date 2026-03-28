@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { formatClp } from '@/lib/utils'
 
 export default function OrdersPage() {
   const { language } = useLanguage()
@@ -122,11 +123,11 @@ export default function OrdersPage() {
                         <div className="flex-1">
                           <p className="font-medium text-foreground">{item.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {language === 'es' ? 'Cantidad' : 'Qty'}: {item.quantity} x ${item.price}
+                            {language === 'es' ? 'Cantidad' : 'Qty'}: {item.quantity} x {formatClp(item.price)}
                           </p>
                         </div>
                         <p className="font-medium text-foreground">
-                          ${item.quantity * item.price}
+                          {formatClp(item.quantity * item.price)}
                         </p>
                       </div>
                     ))}
@@ -142,7 +143,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Total</p>
-                      <p className="text-xl font-bold text-foreground">${order.total}</p>
+                      <p className="text-xl font-bold text-foreground">{formatClp(order.total)}</p>
                     </div>
                   </div>
                 </CardContent>

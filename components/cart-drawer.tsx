@@ -6,6 +6,7 @@ import { X, Minus, Plus, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
+import { formatClp } from '@/lib/utils'
 
 export function CartDrawer() {
   const { language, t } = useLanguage()
@@ -64,7 +65,7 @@ export function CartDrawer() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-accent font-medium uppercase tracking-wide">{item.brand}</p>
                     <h3 className="font-medium text-sm truncate">{language === 'es' ? item.nameEs : item.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{formatClp(item.price)}</p>
                     
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
@@ -107,7 +108,7 @@ export function CartDrawer() {
           <div className="border-t border-border p-4 space-y-4 bg-secondary/30">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('cart.subtotal')}</span>
-              <span className="font-semibold text-lg">${subtotal.toFixed(2)}</span>
+              <span className="font-semibold text-lg">{formatClp(subtotal)}</span>
             </div>
             <p className="text-xs text-muted-foreground">{t('cart.shipping')}: Calculated at checkout</p>
             <Button 

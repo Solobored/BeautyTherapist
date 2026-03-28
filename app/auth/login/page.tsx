@@ -129,18 +129,6 @@ function LoginContent() {
                   language === 'es' ? 'Iniciar Sesion' : 'Sign In'
                 )}
               </Button>
-              
-              <div className="text-center text-sm text-muted-foreground">
-                <p className="mt-4 text-xs">
-                  {language === 'es' ? 'Cuentas de prueba:' : 'Test accounts:'}
-                </p>
-                <p className="text-xs">
-                  {language === 'es' ? 'Cliente' : 'Customer'}: maria@example.com / password123
-                </p>
-                <p className="text-xs">
-                  {language === 'es' ? 'Vendedor' : 'Seller'}: angela@angebae.com / password123
-                </p>
-              </div>
             </form>
           </CardContent>
         </Card>

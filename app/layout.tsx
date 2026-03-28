@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/contexts/language-context'
 import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const playfair = Playfair_Display({ 
@@ -52,6 +53,7 @@ export default function RootLayout({
           </AuthProvider>
         </LanguageProvider>
         <Analytics />
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   )

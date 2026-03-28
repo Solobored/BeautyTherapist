@@ -108,7 +108,7 @@ const mockBuyers: (Buyer & { password: string })[] = []
 // Mock seller data
 const mockSellers: (Seller & { password: string })[] = [
   {
-    id: 'seller-1',
+    id: 'f486c511-c72d-4c32-a562-af8606a448df',
     type: 'seller',
     brandName: 'AngeBae',
     ownerName: 'Angelica Baeriswyl',

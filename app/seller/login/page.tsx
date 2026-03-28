@@ -24,10 +24,10 @@ export default function SellerLoginPage() {
     setError('')
     setIsLoading(true)
     
-    const success = await login(email, password)
-    
-    if (success) {
-      router.push('/seller/dashboard')
+    const result = await login(email, password)
+
+    if (result.success) {
+      router.push(result.redirectTo || '/seller/dashboard')
     } else {
       setError('Invalid email or password')
     }
@@ -68,7 +68,7 @@ export default function SellerLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="you@example.com"
+                placeholder="angebae@gmail.com"
               />
             </div>
             

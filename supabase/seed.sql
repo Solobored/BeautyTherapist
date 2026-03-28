@@ -9,10 +9,10 @@ INSERT INTO profiles (
     avatar_url
   )
 VALUES (
-    uuid_generate_v4(),
+    'f486c511-c72d-4c32-a562-af8606a448df',
     'seller',
     'AngeBae Beauty',
-    'angebae@beautytherapist.com',
+    'angebae@gmail.com',
     '+1-555-0123',
     'https://res.cloudinary.com/demo/image/fetch/https://placehold.co/200x200?text=AngeBae'
   ) ON CONFLICT (email) DO NOTHING;
@@ -20,7 +20,7 @@ VALUES (
 WITH angebae_seller AS (
   SELECT id
   FROM profiles
-  WHERE email = 'angebae@beautytherapist.com'
+  WHERE email = 'angebae@gmail.com'
 )
 INSERT INTO brands (
     owner_id,
