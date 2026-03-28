@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useLanguage } from '@/contexts/language-context'
 
 interface SellerProfileEditorProps {
   brandName: string
@@ -31,7 +30,6 @@ export function SellerProfileEditor({
   onSave,
   isLoading
 }: SellerProfileEditorProps) {
-  const { language } = useLanguage()
   const [formData, setFormData] = useState({
     brandLogo: brandLogo || '',
     brandBanner: brandBanner || '',
@@ -89,15 +87,15 @@ export function SellerProfileEditor({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{language === 'es' ? 'Mi Marca' : 'My Brand'}</CardTitle>
+        <CardTitle>Mi Marca</CardTitle>
         <CardDescription>
-          {language === 'es' ? 'Personaliza la apariencia de tu tienda' : 'Customize your store appearance'}
+          Personaliza la apariencia de tu tienda
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Brand Banner */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Banner de Marca' : 'Brand Banner'}</Label>
+          <Label>Banner de Marca</Label>
           <div className="relative h-40 rounded-lg overflow-hidden bg-muted border-2 border-dashed border-border">
             {currentBanner ? (
               <Image
@@ -111,7 +109,7 @@ export function SellerProfileEditor({
                 <div className="text-center">
                   <Camera className="h-8 w-8 text-muted-foreground opacity-50 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    {language === 'es' ? 'Sube un banner' : 'Upload a banner'}
+                    Sube un banner
                   </p>
                 </div>
               </div>
@@ -132,19 +130,19 @@ export function SellerProfileEditor({
               >
                 <div className="flex items-center gap-1">
                   <Camera className="h-3 w-3" />
-                  {language === 'es' ? 'Cambiar' : 'Change'}
+                  Cambiar
                 </div>
               </Button>
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            {language === 'es' ? 'Recomendado: 1200x400 píxeles' : 'Recommended: 1200x400 pixels'}
+            Recomendado: 1200x400 píxeles
           </p>
         </div>
 
         {/* Brand Logo */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Logo de Marca' : 'Brand Logo'}</Label>
+          <Label>Logo de Marca</Label>
           <div className="flex items-end gap-4">
             <div className="relative h-24 w-24 rounded-lg overflow-hidden bg-muted border-4 border-primary shrink-0">
               {currentLogo ? (
@@ -175,28 +173,28 @@ export function SellerProfileEditor({
               >
                 <div className="flex items-center gap-2">
                   <Camera className="h-4 w-4" />
-                  {language === 'es' ? 'Cambiar Logo' : 'Change Logo'}
+                  Cambiar Logo
                 </div>
               </Button>
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            {language === 'es' ? 'Recomendado: 200x200 píxeles' : 'Recommended: 200x200 pixels'}
+            Recomendado: 200x200 píxeles
           </p>
         </div>
 
         {/* Brand Description */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Descripción de la Marca' : 'Brand Description'}</Label>
+          <Label>Descripción de la Marca</Label>
           <Textarea
-            placeholder={language === 'es' ? 'Cuéntale a tus clientes sobre tu marca...' : 'Tell your customers about your brand...'}
+            placeholder="Cuéntale a tus clientes sobre tu marca..."
             value={formData.brandDescription}
             onChange={(e) => setFormData({ ...formData, brandDescription: e.target.value })}
             rows={4}
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            {language === 'es' ? 'Máximo 500 caracteres' : 'Maximum 500 characters'}
+            Máximo 500 caracteres
             ({formData.brandDescription.length}/500)
           </p>
         </div>
@@ -210,12 +208,12 @@ export function SellerProfileEditor({
           {isSubmitting || isLoading ? (
             <>
               <span className="animate-spin mr-2">⏳</span>
-              {language === 'es' ? 'Guardando...' : 'Saving...'}
+              Guardando...
             </>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              {language === 'es' ? 'Guardar Cambios' : 'Save Changes'}
+              Guardar Cambios
             </>
           )}
         </Button>

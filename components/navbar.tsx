@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export function Navbar() {
-  const { language, setLanguage, t } = useLanguage()
+  const { t } = useLanguage()
   const { itemCount, setIsOpen } = useCart()
   const { user, isAuthenticated, userType, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -328,15 +328,6 @@ export function Navbar() {
                   </button>
                 </>
               )}
-              
-              <button
-                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-              >
-                <span className={language === 'es' ? 'text-foreground font-semibold' : ''}>Espanol</span>
-                <span>/</span>
-                <span className={language === 'en' ? 'text-foreground font-semibold' : ''}>English</span>
-              </button>
             </nav>
           </div>
         )}

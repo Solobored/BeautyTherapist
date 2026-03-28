@@ -27,7 +27,7 @@ import { formatClp } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function SellerProductsPage() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { seller, isAuthenticated, logout } = useAuth()
   const { products, loading, error, refresh } = useSellerProducts()
   const router = useRouter()
@@ -169,7 +169,7 @@ export default function SellerProductsPage() {
                       <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-muted">
                         <Image
                           src={product.images[0] || '/placeholder.svg'}
-                          alt={language === 'es' ? product.nameEs : product.name}
+                          alt={product.name}
                           fill
                           className="object-cover"
                         />
@@ -177,7 +177,7 @@ export default function SellerProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{language === 'es' ? product.nameEs : product.name}</p>
+                        <p className="font-medium">{product.name}</p>
                         <p className="text-xs text-muted-foreground">{product.brand}</p>
                       </div>
                     </TableCell>

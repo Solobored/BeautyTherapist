@@ -17,7 +17,7 @@ import { formatClp } from '@/lib/utils'
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular'
 
 export default function ShopPage() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { products, loading } = useProducts()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string[]>([])
@@ -35,7 +35,6 @@ export default function ShopPage() {
       const query = searchQuery.toLowerCase()
       result = result.filter(p => 
         p.name.toLowerCase().includes(query) ||
-        p.nameEs.toLowerCase().includes(query) ||
         p.brand.toLowerCase().includes(query)
       )
     }

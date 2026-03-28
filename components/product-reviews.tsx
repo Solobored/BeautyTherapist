@@ -36,7 +36,7 @@ export function ProductReviews({
   totalReviews,
   onAddReview
 }: ProductReviewsProps) {
-  const { language } = useLanguage()
+  const { t } = useLanguage()
   const [isAddingReview, setIsAddingReview] = useState(false)
   const [formData, setFormData] = useState({
     reviewerName: '',
@@ -49,7 +49,7 @@ export function ProductReviews({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.reviewerName || !formData.content) {
-      alert(language === 'es' ? 'Por favor completa todos los campos' : 'Please fill all required fields')
+      alert('Por favor completa todos los campos')
       return
     }
 
@@ -73,10 +73,10 @@ export function ProductReviews({
           content: ''
         })
         setIsAddingReview(false)
-        alert(language === 'es' ? 'Reseña enviada para aprobación' : 'Review submitted for approval')
+        alert('Reseña enviada para aprobación')
       }
     } catch (error) {
-      alert(language === 'es' ? 'Error al enviar la reseña' : 'Error submitting review')
+      alert('Error al enviar la reseña')
     } finally {
       setIsSubmitting(false)
     }
@@ -110,7 +110,7 @@ export function ProductReviews({
       {/* Review Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>{language === 'es' ? 'Reseñas de Clientes' : 'Customer Reviews'}</CardTitle>
+          <CardTitle>Reseñas de Clientes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-6">
@@ -120,7 +120,7 @@ export function ProductReviews({
                 {renderStars(averageRating)}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                {totalReviews} {language === 'es' ? 'reseñas' : 'reviews'}
+                {totalReviews} reseñas
               </p>
             </div>
 
@@ -154,21 +154,21 @@ export function ProductReviews({
           variant="outline"
           className="w-full"
         >
-          {language === 'es' ? 'Escribir una reseña' : 'Write a Review'}
+          Escribir una reseña
         </Button>
       ) : (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              {language === 'es' ? 'Comparte tu opinión' : 'Share Your Opinion'}
+              Comparte tu opinión
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>{language === 'es' ? 'Nombre' : 'Name'}</Label>
+                <Label>Nombre</Label>
                 <Input
-                  placeholder={language === 'es' ? 'Tu nombre' : 'Your name'}
+                  placeholder="Tu nombre"
                   value={formData.reviewerName}
                   onChange={(e) => setFormData({ ...formData, reviewerName: e.target.value })}
                   required
@@ -176,7 +176,7 @@ export function ProductReviews({
               </div>
 
               <div className="space-y-2">
-                <Label>{language === 'es' ? 'Calificación' : 'Rating'}</Label>
+                <Label>Calificación</Label>
                 <div className="flex gap-2">
                   {renderStars(formData.rating, true, (rating) => setFormData({ ...formData, rating }))}
                   <span className="text-sm text-muted-foreground ml-2">{formData.rating}/5</span>
@@ -184,18 +184,18 @@ export function ProductReviews({
               </div>
 
               <div className="space-y-2">
-                <Label>{language === 'es' ? 'Título (Opcional)' : 'Title (Optional)'}</Label>
+                <Label>Título (Opcional)</Label>
                 <Input
-                  placeholder={language === 'es' ? 'Ej: ¡Excelente producto!' : 'Ex: Amazing product!'}
+                  placeholder="Ej: ¡Excelente producto!"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>{language === 'es' ? 'Tu opinión' : 'Your Opinion'}</Label>
+                <Label>Tu opinión</Label>
                 <Textarea
-                  placeholder={language === 'es' ? 'Cuéntanos qué te parecen estos producto...' : 'Tell us what you think about this product...'}
+                  placeholder="Cuéntanos qué te parecen estos producto..."
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={4}
@@ -206,14 +206,14 @@ export function ProductReviews({
               <div className="flex gap-2">
                 <Button type="submit" disabled={isSubmitting}>
                   <Send className="h-4 w-4 mr-2" />
-                  {isSubmitting ? (language === 'es' ? 'Enviando...' : 'Submitting...') : (language === 'es' ? 'Enviar Reseña' : 'Submit Review')}
+                  {isSubmitting ? 'Enviando...' : 'Enviar Reseña'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsAddingReview(false)}
                 >
-                  {language === 'es' ? 'Cancelar' : 'Cancel'}
+                  Cancelar
                 </Button>
               </div>
             </form>
@@ -224,11 +224,11 @@ export function ProductReviews({
       {/* Individual Reviews */}
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">
-          {language === 'es' ? 'Todas las reseñas' : 'All Reviews'}
+          Todas las reseñas
         </h3>
         {reviews.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            {language === 'es' ? 'No hay reseñas disponibles' : 'No reviews available'}
+            No hay reseñas disponibles
           </p>
         ) : (
           reviews.map((review) => (
@@ -244,13 +244,13 @@ export function ProductReviews({
                         </div>
                         {review.verifiedPurchase && (
                           <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                            {language === 'es' ? 'Compra verificada' : 'Verified Purchase'}
+                            Compra verificada
                           </span>
                         )}
                       </div>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {new Date(review.date).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US')}
+                      {new Date(review.date).toLocaleDateString('es-ES')}
                     </span>
                   </div>
 
@@ -263,11 +263,11 @@ export function ProductReviews({
                   <div className="flex gap-4 text-sm text-muted-foreground pt-2">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors">
                       <ThumbsUp className="h-4 w-4" />
-                      {language === 'es' ? 'Útil' : 'Helpful'} ({review.helpfulCount || 0})
+                      Útil ({review.helpfulCount || 0})
                     </button>
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors">
                       <ThumbsDown className="h-4 w-4" />
-                      {language === 'es' ? 'No útil' : 'Not Helpful'}
+                      No útil
                     </button>
                   </div>
                 </div>

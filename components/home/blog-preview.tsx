@@ -15,7 +15,7 @@ const categoryLabels = {
 }
 
 export function BlogPreview() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   
   return (
     <section className="py-16 md:py-24 bg-secondary/50">
@@ -43,24 +43,24 @@ export function BlogPreview() {
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                   <Image
                     src={post.coverImage}
-                    alt={language === 'es' ? post.titleEs : post.title}
+                    alt={post.title}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   
                   {/* Category Badge */}
                   <span className="absolute top-3 left-3 px-3 py-1 bg-background/90 backdrop-blur-sm text-xs font-medium rounded-full">
-                    {categoryLabels[post.category][language]}
+                    {categoryLabels[post.category]['es']}
                   </span>
                 </div>
                 
                 {/* Content */}
                 <div className="p-5">
                   <h3 className="font-serif text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors">
-                    {language === 'es' ? post.titleEs : post.title}
+                    {post.title}
                   </h3>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                    {language === 'es' ? post.excerptEs : post.excerpt}
+                    {post.excerpt}
                   </p>
                   <span className="inline-flex items-center text-sm font-medium text-accent">
                     {t('blog.readMore')}

@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useLanguage } from '@/contexts/language-context'
 
 interface ProfileEditorProps {
   fullName: string
@@ -31,7 +30,6 @@ export function ProfileEditor({
   onSave,
   isLoading
 }: ProfileEditorProps) {
-  const { language } = useLanguage()
   const [formData, setFormData] = useState({
     profilePhoto: profilePhoto || '',
     backgroundPhoto: backgroundPhoto || '',
@@ -89,12 +87,12 @@ export function ProfileEditor({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{language === 'es' ? 'Mi Perfil' : 'My Profile'}</CardTitle>
+        <CardTitle>Mi Perfil</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Background Photo */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Foto de Fondo' : 'Background Photo'}</Label>
+          <Label>Foto de Fondo</Label>
           <div className="relative h-32 rounded-lg overflow-hidden bg-muted border-2 border-dashed border-border">
             {currentBackgroundPhoto ? (
               <Image
@@ -124,7 +122,7 @@ export function ProfileEditor({
               >
                 <div className="flex items-center gap-1">
                   <Camera className="h-3 w-3" />
-                  {language === 'es' ? 'Cambiar' : 'Change'}
+                  Cambiar
                 </div>
               </Button>
             </label>
@@ -133,7 +131,7 @@ export function ProfileEditor({
 
         {/* Profile Photo */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Foto de Perfil' : 'Profile Photo'}</Label>
+          <Label>Foto de Perfil</Label>
           <div className="flex items-end gap-4">
             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted border-4 border-primary shrink-0">
               {currentProfilePhoto ? (
@@ -166,7 +164,7 @@ export function ProfileEditor({
               >
                 <div className="flex items-center gap-2">
                   <Camera className="h-4 w-4" />
-                  {language === 'es' ? 'Cambiar Foto' : 'Change Photo'}
+                  Cambiar Foto
                 </div>
               </Button>
             </label>
@@ -175,16 +173,16 @@ export function ProfileEditor({
 
         {/* Description */}
         <div className="space-y-3">
-          <Label>{language === 'es' ? 'Descripción' : 'Description'}</Label>
+          <Label>Descripción</Label>
           <Textarea
-            placeholder={language === 'es' ? 'Cuéntanos sobre ti...' : 'Tell us about yourself...'}
+            placeholder="Cuéntanos sobre ti..."
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={4}
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            {language === 'es' ? 'Máximo 500 caracteres' : 'Maximum 500 characters'}
+            Máximo 500 caracteres
             ({formData.description.length}/500)
           </p>
         </div>
@@ -198,12 +196,12 @@ export function ProfileEditor({
           {isSubmitting || isLoading ? (
             <>
               <span className="animate-spin mr-2">⏳</span>
-              {language === 'es' ? 'Guardando...' : 'Saving...'}
+              Guardando...
             </>
           ) : (
             <>
               <Camera className="h-4 w-4 mr-2" />
-              {language === 'es' ? 'Guardar Cambios' : 'Save Changes'}
+              Guardar Cambios
             </>
           )}
         </Button>

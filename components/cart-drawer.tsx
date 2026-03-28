@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/cart-context'
 import { formatClp } from '@/lib/utils'
 
 export function CartDrawer() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal } = useCart()
   
   if (!isOpen) return null
@@ -57,14 +57,14 @@ export function CartDrawer() {
                   <div className="relative h-20 w-20 rounded-lg overflow-hidden shrink-0 bg-muted">
                     <Image
                       src={item.image}
-                      alt={language === 'es' ? item.nameEs : item.name}
+                      alt={item.name}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-accent font-medium uppercase tracking-wide">{item.brand}</p>
-                    <h3 className="font-medium text-sm truncate">{language === 'es' ? item.nameEs : item.name}</h3>
+                    <h3 className="font-medium text-sm truncate">{item.name}</h3>
                     <p className="text-sm text-muted-foreground mt-1">{formatClp(item.price)}</p>
                     
                     <div className="flex items-center justify-between mt-2">

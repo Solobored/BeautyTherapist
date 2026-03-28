@@ -18,7 +18,7 @@ import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 
 export default function CheckoutPage() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { items, subtotal } = useCart()
   const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
   
@@ -91,7 +91,7 @@ export default function CheckoutPage() {
     setCouponError('')
     
     if (!couponCode.trim()) {
-      setCouponError(language === 'es' ? 'Ingresa un codigo' : 'Enter a code')
+      setCouponError('Ingresa un codigo')
       return
     }
     
@@ -130,7 +130,7 @@ export default function CheckoutPage() {
       return
     }
     
-    setCouponError(language === 'es' ? 'Cupon invalido o expirado' : 'Invalid or expired coupon')
+    setCouponError('Cupon invalido o expirado')
   }
   
   const handleSelectSavedCoupon = (coupon: Coupon) => {
@@ -172,7 +172,7 @@ export default function CheckoutPage() {
       const payload = {
         items: items.map((item) => ({
           productId: item.id,
-          productName: language === 'es' ? item.nameEs : item.name,
+          productName: item.name,
           productImage: item.image,
           quantity: item.quantity,
           price: item.price,
@@ -270,11 +270,11 @@ export default function CheckoutPage() {
                   {isAuthenticated && userType === 'buyer' && user?.type === 'buyer' && user.addresses.length > 0 && (
                     <div className="mb-6">
                       <Label className="mb-2 block">
-                        {language === 'es' ? 'Direcciones Guardadas' : 'Saved Addresses'}
+                        Direcciones Guardadas
                       </Label>
                       <Select value={selectedAddressId} onValueChange={handleAddressSelect}>
                         <SelectTrigger>
-                          <SelectValue placeholder={language === 'es' ? 'Seleccionar direccion' : 'Select address'} />
+                          <SelectValue placeholder="Seleccionar direccion" />
                         </SelectTrigger>
                         <SelectContent>
                           {user.addresses.map((address) => (
@@ -442,13 +442,13 @@ export default function CheckoutPage() {
                         <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
                           <Image
                             src={item.image}
-                            alt={language === 'es' ? item.nameEs : item.name}
+                            alt={item.name}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{language === 'es' ? item.nameEs : item.name}</p>
+                          <p className="text-sm font-medium truncate">{item.name}</p>
                           <p className="text-xs text-muted-foreground">{item.brand}</p>
                           <p className="text-sm mt-1">
                             {item.quantity} x {formatClp(item.price)}
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
                   <div className="border-t border-border pt-4 mb-4">
                     <Label className="mb-2 block flex items-center gap-2">
                       <Ticket className="h-4 w-4" />
-                      {language === 'es' ? 'Cupon de Descuento' : 'Discount Coupon'}
+                      Cupon de Descuento
                     </Label>
                     
                     {appliedCoupon ? (
@@ -486,13 +486,13 @@ export default function CheckoutPage() {
                       <div className="space-y-2">
                         <div className="flex gap-2">
                           <Input
-                            placeholder={language === 'es' ? 'Codigo de cupon' : 'Coupon code'}
+                            placeholder="Codigo de cupon"
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                             className="font-mono"
                           />
                           <Button type="button" variant="outline" onClick={handleApplyCoupon}>
-                            {language === 'es' ? 'Aplicar' : 'Apply'}
+                            Aplicar
                           </Button>
                         </div>
                         {couponError && (
@@ -507,7 +507,7 @@ export default function CheckoutPage() {
                               onClick={() => setShowSavedCoupons(!showSavedCoupons)}
                               className="flex items-center gap-1 text-sm text-primary hover:underline"
                             >
-                              {language === 'es' ? 'Usar mis cupones guardados' : 'Use my saved coupons'}
+                              Usar mis cupones guardados
                               <ChevronDown className={`h-4 w-4 transition-transform ${showSavedCoupons ? 'rotate-180' : ''}`} />
                             </button>
                             
@@ -527,7 +527,7 @@ export default function CheckoutPage() {
                                       </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      {language === 'es' ? 'Expira' : 'Expires'}: {new Date(coupon.expiryDate).toLocaleDateString()}
+                                      Expira: {new Date(coupon.expiryDate).toLocaleDateString()}
                                     </p>
                                   </button>
                                 ))}
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
                     </div>
                     {discount > 0 && (
                       <div className="flex items-center justify-between text-sm text-green-600">
-                        <span>{language === 'es' ? 'Descuento' : 'Discount'}</span>
+                        <span>Descuento</span>
                         <span>-{formatClp(discount)}</span>
                       </div>
                     )}

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 
 export function Footer() {
-  const { language, setLanguage, t } = useLanguage()
+  const { t } = useLanguage()
   
   return (
     <footer className="bg-secondary border-t border-border">

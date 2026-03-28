@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { brands } from '@/lib/data'
 
 export function BrandsShowcase() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   
   return (
     <section className="py-16 md:py-24 bg-secondary/50">
@@ -60,7 +60,7 @@ export function BrandsShowcase() {
               {/* Content */}
               <div className="p-6 md:p-8">
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  {language === 'es' ? brand.descriptionEs : brand.description}
+                  {brand.description}
                 </p>
                 <Button 
                   asChild

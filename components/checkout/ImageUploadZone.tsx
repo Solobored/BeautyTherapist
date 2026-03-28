@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
-import { AlertCircle, X, Upload } from 'lucide-react';
+import { AlertCircle, X, Upload, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
@@ -13,6 +13,8 @@ interface UploadedImage {
   publicId: string;
   position: number;
   preview?: string;
+  originalSize?: number;
+  compressedSize?: number;
 }
 
 interface ImageUploadZoneProps {
@@ -84,6 +86,10 @@ export function ImageUploadZone({
           formData.append('file', file);
           if (webpOnly) formData.append('webpOnly', 'true');
 
+          // Show compression in progress
+          const originalSize = file.size;
+          const toastId = toast.loading(`Comprimiendo imagen ${file.name} en la nube...`);
+
           const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
@@ -91,21 +97,32 @@ export function ImageUploadZone({
 
           if (!response.ok) {
             const errorData = await response.json();
+            toast.dismiss(toastId);
             throw new Error(errorData.error || 'Upload failed');
           }
 
           const data = await response.json();
+          const compressedSize = data.size;
+          const saved = originalSize - compressedSize;
+          const savedPercentage = Math.round((saved / originalSize) * 100);
 
           const newImage: UploadedImage = {
             url: data.url,
             publicId: data.publicId,
             position: images.length,
+            originalSize: originalSize,
+            compressedSize: compressedSize,
           };
 
           const updatedImages = [...images, newImage];
           setImages(updatedImages);
           onImagesChange(updatedImages);
-          toast.success(`${file.name} uploaded successfully`);
+
+          // Success with compression info
+          toast.dismiss(toastId);
+          toast.success(
+            `${file.name} ✅ Comprimida -${savedPercentage}% (${(saved / 1024 / 1024).toFixed(2)}MB ahorrados)`
+          );
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Upload failed';
@@ -193,19 +210,20 @@ export function ImageUploadZone({
             {loading ? (
               <>
                 <Spinner className="h-8 w-8 mb-2" />
-                <p className="text-sm text-gray-600">Uploading...</p>
+                <p className="text-sm text-gray-600">Subiendo y comprimiendo en la nube...</p>
+                <p className="text-xs text-gray-500 mt-1">Cloudinary optimizando automáticamente</p>
               </>
             ) : (
               <>
                 <Upload className="h-8 w-8 text-gray-400 mb-2" />
                 <p className="text-sm font-medium text-gray-700">
-                  Drag and drop images here, or click to select
+                  Arrastra imágenes aquí, o haz clic para seleccionar
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {webpOnly ? 'Solo WebP hasta 5MB c/u' : 'JPG, PNG, or WebP up to 5MB each'}
+                  {webpOnly ? 'Solo WebP hasta 5MB c/u' : 'JPG, PNG o WebP hasta 5MB cada una'}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Max {maxImages} images
+                  Máximo {maxImages} imágenes
                 </p>
               </>
             )}
@@ -217,64 +235,87 @@ export function ImageUploadZone({
       {images.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium">
-            Uploaded Images ({images.length}/{maxImages})
+            Imágenes Subidas ({images.length}/{maxImages})
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {images.map((image, index) => (
-              <div key={image.publicId} className="relative group">
-                <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                  <Image
-                    src={image.url}
-                    alt={`Product image ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                  />
-                  {index === 0 && (
-                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                      Primary
-                    </div>
+            {images.map((image, index) => {
+              const saved = image.originalSize && image.compressedSize 
+                ? image.originalSize - image.compressedSize 
+                : 0;
+              const savedPercentage = image.originalSize 
+                ? Math.round((saved / image.originalSize) * 100)
+                : 0;
+              
+              return (
+                <div key={image.publicId} className="relative group">
+                  <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                    <Image
+                      src={image.url}
+                      alt={`Product image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                        Principal
+                      </div>
+                    )}
+                    {/* Compression badge */}
+                    {saved > 0 && (
+                      <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                        <Cloud className="h-3 w-3" />
+                        -{savedPercentage}%
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hover Actions */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-lg transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => moveImage(index, 'up')}
+                      disabled={index === 0}
+                      className="h-8 w-8 p-0"
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => moveImage(index, 'down')}
+                      disabled={index === images.length - 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      ↓
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => removeImage(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Size info */}
+                  {image.compressedSize && (
+                    <p className="text-xs text-gray-500 mt-1 text-center">
+                      {(image.compressedSize / 1024 / 1024).toFixed(2)}MB
+                    </p>
                   )}
                 </div>
-
-                {/* Hover Actions */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-lg transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => moveImage(index, 'up')}
-                    disabled={index === 0}
-                    className="h-8 w-8 p-0"
-                  >
-                    ↑
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => moveImage(index, 'down')}
-                    disabled={index === images.length - 1}
-                    className="h-8 w-8 p-0"
-                  >
-                    ↓
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => removeImage(index)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Validation Message */}
       {images.length === 0 && !error && (
-        <p className="text-sm text-red-500">At least 1 image is required</p>
+        <p className="text-sm text-red-500">Se requiere al menos 1 imagen</p>
       )}
     </div>
   );

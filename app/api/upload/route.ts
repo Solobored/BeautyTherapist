@@ -53,21 +53,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary with aggressive optimization
     return new Promise((resolve) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: 'beauty-therapist/products',
           resource_type: 'auto',
-          quality: 'auto',
-          fetch_format: 'auto',
+          // Aggressive compression settings
+          quality: 'auto:eco', // Auto quality with emphasis on compression
+          fetch_format: 'auto', // Auto format (WebP for modern browsers)
+          flags: ['progressive', 'immutable_cache'], // Progressive JPEG, caching
+          transformation: [
+            {
+              quality: 'auto:eco',
+              fetch_format: 'auto',
+              flags: 'progressive',
+            },
+          ],
+          // Metadata removal to reduce file size
+          colors: true, // Generate color palette (useful for placeholders)
+          default_source: true,
+          // Responsive image generation
+          responsive_width: true,
+          eager_async: true,
         },
         (error, result) => {
           if (error) {
             console.error('Cloudinary upload error:', error);
             resolve(
               NextResponse.json(
-                { error: 'Failed to upload image' },
+                { error: 'Error al subir la imagen' },
                 { status: 500 }
               )
             );
@@ -79,6 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 width: result.width,
                 height: result.height,
                 size: result.bytes,
+                format: result.format,
+                colors: result.colors || [],
               })
             );
           }

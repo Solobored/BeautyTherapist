@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/language-context'
 import { testimonials } from '@/lib/data'
 
 export function Testimonials() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   
   return (
     <section className="py-16 md:py-24 bg-background">
@@ -40,7 +40,7 @@ export function Testimonials() {
               
               {/* Quote */}
               <p className="text-foreground leading-relaxed mb-6">
-                &ldquo;{language === 'es' ? testimonial.textEs : testimonial.text}&rdquo;
+                &ldquo;{testimonial.text}&rdquo;
               </p>
               
               {/* Customer */}

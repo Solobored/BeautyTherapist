@@ -15,11 +15,10 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { addItem } = useCart()
   const { user, isAuthenticated, userType, toggleWishlist, isInWishlist } = useAuth()
   
-  const name = language === 'es' ? product.nameEs : product.name
   const inWishlist = isInWishlist(product.id)
   
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -28,7 +27,6 @@ export function ProductCard({ product }: ProductCardProps) {
     addItem({
       id: product.id,
       name: product.name,
-      nameEs: product.nameEs,
       brand: product.brand,
       price: product.price,
       image: product.images[0]
@@ -76,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* Low Stock Badge */}
           {product.stock > 0 && product.stock <= 5 && (
             <span className="absolute bottom-3 left-3 px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded-full">
-              {language === 'es' ? 'Pocas unidades' : 'Low stock'}
+              Pocas unidades
             </span>
           )}
         </div>
@@ -84,7 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Content */}
         <div className="p-4">
           <p className="text-xs text-accent font-medium uppercase tracking-wide mb-1">{product.brand}</p>
-          <h3 className="font-medium text-foreground line-clamp-2 min-h-[2.5rem]">{name}</h3>
+          <h3 className="font-medium text-foreground line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
           
           {/* Rating */}
           <div className="flex items-center gap-1 mt-2">
@@ -109,7 +107,7 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             <ShoppingBag className="h-4 w-4 mr-2" />
             {product.stock === 0 
-              ? (language === 'es' ? 'Agotado' : 'Out of Stock')
+              ? 'Agotado'
               : t('featured.addToCart')}
           </Button>
         </div>

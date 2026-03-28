@@ -18,7 +18,7 @@ import { notFound } from 'next/navigation'
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { addItem } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -28,10 +28,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   if (!product) {
     notFound()
   }
-  
-  const name = language === 'es' ? product.nameEs : product.name
-  const description = language === 'es' ? product.descriptionEs : product.description
-  const howToUse = language === 'es' ? product.howToUseEs : product.howToUse
   
   const productReviews = reviews.filter(r => r.productId === product.id)
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4)
@@ -47,7 +43,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       addItem({
         id: product.id,
         name: product.name,
-        nameEs: product.nameEs,
         brand: product.brand,
         price: product.price,
         image: product.images[0]
@@ -66,7 +61,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <ChevronRight className="h-4 w-4" />
             <Link href="/shop" className="hover:text-foreground transition-colors">{t('nav.shop')}</Link>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">{name}</span>
+            <span className="text-foreground">{product.name}</span>
           </nav>
           
           {/* Product Section */}
@@ -114,7 +109,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </Link>
               
               <h1 className="font-serif text-3xl md:text-4xl font-semibold text-foreground mb-4">
-                {name}
+                {product.name}
               </h1>
               
               {/* Rating */}
@@ -147,7 +142,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               
               {/* Description */}
               <p className="text-muted-foreground leading-relaxed mb-6">
-                {description}
+                {product.description}
               </p>
               
               {/* Quantity & Add to Cart */}
@@ -228,7 +223,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </TabsList>
             
             <TabsContent value="description" className="pt-6">
-              <p className="text-muted-foreground leading-relaxed max-w-3xl">{description}</p>
+              <p className="text-muted-foreground leading-relaxed max-w-3xl">{product.description}</p>
             </TabsContent>
             
             <TabsContent value="ingredients" className="pt-6">
@@ -236,7 +231,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </TabsContent>
             
             <TabsContent value="how-to-use" className="pt-6">
-              <p className="text-muted-foreground leading-relaxed max-w-3xl">{howToUse}</p>
+              <p className="text-muted-foreground leading-relaxed max-w-3xl">{product.howToUse}</p>
             </TabsContent>
             
             <TabsContent value="reviews" className="pt-6">
@@ -247,7 +242,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   productId: r.productId,
                   reviewerName: r.customerName,
                   rating: r.rating,
-                  content: language === 'es' ? r.textEs : r.text,
+                  content: r.text,
                   date: r.date,
                   verifiedPurchase: true
                 }))}

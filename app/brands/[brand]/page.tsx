@@ -14,7 +14,7 @@ import { notFound } from 'next/navigation'
 
 export default function BrandPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: brandSlug } = use(params)
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { products, loading } = useProducts()
   
   const brand = brands.find(b => b.slug === brandSlug)
@@ -24,7 +24,7 @@ export default function BrandPage({ params }: { params: Promise<{ brand: string 
   }
   
   const brandProducts = products.filter(p => p.brandSlug === brandSlug)
-  const description = language === 'es' ? brand.descriptionEs : brand.description
+  const description = brand.description
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -80,7 +80,7 @@ export default function BrandPage({ params }: { params: Promise<{ brand: string 
           {/* Products */}
           <section>
             <h2 className="font-serif text-2xl font-semibold text-foreground mb-6">
-              {language === 'es' ? 'Productos' : 'Products'}
+              Productos
             </h2>
             
             {brandProducts.length > 0 ? (
@@ -91,7 +91,7 @@ export default function BrandPage({ params }: { params: Promise<{ brand: string 
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-12">
-                No products available from this brand yet.
+                No hay productos disponibles de esta marca aún.
               </p>
             )}
           </section>
