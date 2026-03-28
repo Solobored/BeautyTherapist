@@ -57,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return new Promise((resolve) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'beauty-therapist/products',
+          folder: 'beauty-therapy/products',
           resource_type: 'auto',
           // Aggressive compression settings
           quality: 'auto:eco', // Auto quality with emphasis on compression

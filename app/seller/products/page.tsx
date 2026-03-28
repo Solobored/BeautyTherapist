@@ -101,7 +101,7 @@ export default function SellerProductsPage() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Link href="/seller/dashboard" className="font-serif text-xl font-semibold">
-              Beauty Therapist
+              Beauty & Therapy
             </Link>
 
             <div className="flex items-center gap-4">

@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Resuelve la marca por email + slug. Las rutas /api/seller/* confían en los headers
+ * enviados por el cliente; en producción conviene validar sesión (p. ej. JWT Supabase)
+ * y comprobar que el email coincide con el usuario autenticado.
+ */
 export async function resolveBrandIdForSeller(
   supabase: SupabaseClient,
   sellerEmail: string,

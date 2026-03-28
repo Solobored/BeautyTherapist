@@ -17,7 +17,7 @@ export function Footer() {
           <div className="lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
               <span className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-                Beauty Therapist
+                Beauty & Therapy
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6">
@@ -116,7 +116,7 @@ export function Footer() {
         
         <div className="mt-12 pt-8 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Beauty Therapist. All rights reserved.
+            &copy; {new Date().getFullYear()} Beauty & Therapy. Todos los derechos reservados.
           </p>
         </div>
       </div>

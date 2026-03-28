@@ -26,9 +26,10 @@ const josefin = Josefin_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Beauty Therapist | Premium Beauty Marketplace',
-  description: 'Where beauty meets expertise. Discover premium skincare and makeup from curated brands like AngeBae.',
-  keywords: ['beauty', 'skincare', 'makeup', 'cosmetics', 'marketplace', 'AngeBae'],
+  title: 'Beauty & Therapy | Marketplace de belleza premium',
+  description:
+    'Skincare y maquillaje seleccionados por expertos. Marcas premium en un solo lugar.',
+  keywords: ['belleza', 'skincare', 'maquillaje', 'cosmética', 'marketplace', 'Chile'],
 }
 
 export const viewport: Viewport = {

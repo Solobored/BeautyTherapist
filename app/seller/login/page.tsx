@@ -42,7 +42,7 @@ export default function SellerLoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <span className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-              Beauty Therapist
+              Beauty & Therapy
             </span>
           </Link>
           <p className="text-sm text-muted-foreground mt-2">Seller Portal</p>

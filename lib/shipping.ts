@@ -71,7 +71,7 @@ export async function geocodeChileCity(city: string, state: string): Promise<{ l
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'BeautyTherapistCheckout/1.0 (contact: support@example.com)',
+      'User-Agent': 'BeautyTherapyCheckout/1.0',
       Accept: 'application/json',
     },
     next: { revalidate: 0 },

@@ -57,6 +57,17 @@ type SellerOrderRow = {
   createdAt: string
 }
 
+type SellerAnalytics = {
+  totalRevenue: number
+  totalSales: number
+  revenueThisMonth: number
+  salesThisMonth: number
+  totalRevenueLastMonth: number
+  totalSalesLastMonth: number
+  revenueByMonth: { month: string; revenue: number }[]
+  salesByCategory: { category: string; revenue: number }[]
+}
+
 export default function SellerDashboardPage() {
   const { language, t } = useLanguage()
   const { seller, isAuthenticated, logout } = useAuth()
@@ -65,6 +76,7 @@ export default function SellerDashboardPage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [sellerOrders, setSellerOrders] = useState<SellerOrderRow[]>([])
+  const [orderAnalytics, setOrderAnalytics] = useState<SellerAnalytics | null>(null)
   const [ordersLoading, setOrdersLoading] = useState(true)
   
   useEffect(() => {
@@ -101,9 +113,14 @@ export default function SellerDashboardPage() {
               createdAt: o.createdAt,
             }))
           )
+          const a = json.analytics as SellerAnalytics | undefined
+          setOrderAnalytics(a ?? null)
         }
       } catch {
-        if (!cancelled) setSellerOrders([])
+        if (!cancelled) {
+          setSellerOrders([])
+          setOrderAnalytics(null)
+        }
       } finally {
         if (!cancelled) setOrdersLoading(false)
       }
@@ -132,29 +149,24 @@ export default function SellerDashboardPage() {
   // Calculate real metrics from products
   const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0)
   const totalProducts = products.filter(p => p.status === 'active').length
-  
-  const totalRevenue = sellerOrders.reduce((sum, order) => sum + order.total, 0)
-  const totalSales = sellerOrders.length
-  const now = new Date()
-  const startPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const endPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
-  const ordersLastMonth = sellerOrders.filter((o) => {
-    const d = new Date(o.createdAt)
-    return d >= startPrevMonth && d <= endPrevMonth
-  })
-  const totalRevenueLastMonth = ordersLastMonth.reduce((s, o) => s + o.total, 0)
-  const totalSalesLastMonth = ordersLastMonth.length
-  
+
+  const totalRevenue = orderAnalytics?.totalRevenue ?? 0
+  const totalSales = orderAnalytics?.totalSales ?? 0
+  const revPrev = orderAnalytics?.totalRevenueLastMonth ?? 0
+  const salesPrev = orderAnalytics?.totalSalesLastMonth ?? 0
+  const revThis = orderAnalytics?.revenueThisMonth ?? 0
+  const salesThis = orderAnalytics?.salesThisMonth ?? 0
+
   const revenueChange =
-    totalRevenueLastMonth > 0
-      ? (((totalRevenue - totalRevenueLastMonth) / totalRevenueLastMonth) * 100).toFixed(1)
-      : totalRevenue > 0
+    revPrev > 0
+      ? (((revThis - revPrev) / revPrev) * 100).toFixed(1)
+      : revThis > 0
         ? '100'
         : '0'
   const salesChange =
-    totalSalesLastMonth > 0
-      ? (((totalSales - totalSalesLastMonth) / totalSalesLastMonth) * 100).toFixed(1)
-      : totalSales > 0
+    salesPrev > 0
+      ? (((salesThis - salesPrev) / salesPrev) * 100).toFixed(1)
+      : salesThis > 0
         ? '100'
         : '0'
   
@@ -165,19 +177,17 @@ export default function SellerDashboardPage() {
     .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
     .slice(0, 5)
   
-  const monthlyRevenueData = (() => {
-    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']
-    return labels.map((month, i) => ({
-      month,
-      revenue: Math.round((totalRevenue / 6) * (0.5 + (i + 1) * 0.1)),
-    }))
-  })()
-  
-  // Categories data for sales by category
-  const salesByCategoryData = [
-    { category: 'Skincare', sales: Math.round(totalSales * 0.6) },
-    { category: 'Makeup', sales: Math.round(totalSales * 0.4) }
-  ]
+  const monthlyRevenueData =
+    orderAnalytics?.revenueByMonth?.length ? orderAnalytics.revenueByMonth : [{ month: '—', revenue: 0 }]
+
+  const salesByCategoryData = (orderAnalytics?.salesByCategory?.length
+    ? orderAnalytics.salesByCategory
+    : [{ category: '—', revenue: 0 }]
+  ).map((row) => ({ category: row.category, sales: row.revenue }))
+
+  const recentOrdersForTable = sellerOrders
+    .filter((o) => o.orderStatus !== 'cancelled')
+    .slice(0, 5)
   
   const handleLogout = () => {
     logout()
@@ -191,7 +201,7 @@ export default function SellerDashboardPage() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Link href="/seller/dashboard" className="font-serif text-xl font-semibold">
-              Beauty Therapist
+              Beauty & Therapy
             </Link>
             
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
@@ -282,10 +292,12 @@ export default function SellerDashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatClp(totalRevenue)}</div>
+              <div className="text-2xl font-bold">
+                {ordersLoading ? '…' : formatClp(totalRevenue)}
+              </div>
               <p className={`text-xs flex items-center gap-1 ${Number(revenueChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {Number(revenueChange) >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                {revenueChange}% {t('dashboard.vsLastMonth')}
+                {ordersLoading ? '—' : `${revenueChange}%`} {t('dashboard.vsLastMonth')}
               </p>
             </CardContent>
           </Card>
@@ -298,10 +310,10 @@ export default function SellerDashboardPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalSales}</div>
+              <div className="text-2xl font-bold">{ordersLoading ? '…' : totalSales}</div>
               <p className={`text-xs flex items-center gap-1 ${Number(salesChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {Number(salesChange) >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                {salesChange}% {t('dashboard.vsLastMonth')}
+                {ordersLoading ? '—' : `${salesChange}%`} {t('dashboard.vsLastMonth')}
               </p>
             </CardContent>
           </Card>
@@ -421,14 +433,14 @@ export default function SellerDashboardPage() {
                         …
                       </TableCell>
                     </TableRow>
-                  ) : sellerOrders.length === 0 ? (
+                  ) : recentOrdersForTable.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">
                         Aún no hay pedidos con tus productos.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    sellerOrders.slice(0, 5).map((order) => {
+                    recentOrdersForTable.map((order) => {
                       const first = order.items[0]
                       const label =
                         first != null

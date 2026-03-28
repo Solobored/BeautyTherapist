@@ -52,7 +52,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
               <span className="font-serif text-xl md:text-2xl font-semibold tracking-tight text-foreground">
-                Beauty Therapist
+                Beauty & Therapy
               </span>
             </Link>
             

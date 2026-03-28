@@ -5,7 +5,7 @@ export type Language = 'es' | 'en';
 
 export const translations = {
   common: {
-    appName: { es: 'Beauty Therapist', en: 'Beauty Therapist' },
+    appName: { es: 'Beauty & Therapy', en: 'Beauty & Therapy' },
     loading: { es: 'Cargando...', en: 'Loading...' },
     usingLocalData: { es: 'Usando datos locales temporalmente', en: 'Using local data temporarily' },
     error: { es: 'Error', en: 'Error' },
@@ -221,7 +221,10 @@ export const translations = {
     followUs: { es: 'Síguenos', en: 'Follow Us' },
     subscribe: { es: 'Suscribirse', en: 'Subscribe' },
     enterEmail: { es: 'Ingresa tu correo electrónico', en: 'Enter your email' },
-    copyright: { es: '© 2024 Beauty Therapist. Todos los derechos reservados.', en: '© 2024 Beauty Therapist. All rights reserved.' },
+    copyright: {
+      es: '© 2024 Beauty & Therapy. Todos los derechos reservados.',
+      en: '© 2024 Beauty & Therapy. All rights reserved.',
+    },
   },
 
   errors: {

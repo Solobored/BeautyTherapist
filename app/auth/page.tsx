@@ -15,7 +15,7 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <h1 className="font-serif text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-              Beauty Therapist
+              Beauty & Therapy
             </h1>
           </Link>
           <p className="text-muted-foreground mt-2">

@@ -16,7 +16,7 @@ export async function sendOrderCancelledToBuyer(input: {
   }
 
   const from =
-    process.env.RESEND_FROM_EMAIL?.trim() || 'Beauty Therapist <onboarding@resend.dev>'
+    process.env.RESEND_FROM_EMAIL?.trim() || 'Beauty & Therapy <onboarding@resend.dev>'
 
   const subject = input.refunded
     ? 'Tu pedido fue anulado — reembolso en proceso'

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { computeSellerOrderAnalytics, type OrderRowForAnalytics } from '@/lib/seller-order-analytics'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     const { data: brandProducts, error: pErr } = await supabaseServer
       .from('products')
-      .select('id')
+      .select('id, category')
       .eq('brand_id', brandId)
 
     if (pErr) {
@@ -41,6 +42,9 @@ export async function GET(request: NextRequest) {
     }
 
     const productIds = new Set((brandProducts ?? []).map((p) => p.id))
+    const productsById = new Map(
+      (brandProducts ?? []).map((p) => [p.id, { category: String(p.category ?? 'other') }])
+    )
 
     const { data: orders, error: oErr } = await supabaseServer
       .from('orders')
@@ -56,6 +60,12 @@ export async function GET(request: NextRequest) {
       const items = (order.items ?? []) as OrderItem[]
       return items.some((i) => i.product_id && productIds.has(i.product_id))
     })
+
+    const analytics = computeSellerOrderAnalytics(
+      filtered as OrderRowForAnalytics[],
+      productIds,
+      productsById
+    )
 
     const rows = filtered.map((order) => {
       const items = (order.items ?? []) as OrderItem[]
@@ -83,7 +93,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ orders: rows })
+    return NextResponse.json({ orders: rows, analytics })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

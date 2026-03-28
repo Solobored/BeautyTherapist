@@ -21,7 +21,10 @@ const translations: Record<string, string> = {
   'nav.logout': 'Cerrar Sesion',
   
   // Hero
+  'hero.badge': 'Marketplace de belleza premium',
   'hero.tagline': 'Donde la belleza encuentra su esencia',
+  'hero.subtitle':
+    'Descubre skincare y maquillaje de marcas premium, seleccionados por expertas. Todo para tu rutina de belleza.',
   'hero.shopNow': 'Comprar Ahora',
   'hero.sellWithUs': 'Vende con Nosotros',
   

@@ -145,7 +145,7 @@ export default function SellerOrdersPage() {
                 </Link>
               </Button>
               <Link href="/seller/dashboard" className="font-serif text-xl font-semibold">
-                Beauty Therapist
+                Beauty & Therapy
               </Link>
             </div>
             <div className="flex items-center gap-2">

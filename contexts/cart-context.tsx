@@ -33,7 +33,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('beauty-therapist-cart')
+    const legacyCart = localStorage.getItem('beauty-therapist-cart')
+    if (legacyCart && !localStorage.getItem('beauty-therapy-cart')) {
+      localStorage.setItem('beauty-therapy-cart', legacyCart)
+      localStorage.removeItem('beauty-therapist-cart')
+    }
+    const savedCart = localStorage.getItem('beauty-therapy-cart')
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart))
@@ -47,7 +52,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Save cart to localStorage when it changes
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('beauty-therapist-cart', JSON.stringify(items))
+      localStorage.setItem('beauty-therapy-cart', JSON.stringify(items))
     }
   }, [items, isHydrated])
   

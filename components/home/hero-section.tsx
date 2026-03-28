@@ -20,7 +20,7 @@ export function HeroSection() {
       {/* Content */}
       <div className="relative container mx-auto px-4 py-20 text-center">
         <span className="inline-block font-accent text-xs uppercase tracking-[0.3em] text-accent mb-6">
-          Premium Beauty Marketplace
+          {t('hero.badge')}
         </span>
         
         <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold text-foreground mb-6 max-w-4xl mx-auto leading-tight text-balance">
@@ -28,8 +28,7 @@ export function HeroSection() {
         </h1>
         
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-          Discover curated skincare and makeup from premium brands. 
-          Expert-selected products for your beauty journey.
+          {t('hero.subtitle')}
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

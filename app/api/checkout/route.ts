@@ -4,7 +4,13 @@ import { createPreference } from '@/lib/mercadopago'
 import { type ShippingKind } from '@/lib/shipping'
 import { resolveServerShippingClp } from '@/lib/shipping-checkout-server'
 import type { ChileDeliveryChannel } from '@/lib/chile-shipping'
-import { buildMercadoPagoCheckoutUrls, mercadoPagoAllowsAutoReturn } from '@/lib/mp-public-url'
+import {
+  assertMercadoPagoBackUrls,
+  buildMercadoPagoCheckoutUrls,
+  mercadoPagoAllowsAutoReturn,
+  resolveMercadoPagoRuntimeMode,
+} from '@/lib/mp-public-url'
+import { checkRateLimit, clientIp } from '@/lib/rate-limit-ip'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -51,6 +57,15 @@ function mpInitPoint(pref: { init_point?: string; sandbox_init_point?: string })
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = clientIp(request)
+    const rl = checkRateLimit(`checkout:${ip}`, 25, 60_000)
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+      )
+    }
+
     if (!process.env.MERCADOPAGO_ACCESS_TOKEN?.trim()) {
       return NextResponse.json(
         {
@@ -246,8 +261,10 @@ export async function POST(request: NextRequest) {
 
     try {
       const urls = buildMercadoPagoCheckoutUrls(order.id)
+      assertMercadoPagoBackUrls(urls)
+      const mpMode = resolveMercadoPagoRuntimeMode()
       const notifyIsHttps = urls.notification.startsWith('https://')
-      const useAutoReturn = mercadoPagoAllowsAutoReturn(urls.success)
+      const useAutoReturn = mercadoPagoAllowsAutoReturn(urls.success, mpMode)
 
       const preference = await createPreference({
         items: mpItems,

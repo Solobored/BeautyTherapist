@@ -131,7 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   
   useEffect(() => {
-    const savedAuth = localStorage.getItem('beauty-therapist-auth')
+    const legacy = localStorage.getItem('beauty-therapist-auth')
+    if (legacy && !localStorage.getItem('beauty-therapy-auth')) {
+      localStorage.setItem('beauty-therapy-auth', legacy)
+      localStorage.removeItem('beauty-therapist-auth')
+    }
+    const savedAuth = localStorage.getItem('beauty-therapy-auth')
     if (savedAuth) {
       try {
         setUser(JSON.parse(savedAuth))
@@ -145,9 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isHydrated) {
       if (user) {
-        localStorage.setItem('beauty-therapist-auth', JSON.stringify(user))
+        localStorage.setItem('beauty-therapy-auth', JSON.stringify(user))
       } else {
-        localStorage.removeItem('beauty-therapist-auth')
+        localStorage.removeItem('beauty-therapy-auth')
       }
     }
   }, [user, isHydrated])
