@@ -90,7 +90,7 @@ export const products: Product[] = [
     comparePrice: 85,
     description: 'Un lujoso sérum de vitamina C que ilumina y unifica el tono de la piel mientras proporciona una poderosa protección antioxidante. Formulado con 15% de vitamina C estabilizada y ácido hialurónico para una tez luminosa e hidratada.',
     ingredients: 'Aqua, Ascorbic Acid, Sodium Hyaluronate, Ferulic Acid, Vitamin E, Aloe Vera Extract, Glycerin, Niacinamide',
-    howToUse: 'Aplica 3-4 gotas sobre la piel limpia y seca por la mañana y por la noche. Continúa con hidratante y protector solar durante el día.',,
+    howToUse: 'Aplica 3-4 gotas sobre la piel limpia y seca por la mañana y por la noche. Continúa con hidratante y protector solar durante el día.',
     images: [
       'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&h=600&fit=crop',
       'https://images.unsplash.com/photo-1617897903246-719242758050?w=600&h=600&fit=crop'
