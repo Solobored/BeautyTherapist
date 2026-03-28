@@ -10,7 +10,7 @@ type FilterType = 'all' | 'skincare' | 'makeup'
 
 export function FeaturedProducts() {
   const { t } = useLanguage()
-  const { products, loading, isUsingMockData } = useProducts()
+  const { products, loading } = useProducts()
   const [filter, setFilter] = useState<FilterType>('all')
   
   const filteredProducts = filter === 'all' 
@@ -63,9 +63,6 @@ export function FeaturedProducts() {
           <h2 className="font-serif text-3xl md:text-4xl font-semibold text-foreground">
             {t('featured.title')}
           </h2>
-          {isUsingMockData && (
-            <p className="text-xs text-amber-600 mt-2">{t('common.usingLocalData')}</p>
-          )}
         </div>
         
         {/* Filter Chips */}

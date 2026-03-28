@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
@@ -17,6 +17,14 @@ import { useAuth, type Coupon } from '@/contexts/auth-context'
 import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 
+const NATIONAL_CLP = Number(process.env.NEXT_PUBLIC_SHIPPING_NATIONAL_CLP ?? '5000')
+const INTERNATIONAL_CLP = Number(process.env.NEXT_PUBLIC_SHIPPING_INTERNATIONAL_CLP ?? '25000')
+const DISTANCE_QUOTE_UI = process.env.NEXT_PUBLIC_ENABLE_SHIPPING_DISTANCE_QUOTE === 'true'
+
+function normCountry(s: string) {
+  return s.trim().toLowerCase()
+}
+
 export default function CheckoutPage() {
   const { t } = useLanguage()
   const { items, subtotal } = useCart()
@@ -31,7 +39,8 @@ export default function CheckoutPage() {
     state: '',
     zip: '',
     country: '',
-    deliveryMethod: 'standard',
+    shippingKind: 'national' as 'national' | 'international',
+    nationalMode: 'flat' as 'flat' | 'distance',
     createAccount: false
   })
   
@@ -42,6 +51,9 @@ export default function CheckoutPage() {
   const [showSavedCoupons, setShowSavedCoupons] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [distanceQuoteClp, setDistanceQuoteClp] = useState<number | null>(null)
+  const [distanceQuoteLoading, setDistanceQuoteLoading] = useState(false)
+  const [distanceQuoteNote, setDistanceQuoteNote] = useState<string | null>(null)
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -73,7 +85,90 @@ export default function CheckoutPage() {
   
   const availableCoupons = isAuthenticated && userType === 'buyer' ? getAvailableCoupons() : []
   
-  const shippingCost = formData.deliveryMethod === 'express' ? 15000 : 5000
+  const isChile = ['chile', 'cl', 'república de chile', 'republic of chile'].includes(normCountry(formData.country))
+
+  const shippingCost = useMemo(() => {
+    if (formData.shippingKind === 'international') {
+      return Number.isFinite(INTERNATIONAL_CLP) ? INTERNATIONAL_CLP : 25000
+    }
+    if (formData.nationalMode === 'distance' && distanceQuoteClp != null) {
+      return distanceQuoteClp
+    }
+    return Number.isFinite(NATIONAL_CLP) ? NATIONAL_CLP : 5000
+  }, [formData.shippingKind, formData.nationalMode, distanceQuoteClp])
+
+  const fetchDistanceQuote = useCallback(async () => {
+    if (!DISTANCE_QUOTE_UI || formData.nationalMode !== 'distance' || !isChile) return
+    if (!formData.city.trim() || !formData.state.trim()) {
+      setDistanceQuoteNote('Completa ciudad y región para estimar el envío.')
+      return
+    }
+    setDistanceQuoteLoading(true)
+    setDistanceQuoteNote(null)
+    try {
+      const res = await fetch('/api/shipping-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: formData.city,
+          state: formData.state,
+          country: formData.country || 'Chile',
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDistanceQuoteClp(null)
+        setDistanceQuoteNote(data.error || 'No se pudo calcular el envío.')
+        return
+      }
+      if (typeof data.shippingClp === 'number') {
+        setDistanceQuoteClp(data.shippingClp)
+        if (data.distanceKm != null) {
+          setDistanceQuoteNote(`Distancia aprox. ${data.distanceKm} km desde bodega.`)
+        } else if (data.fallback) {
+          setDistanceQuoteNote(data.message || 'Se aplica tarifa plana nacional.')
+        } else {
+          setDistanceQuoteNote(null)
+        }
+      }
+    } catch {
+      setDistanceQuoteNote('Error de red al calcular envío.')
+      setDistanceQuoteClp(null)
+    } finally {
+      setDistanceQuoteLoading(false)
+    }
+  }, [
+    formData.city,
+    formData.state,
+    formData.country,
+    formData.nationalMode,
+    isChile,
+  ])
+
+  useEffect(() => {
+    if (formData.shippingKind !== 'national' || formData.nationalMode !== 'distance' || !isChile) {
+      setDistanceQuoteClp(null)
+      setDistanceQuoteNote(null)
+      return
+    }
+    if (!formData.city.trim() || !formData.state.trim()) {
+      setDistanceQuoteClp(null)
+      setDistanceQuoteNote('Completa ciudad y región para estimar el envío.')
+      return
+    }
+    const timer = window.setTimeout(() => {
+      void fetchDistanceQuote()
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [
+    formData.shippingKind,
+    formData.nationalMode,
+    formData.city,
+    formData.state,
+    formData.country,
+    isChile,
+    fetchDistanceQuote,
+  ])
   
   // Calculate discount
   let discount = 0
@@ -163,8 +258,19 @@ export default function CheckoutPage() {
     }
   }
   
+  const distanceShippingBlocked =
+    formData.shippingKind === 'national' &&
+    formData.nationalMode === 'distance' &&
+    isChile &&
+    DISTANCE_QUOTE_UI &&
+    (distanceQuoteLoading || distanceQuoteClp == null)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (distanceShippingBlocked) {
+      setSubmitError('Espera a que se calcule el envío o elige tarifa plana nacional.')
+      return
+    }
     setIsSubmitting(true)
     setSubmitError(null)
 
@@ -187,6 +293,8 @@ export default function CheckoutPage() {
           zip: formData.zip,
           country: formData.country,
         },
+        shippingKind: formData.shippingKind,
+        nationalMode: formData.shippingKind === 'national' ? formData.nationalMode : 'flat',
         couponCode: appliedCoupon?.code || couponCode || undefined,
         subtotal,
         shippingCost,
@@ -379,29 +487,70 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   
-                  {/* Delivery Method */}
+                  {/* Envío nacional / internacional */}
                   <div className="mt-6">
-                    <Label className="mb-3 block">{t('checkout.deliveryMethod')}</Label>
+                    <Label className="mb-3 block">Tipo de envío</Label>
                     <RadioGroup
-                      value={formData.deliveryMethod}
-                      onValueChange={(value) => handleInputChange('deliveryMethod', value)}
+                      value={formData.shippingKind}
+                      onValueChange={(value) =>
+                        handleInputChange('shippingKind', value as 'national' | 'international')
+                      }
                       className="space-y-3"
                     >
                       <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                        <RadioGroupItem value="standard" id="standard" />
+                        <RadioGroupItem value="national" id="ship-national" />
                         <div className="flex-1">
-                          <p className="font-medium">{t('checkout.standard')}</p>
-                          <p className="text-sm text-muted-foreground">{formatClp(5000)}</p>
+                          <p className="font-medium">Nacional (Chile)</p>
+                          <p className="text-sm text-muted-foreground">
+                            Desde {formatClp(Number.isFinite(NATIONAL_CLP) ? NATIONAL_CLP : 5000)}
+                          </p>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                        <RadioGroupItem value="express" id="express" />
+                        <RadioGroupItem value="international" id="ship-international" />
                         <div className="flex-1">
-                          <p className="font-medium">{t('checkout.express')}</p>
-                          <p className="text-sm text-muted-foreground">{formatClp(15000)}</p>
+                          <p className="font-medium">Internacional</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatClp(Number.isFinite(INTERNATIONAL_CLP) ? INTERNATIONAL_CLP : 25000)}
+                          </p>
                         </div>
                       </label>
                     </RadioGroup>
+
+                    {formData.shippingKind === 'national' && DISTANCE_QUOTE_UI && isChile && (
+                      <div className="mt-4 pl-1 space-y-2">
+                        <Label className="text-sm text-muted-foreground">Modalidad dentro de Chile</Label>
+                        <RadioGroup
+                          value={formData.nationalMode}
+                          onValueChange={(value) =>
+                            handleInputChange('nationalMode', value as 'flat' | 'distance')
+                          }
+                          className="space-y-2"
+                        >
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <RadioGroupItem value="flat" id="nat-flat" />
+                            <span className="text-sm">Tarifa plana nacional</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <RadioGroupItem value="distance" id="nat-distance" />
+                            <span className="text-sm">Estimación por distancia (ciudad/región)</span>
+                          </label>
+                        </RadioGroup>
+                        {formData.nationalMode === 'distance' && (
+                          <div className="text-sm text-muted-foreground pt-1">
+                            {distanceQuoteLoading && <p>Calculando envío…</p>}
+                            {distanceQuoteNote && <p>{distanceQuoteNote}</p>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.shippingKind === 'international' && (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        El envío internacional usa tarifa fija. Asegúrate de indicar el país correcto en el
+                        formulario.
+                      </p>
+                    )}
                   </div>
                 </section>
                 
@@ -565,7 +714,7 @@ export default function CheckoutPage() {
                   <Button 
                     type="submit" 
                     className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || distanceShippingBlocked}
                   >
                     {isSubmitting ? t('common.loading') : t('checkout.placeOrder')}
                   </Button>

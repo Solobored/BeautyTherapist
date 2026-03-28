@@ -165,6 +165,7 @@ const translations: Record<string, string> = {
   'products.delete': 'Eliminar',
   'products.images': 'Imágenes',
   'products.save': 'Guardar Producto',
+  'products.noProducts': 'No hay productos publicados aún.',
   
   // Blog
   'blog.categories.skincare': 'Rutina de Skincare',
@@ -185,6 +186,7 @@ const translations: Record<string, string> = {
 
 interface LanguageContextType {
   t: (key: string) => string
+  language: 'es' | 'en'
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -193,9 +195,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (key: string): string => {
     return translations[key] || key
   }
-  
+
   return (
-    <LanguageContext.Provider value={{ t }}>
+    <LanguageContext.Provider value={{ t, language: 'es' }}>
       {children}
     </LanguageContext.Provider>
   )
@@ -206,5 +208,5 @@ export function useLanguage() {
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider')
   }
-  return { t: context.t }
+  return { t: context.t, language: context.language }
 }

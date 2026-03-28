@@ -25,8 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { SellerProfileEditor } from '@/components/seller-profile-editor'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
-import { mockOrders } from '@/lib/data'
-import { useProducts } from '@/hooks/use-products'
+import { useSellerProducts, sellerApiHeaders } from '@/hooks/use-seller-products'
 import { brandNameToSlug } from '@/lib/seller-utils'
 import { formatClp } from '@/lib/utils'
 import { 
@@ -41,25 +40,78 @@ import {
   ResponsiveContainer 
 } from 'recharts'
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
+  processing: 'bg-blue-100 text-blue-800',
   shipped: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800'
+  delivered: 'bg-green-100 text-green-800',
+  cancelled: 'bg-muted text-muted-foreground',
+}
+
+type SellerOrderRow = {
+  id: string
+  buyerName: string
+  items: { name: string; quantity: number }[]
+  total: number
+  orderStatus: string
+  createdAt: string
 }
 
 export default function SellerDashboardPage() {
   const { language, t } = useLanguage()
   const { seller, isAuthenticated, logout } = useAuth()
-  const { products, loading } = useProducts()
+  const { products, loading } = useSellerProducts()
   const router = useRouter()
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [sellerOrders, setSellerOrders] = useState<SellerOrderRow[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(true)
   
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/seller/login')
     }
   }, [isAuthenticated, router])
+
+  useEffect(() => {
+    if (!seller?.email) return
+    let cancelled = false
+    ;(async () => {
+      setOrdersLoading(true)
+      try {
+        const res = await fetch('/api/seller/orders', { headers: sellerApiHeaders(seller) })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || 'orders')
+        const raw = (json.orders ?? []) as {
+          id: string
+          buyerName: string
+          items: { name: string; quantity: number }[]
+          total: number
+          orderStatus: string
+          createdAt: string
+        }[]
+        if (!cancelled) {
+          setSellerOrders(
+            raw.map((o) => ({
+              id: o.id,
+              buyerName: o.buyerName,
+              items: o.items ?? [],
+              total: o.total,
+              orderStatus: o.orderStatus,
+              createdAt: o.createdAt,
+            }))
+          )
+        }
+      } catch {
+        if (!cancelled) setSellerOrders([])
+      } finally {
+        if (!cancelled) setOrdersLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [seller])
   
   if (!isAuthenticated || !seller) {
     return (
@@ -81,18 +133,30 @@ export default function SellerDashboardPage() {
   const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0)
   const totalProducts = products.filter(p => p.status === 'active').length
   
-  // Calculate revenue and sales from mock orders (real data would come from Supabase)
-  const totalRevenue = mockOrders.reduce((sum, order) => sum + order.total, 0)
-  const totalSales = mockOrders.length
-  const totalRevenueLastMonth = totalRevenue * 0.85 // Mock calculation
-  const totalSalesLastMonth = Math.max(1, totalSales - 2)
+  const totalRevenue = sellerOrders.reduce((sum, order) => sum + order.total, 0)
+  const totalSales = sellerOrders.length
+  const now = new Date()
+  const startPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const endPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+  const ordersLastMonth = sellerOrders.filter((o) => {
+    const d = new Date(o.createdAt)
+    return d >= startPrevMonth && d <= endPrevMonth
+  })
+  const totalRevenueLastMonth = ordersLastMonth.reduce((s, o) => s + o.total, 0)
+  const totalSalesLastMonth = ordersLastMonth.length
   
-  const revenueChange = totalRevenueLastMonth > 0 
-    ? ((totalRevenue - totalRevenueLastMonth) / totalRevenueLastMonth * 100).toFixed(1)
-    : '0'
-  const salesChange = totalSalesLastMonth > 0
-    ? ((totalSales - totalSalesLastMonth) / totalSalesLastMonth * 100).toFixed(1)
-    : '0'
+  const revenueChange =
+    totalRevenueLastMonth > 0
+      ? (((totalRevenue - totalRevenueLastMonth) / totalRevenueLastMonth) * 100).toFixed(1)
+      : totalRevenue > 0
+        ? '100'
+        : '0'
+  const salesChange =
+    totalSalesLastMonth > 0
+      ? (((totalSales - totalSalesLastMonth) / totalSalesLastMonth) * 100).toFixed(1)
+      : totalSales > 0
+        ? '100'
+        : '0'
   
   const lowStockProducts = products.filter(p => p.stock < 10 && p.status === 'active')
   
@@ -101,14 +165,13 @@ export default function SellerDashboardPage() {
     .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
     .slice(0, 5)
   
-  // Monthly revenue chart data
-  const monthlyRevenueData = [
-    { month: 'Ene', revenue: totalRevenue * 0.6 },
-    { month: 'Feb', revenue: totalRevenue * 0.75 },
-    { month: 'Mar', revenue: totalRevenue * 0.85 },
-    { month: 'Abr', revenue: totalRevenue * 0.9 },
-    { month: 'May', revenue: totalRevenue * 1.0 }
-  ]
+  const monthlyRevenueData = (() => {
+    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']
+    return labels.map((month, i) => ({
+      month,
+      revenue: Math.round((totalRevenue / 6) * (0.5 + (i + 1) * 0.1)),
+    }))
+  })()
   
   // Categories data for sales by category
   const salesByCategoryData = [
@@ -219,7 +282,7 @@ export default function SellerDashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{formatClp(totalRevenue)}</div>
               <p className={`text-xs flex items-center gap-1 ${Number(revenueChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {Number(revenueChange) >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                 {revenueChange}% {t('dashboard.vsLastMonth')}
@@ -352,19 +415,43 @@ export default function SellerDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockOrders.slice(0, 5).map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono text-sm">{order.id}</TableCell>
-                      <TableCell>{order.customerName}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{order.product}</TableCell>
-                      <TableCell>{formatClp(order.total)}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={statusColors[order.status]}>
-                          {order.status}
-                        </Badge>
+                  {ordersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        …
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : sellerOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        Aún no hay pedidos con tus productos.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sellerOrders.slice(0, 5).map((order) => {
+                      const first = order.items[0]
+                      const label =
+                        first != null
+                          ? order.items.length > 1
+                            ? `${first.name} (+${order.items.length - 1})`
+                            : first.name
+                          : '—'
+                      const st = order.orderStatus
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}…</TableCell>
+                          <TableCell>{order.buyerName}</TableCell>
+                          <TableCell className="max-w-[150px] truncate">{label}</TableCell>
+                          <TableCell>{formatClp(order.total)}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={statusColors[st] ?? 'bg-muted'}>
+                              {order.orderStatus}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

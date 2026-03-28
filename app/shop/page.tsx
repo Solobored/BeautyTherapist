@@ -18,7 +18,7 @@ type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular'
 
 export default function ShopPage() {
   const { t } = useLanguage()
-  const { products, loading } = useProducts()
+  const { products, loading, error: productsError } = useProducts()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState<string[]>([])
@@ -35,6 +35,7 @@ export default function ShopPage() {
       const query = searchQuery.toLowerCase()
       result = result.filter(p => 
         p.name.toLowerCase().includes(query) ||
+        (p.nameEs && p.nameEs.toLowerCase().includes(query)) ||
         p.brand.toLowerCase().includes(query)
       )
     }
@@ -102,6 +103,12 @@ export default function ShopPage() {
             <h1 className="font-serif text-3xl md:text-4xl font-semibold text-foreground mb-2">{t('shop.title')}</h1>
             <p className="text-muted-foreground">{filteredProducts.length} products</p>
           </div>
+
+          {productsError && (
+            <p className="mb-6 text-sm text-destructive rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+              {t('common.error')}: {productsError}
+            </p>
+          )}
           
           {/* Search and Sort Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">

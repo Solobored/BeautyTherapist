@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Heart, ArrowLeft } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
-import { products } from '@/lib/data'
+import { useProducts } from '@/hooks/use-products'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
@@ -17,23 +17,27 @@ export default function WishlistPage() {
   const { language } = useLanguage()
   const { user, isAuthenticated, userType } = useAuth()
   const router = useRouter()
-  
+  const { products, loading } = useProducts()
+
   useEffect(() => {
     if (!isAuthenticated || userType !== 'buyer') {
       router.push('/auth/login?returnUrl=/account/wishlist')
     }
   }, [isAuthenticated, userType, router])
-  
+
+  const wishlistProducts = useMemo(() => {
+    if (!user || user.type !== 'buyer') return []
+    return products.filter((p) => user.wishlist.includes(p.id))
+  }, [products, user])
+
   if (!user || user.type !== 'buyer') {
     return null
   }
-  
-  const wishlistProducts = products.filter(p => user.wishlist.includes(p.id))
-  
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/account/dashboard">
@@ -46,13 +50,21 @@ export default function WishlistPage() {
             {language === 'es' ? 'Mi Lista de Deseos' : 'My Wishlist'}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {language === 'es' 
-              ? `${wishlistProducts.length} productos guardados`
-              : `${wishlistProducts.length} saved products`}
+            {loading
+              ? language === 'es'
+                ? 'Cargando…'
+                : 'Loading…'
+              : language === 'es'
+                ? `${wishlistProducts.length} productos guardados`
+                : `${wishlistProducts.length} saved products`}
           </p>
         </div>
-        
-        {wishlistProducts.length === 0 ? (
+
+        {loading ? (
+          <p className="text-muted-foreground text-center py-12">
+            {language === 'es' ? 'Cargando productos…' : 'Loading products…'}
+          </p>
+        ) : wishlistProducts.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
@@ -60,14 +72,12 @@ export default function WishlistPage() {
                 {language === 'es' ? 'Tu lista esta vacia' : 'Your wishlist is empty'}
               </h2>
               <p className="text-muted-foreground mb-6">
-                {language === 'es' 
+                {language === 'es'
                   ? 'Guarda tus productos favoritos haciendo clic en el corazon'
                   : 'Save your favorite products by clicking the heart icon'}
               </p>
               <Link href="/shop">
-                <Button>
-                  {language === 'es' ? 'Explorar Tienda' : 'Explore Shop'}
-                </Button>
+                <Button>{language === 'es' ? 'Explorar Tienda' : 'Explore Shop'}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -79,7 +89,7 @@ export default function WishlistPage() {
           </div>
         )}
       </main>
-      
+
       <Footer />
     </div>
   )

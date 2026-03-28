@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
-import { type Product } from '@/lib/data'
+import type { StoreProduct } from '@/lib/product-types'
 import { cn, formatClp } from '@/lib/utils'
 
 interface ProductCardProps {
-  product: Product
+  product: StoreProduct
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -21,15 +21,18 @@ export function ProductCard({ product }: ProductCardProps) {
   
   const inWishlist = isInWishlist(product.id)
   
+  const cardTitle = product.nameEs?.trim() || product.name
+  const cardImage = product.images[0] || '/placeholder.svg'
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     addItem({
       id: product.id,
-      name: product.name,
+      name: cardTitle,
       brand: product.brand,
       price: product.price,
-      image: product.images[0]
+      image: cardImage,
     })
   }
   
@@ -47,8 +50,8 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Image */}
         <div className="relative aspect-square bg-muted overflow-hidden">
           <Image
-            src={product.images[0]}
-            alt={name}
+            src={cardImage}
+            alt={cardTitle}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -65,7 +68,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </button>
           
           {/* Sale Badge */}
-          {product.comparePrice && (
+          {product.comparePrice != null && product.comparePrice > 0 && (
             <span className="absolute top-3 left-3 px-2 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-full">
               Sale
             </span>
@@ -82,19 +85,23 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Content */}
         <div className="p-4">
           <p className="text-xs text-accent font-medium uppercase tracking-wide mb-1">{product.brand}</p>
-          <h3 className="font-medium text-foreground line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+          <h3 className="font-medium text-foreground line-clamp-2 min-h-[2.5rem]">{cardTitle}</h3>
           
           {/* Rating */}
           <div className="flex items-center gap-1 mt-2">
             <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-            <span className="text-sm text-muted-foreground">{product.rating}</span>
-            <span className="text-sm text-muted-foreground">({product.reviewCount})</span>
+            {product.rating > 0 && (
+              <>
+                <span className="text-sm text-muted-foreground">{product.rating}</span>
+                <span className="text-sm text-muted-foreground">({product.reviewCount})</span>
+              </>
+            )}
           </div>
           
           {/* Price */}
           <div className="flex items-center gap-2 mt-2">
             <span className="font-semibold text-foreground">{formatClp(product.price)}</span>
-            {product.comparePrice && (
+            {product.comparePrice != null && product.comparePrice > 0 && (
               <span className="text-sm text-muted-foreground line-through">{formatClp(product.comparePrice)}</span>
             )}
           </div>
