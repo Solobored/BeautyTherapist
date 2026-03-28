@@ -111,18 +111,6 @@ export function Footer() {
                 <Send className="h-4 w-4" />
               </Button>
             </form>
-            
-            {/* Language Toggle */}
-            <div className="mt-6">
-              <button
-                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <span className={language === 'es' ? 'text-foreground font-semibold' : ''}>ES</span>
-                <span className="text-border">|</span>
-                <span className={language === 'en' ? 'text-foreground font-semibold' : ''}>EN</span>
-              </button>
-            </div>
           </div>
         </div>
         

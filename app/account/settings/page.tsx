@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ProfileEditor } from '@/components/profile-editor'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { Navbar } from '@/components/navbar'
@@ -145,40 +146,29 @@ export default function SettingsPage() {
         )}
         
         <div className="grid gap-6 max-w-2xl">
-          {/* Profile Photo */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{language === 'es' ? 'Foto de Perfil' : 'Profile Photo'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  {user.profilePhoto ? (
-                    <Image
-                      src={user.profilePhoto}
-                      alt={user.fullName}
-                      width={80}
-                      height={80}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-3xl font-semibold text-primary">
-                        {user.fullName.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  <button className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground shadow-lg">
-                    <Camera className="w-4 h-4" />
-                  </button>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">{user.fullName}</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Profile Editor - Photo, Background, Description */}
+          <ProfileEditor
+            fullName={user.fullName}
+            profilePhoto={user.profilePhoto}
+            backgroundPhoto={user.backgroundPhoto}
+            description={user.description}
+            onSave={async (data) => {
+              setIsLoading(true)
+              try {
+                await new Promise(resolve => setTimeout(resolve, 500))
+                updateBuyerProfile({
+                  profilePhoto: data.profilePhoto,
+                  backgroundPhoto: data.backgroundPhoto,
+                  description: data.description
+                })
+                setSuccessMessage(language === 'es' ? '¡Perfil actualizado!' : 'Profile updated!')
+                setTimeout(() => setSuccessMessage(''), 3000)
+              } finally {
+                setIsLoading(false)
+              }
+            }}
+            isLoading={isLoading}
+          />
           
           {/* Profile Information */}
           <Card>

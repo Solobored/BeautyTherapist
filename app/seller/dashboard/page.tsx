@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
-import { dashboardMetrics, mockOrders } from '@/lib/data'
+import { mockOrders } from '@/lib/data'
 import { useProducts } from '@/hooks/use-products'
 import { brandNameToSlug } from '@/lib/seller-utils'
 import { formatClp } from '@/lib/utils'
@@ -74,10 +74,44 @@ export default function SellerDashboardPage() {
     )
   }
   
-  const revenueChange = ((dashboardMetrics.totalRevenue - dashboardMetrics.totalRevenueLastMonth) / dashboardMetrics.totalRevenueLastMonth * 100).toFixed(1)
-  const salesChange = ((dashboardMetrics.totalSales - dashboardMetrics.totalSalesLastMonth) / dashboardMetrics.totalSalesLastMonth * 100).toFixed(1)
+  // Calculate real metrics from products
+  const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0)
+  const totalProducts = products.filter(p => p.status === 'active').length
   
-  const lowStockProducts = products.filter(p => p.stock < 10)
+  // Calculate revenue and sales from mock orders (real data would come from Supabase)
+  const totalRevenue = mockOrders.reduce((sum, order) => sum + order.total, 0)
+  const totalSales = mockOrders.length
+  const totalRevenueLastMonth = totalRevenue * 0.85 // Mock calculation
+  const totalSalesLastMonth = Math.max(1, totalSales - 2)
+  
+  const revenueChange = totalRevenueLastMonth > 0 
+    ? ((totalRevenue - totalRevenueLastMonth) / totalRevenueLastMonth * 100).toFixed(1)
+    : '0'
+  const salesChange = totalSalesLastMonth > 0
+    ? ((totalSales - totalSalesLastMonth) / totalSalesLastMonth * 100).toFixed(1)
+    : '0'
+  
+  const lowStockProducts = products.filter(p => p.stock < 10 && p.status === 'active')
+  
+  // Most viewed products
+  const mostViewedProducts = products
+    .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+    .slice(0, 5)
+  
+  // Monthly revenue chart data
+  const monthlyRevenueData = [
+    { month: 'Ene', revenue: totalRevenue * 0.6 },
+    { month: 'Feb', revenue: totalRevenue * 0.75 },
+    { month: 'Mar', revenue: totalRevenue * 0.85 },
+    { month: 'Abr', revenue: totalRevenue * 0.9 },
+    { month: 'May', revenue: totalRevenue * 1.0 }
+  ]
+  
+  // Categories data for sales by category
+  const salesByCategoryData = [
+    { category: 'Skincare', sales: Math.round(totalSales * 0.6) },
+    { category: 'Makeup', sales: Math.round(totalSales * 0.4) }
+  ]
   
   const handleLogout = () => {
     logout()
@@ -152,7 +186,7 @@ export default function SellerDashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${dashboardMetrics.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
               <p className={`text-xs flex items-center gap-1 ${Number(revenueChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {Number(revenueChange) >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                 {revenueChange}% {t('dashboard.vsLastMonth')}
@@ -168,7 +202,7 @@ export default function SellerDashboardPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardMetrics.totalSales}</div>
+              <div className="text-2xl font-bold">{totalSales}</div>
               <p className={`text-xs flex items-center gap-1 ${Number(salesChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {Number(salesChange) >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                 {salesChange}% {t('dashboard.vsLastMonth')}
@@ -184,7 +218,7 @@ export default function SellerDashboardPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardMetrics.availableStock}</div>
+              <div className="text-2xl font-bold">{totalStock}</div>
               <p className="text-xs text-muted-foreground">{t('common.units')}</p>
             </CardContent>
           </Card>
@@ -192,19 +226,15 @@ export default function SellerDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('dashboard.mostViewed')}
+                {language === 'es' ? 'Productos' : 'Products'}
               </CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-1">
-                {dashboardMetrics.mostViewedProducts.slice(0, 2).map((product, i) => (
-                  <p key={i} className="text-xs truncate">
-                    <span className="font-medium">{product.name}</span>
-                    <span className="text-muted-foreground ml-1">({product.views})</span>
-                  </p>
-                ))}
-              </div>
+              <div className="text-2xl font-bold">{totalProducts}</div>
+              <p className="text-xs text-muted-foreground">
+                {language === 'es' ? 'productos activos' : 'active products'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -220,7 +250,7 @@ export default function SellerDashboardPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={dashboardMetrics.monthlyRevenue}>
+                <LineChart data={monthlyRevenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -249,7 +279,7 @@ export default function SellerDashboardPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={dashboardMetrics.salesByCategory}>
+                <BarChart data={salesByCategoryData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -346,14 +376,14 @@ export default function SellerDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {dashboardMetrics.bestSellingProducts.map((product, i) => (
+              {mostViewedProducts.slice(0, 3).map((product, i) => (
                 <div key={i} className="flex items-center gap-4 p-4 bg-secondary/50 rounded-xl">
                   <div className="h-10 w-10 rounded-full bg-primary/30 flex items-center justify-center font-bold text-accent">
                     #{i + 1}
                   </div>
                   <div>
-                    <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.sold} sold</p>
+                    <p className="font-medium">{language === 'es' ? product.nameEs : product.name}</p>
+                    <p className="text-sm text-muted-foreground">{product.reviewCount} {language === 'es' ? 'reseñas' : 'reviews'}</p>
                   </div>
                 </div>
               ))}

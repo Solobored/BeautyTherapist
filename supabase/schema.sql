@@ -144,6 +144,23 @@ CREATE TABLE blog_posts (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- Product Reviews
+CREATE TABLE product_reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  reviewer_name TEXT NOT NULL,
+  reviewer_email TEXT,
+  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  title TEXT,
+  content TEXT NOT NULL,
+  verified_purchase BOOLEAN DEFAULT false,
+  helpful_count INT DEFAULT 0,
+  unhelpful_count INT DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 -- Indexes
 CREATE INDEX idx_profiles_email ON profiles(email);
 CREATE INDEX idx_brands_owner_id ON brands(owner_id);
@@ -161,6 +178,9 @@ CREATE INDEX idx_wishlist_user_id ON wishlist(user_id);
 CREATE INDEX idx_wishlist_product_id ON wishlist(product_id);
 CREATE INDEX idx_blog_posts_slug ON blog_posts(slug);
 CREATE INDEX idx_coupons_code ON coupons(code);
+CREATE INDEX idx_product_reviews_product_id ON product_reviews(product_id);
+CREATE INDEX idx_product_reviews_user_id ON product_reviews(user_id);
+CREATE INDEX idx_product_reviews_status ON product_reviews(status);
 -- Row Level Security (RLS) Policies
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -267,3 +287,14 @@ SELECT USING (
       OR expires_at > NOW()
     )
   );
+-- Product Reviews RLS
+ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read approved reviews" ON product_reviews FOR
+SELECT USING (status = 'approved');
+CREATE POLICY "Users can read their own reviews" ON product_reviews FOR
+SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can create reviews" ON product_reviews FOR
+INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+CREATE POLICY "Users can update their own reviews" ON product_reviews FOR
+UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own reviews" ON product_reviews FOR DELETE USING (auth.uid() = user_id);

@@ -71,16 +71,6 @@ export function Navbar() {
             
             {/* Right Side Actions */}
             <div className="flex items-center gap-2 md:gap-4">
-              {/* Language Toggle */}
-              <button
-                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                className="hidden sm:flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-secondary"
-              >
-                <span className={language === 'es' ? 'text-foreground' : ''}>ES</span>
-                <span className="text-border">|</span>
-                <span className={language === 'en' ? 'text-foreground' : ''}>EN</span>
-              </button>
-              
               {/* Search */}
               <Link href="/shop">
                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">

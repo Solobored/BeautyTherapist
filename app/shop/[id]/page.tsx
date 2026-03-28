@@ -7,6 +7,7 @@ import { Star, Minus, Plus, ShoppingBag, Heart, ChevronRight } from 'lucide-reac
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
+import { ProductReviews } from '@/components/product-reviews'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLanguage } from '@/contexts/language-context'
@@ -239,43 +240,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </TabsContent>
             
             <TabsContent value="reviews" className="pt-6">
-              {productReviews.length > 0 ? (
-                <div className="space-y-6 max-w-3xl">
-                  {productReviews.map((review) => (
-                    <div key={review.id} className="border-b border-border pb-6">
-                      <div className="flex items-start gap-4">
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
-                          <Image
-                            src={review.customerImage}
-                            alt={review.customerName}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{review.customerName}</span>
-                            <span className="text-xs text-muted-foreground">{review.date}</span>
-                          </div>
-                          <div className="flex mb-2">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`h-3 w-3 ${i < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground'}`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-muted-foreground text-sm">
-                            {language === 'es' ? review.textEs : review.text}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No reviews yet.</p>
-              )}
+              <ProductReviews
+                productId={product.id}
+                reviews={productReviews.map(r => ({
+                  id: r.id,
+                  productId: r.productId,
+                  reviewerName: r.customerName,
+                  rating: r.rating,
+                  content: language === 'es' ? r.textEs : r.text,
+                  date: r.date,
+                  verifiedPurchase: true
+                }))}
+                averageRating={product.rating}
+                totalReviews={product.reviewCount}
+              />
             </TabsContent>
           </Tabs>
           
