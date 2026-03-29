@@ -77,6 +77,9 @@ export interface Seller {
   brandLogo?: string
   brandBanner?: string
   brandDescription?: string
+  facebookUrl?: string
+  instagramUrl?: string
+  tiktokUrl?: string
   category: 'skincare' | 'makeup' | 'both'
 }
 
@@ -94,6 +97,7 @@ interface AuthContextType {
   registerSeller: (data: Omit<Seller, 'id' | 'type'> & { password: string }) => Promise<boolean>
   logout: () => void
   updateBuyerProfile: (data: Partial<Buyer>) => void
+  updateSellerProfile: (data: Partial<Seller>) => void
   addAddress: (address: Omit<Address, 'id'>) => void
   updateAddress: (id: string, address: Partial<Address>) => void
   deleteAddress: (id: string) => void
@@ -120,7 +124,11 @@ const mockSellers: (Seller & { password: string })[] = [
     phone: '+1 555 123 4567',
     country: 'United States',
     brandLogo: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
+    brandBanner: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
     brandDescription: 'Skincare y maquillaje premium elaborado con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras.',
+    facebookUrl: 'https://www.facebook.com/angebae',
+    instagramUrl: 'https://www.instagram.com/angebae',
+    tiktokUrl: 'https://www.tiktok.com/@angebae',
     category: 'both'
   }
 ]
@@ -236,7 +244,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone: data.phone,
       country: data.country,
       brandLogo: data.brandLogo,
+      brandBanner: data.brandBanner,
       brandDescription: data.brandDescription,
+      facebookUrl: data.facebookUrl,
+      instagramUrl: data.instagramUrl,
+      tiktokUrl: data.tiktokUrl,
       category: data.category
     }
     
@@ -251,6 +263,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const updateBuyerProfile = (data: Partial<Buyer>) => {
     if (user?.type === 'buyer') {
+      setUser({ ...user, ...data })
+    }
+  }
+
+  const updateSellerProfile = (data: Partial<Seller>) => {
+    if (user?.type === 'seller') {
       setUser({ ...user, ...data })
     }
   }
@@ -348,6 +366,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerSeller,
     logout,
     updateBuyerProfile,
+    updateSellerProfile,
     addAddress,
     updateAddress,
     deleteAddress,

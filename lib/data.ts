@@ -5,6 +5,9 @@ export interface Brand {
   description: string
   logo: string
   banner: string
+  facebook?: string
+  instagram?: string
+  tiktok?: string
 }
 
 export interface BlogPost {
@@ -36,7 +39,10 @@ export const brands: Brand[] = [
     slug: 'angebae',
     description: 'Skincare y maquillaje premium elaborados con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras para revelar tu belleza natural.',
     logo: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
-    banner: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop'
+    banner: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
+    facebook: 'https://www.facebook.com/angebae',
+    instagram: 'https://www.instagram.com/angebae',
+    tiktok: 'https://www.tiktok.com/@angebae'
   }
 ]
 

@@ -47,6 +47,10 @@ export type Database = {
           brand_slug: string;
           description: string | null;
           logo_url: string | null;
+          banner_url: string | null;
+          facebook_url: string | null;
+          instagram_url: string | null;
+          tiktok_url: string | null;
           category: string;
           is_active: boolean;
           created_at: string;

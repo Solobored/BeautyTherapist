@@ -28,6 +28,10 @@ INSERT INTO brands (
     brand_slug,
     description,
     logo_url,
+    banner_url,
+    facebook_url,
+    instagram_url,
+    tiktok_url,
     category,
     is_active
   )
@@ -36,6 +40,10 @@ SELECT angebae_seller.id,
   'angebae',
   'Clean beauty for every skin type. Skincare rituals and makeup crafted with care.',
   'https://res.cloudinary.com/demo/image/fetch/https://placehold.co/300x300?text=AngeBae+Logo',
+  'https://res.cloudinary.com/demo/image/fetch/https://placehold.co/1200x400?text=AngeBae+Banner',
+  'https://www.facebook.com/angebae',
+  'https://www.instagram.com/angebae',
+  'https://www.tiktok.com/@angebae',
   'both',
   true
 FROM angebae_seller ON CONFLICT (brand_slug) DO NOTHING;

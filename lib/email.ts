@@ -52,6 +52,40 @@ export async function sendOrderCancelledToBuyer(input: {
   }
 }
 
+export async function sendOrderShippedToBuyer(input: {
+  to: string
+  buyerName: string
+  orderId: string
+}) {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) {
+    console.warn('[email] RESEND_API_KEY no configurada; no se envía correo al comprador (shipped).')
+    return { sent: false as const }
+  }
+
+  const from =
+    process.env.RESEND_FROM_EMAIL?.trim() || 'Beauty & Therapy <onboarding@resend.dev>'
+
+  const html = `
+    <p>Hola ${escapeHtml(input.buyerName)},</p>
+    <p>Tu pedido <strong>${escapeHtml(input.orderId.slice(0, 8))}…</strong> fue marcado como <strong>enviado</strong>.</p>
+    <p>Recibirás otra notificación cuando se entregue. Si tienes preguntas, responde a este correo.</p>
+  `
+
+  try {
+    await resend().emails.send({
+      from,
+      to: input.to,
+      subject: 'Tu pedido está en camino',
+      html,
+    })
+    return { sent: true as const }
+  } catch (e) {
+    console.error('[email] Resend error (shipped)', e)
+    return { sent: false as const }
+  }
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, '&amp;')

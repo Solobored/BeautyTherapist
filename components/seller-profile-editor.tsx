@@ -18,8 +18,14 @@ interface SellerProfileEditorProps {
     brandLogo?: string
     brandBanner?: string
     brandDescription?: string
+    facebookUrl?: string
+    instagramUrl?: string
+    tiktokUrl?: string
   }) => Promise<void>
   isLoading?: boolean
+  facebookUrl?: string
+  instagramUrl?: string
+  tiktokUrl?: string
 }
 
 export function SellerProfileEditor({
@@ -27,13 +33,19 @@ export function SellerProfileEditor({
   brandLogo,
   brandBanner,
   brandDescription,
+  facebookUrl,
+  instagramUrl,
+  tiktokUrl,
   onSave,
   isLoading
 }: SellerProfileEditorProps) {
   const [formData, setFormData] = useState({
     brandLogo: brandLogo || '',
     brandBanner: brandBanner || '',
-    brandDescription: brandDescription || ''
+    brandDescription: brandDescription || '',
+    facebookUrl: facebookUrl || '',
+    instagramUrl: instagramUrl || '',
+    tiktokUrl: tiktokUrl || ''
   })
   const [previewLogo, setPreviewLogo] = useState<string | null>(null)
   const [previewBanner, setPreviewBanner] = useState<string | null>(null)
@@ -73,7 +85,10 @@ export function SellerProfileEditor({
         await onSave({
           brandLogo: formData.brandLogo || undefined,
           brandBanner: formData.brandBanner || undefined,
-          brandDescription: formData.brandDescription || undefined
+          brandDescription: formData.brandDescription || undefined,
+          facebookUrl: formData.facebookUrl || undefined,
+          instagramUrl: formData.instagramUrl || undefined,
+          tiktokUrl: formData.tiktokUrl || undefined
         })
       }
     } finally {
@@ -194,15 +209,59 @@ export function SellerProfileEditor({
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            Máximo 500 caracteres
-            ({formData.brandDescription.length}/500)
-          </p>
-        </div>
+          Máximo 500 caracteres
+          ({formData.brandDescription.length}/500)
+        </p>
+      </div>
 
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting || isLoading}
+      {/* Social links */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Redes sociales</Label>
+            <p className="text-sm text-muted-foreground">
+              Se mostrarán en tu página de marca para que los clientes visiten tus perfiles.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="facebookUrl">Facebook</Label>
+            <Input
+              id="facebookUrl"
+              placeholder="https://www.facebook.com/tu-marca"
+              value={formData.facebookUrl}
+              onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+              inputMode="url"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="instagramUrl">Instagram</Label>
+            <Input
+              id="instagramUrl"
+              placeholder="https://www.instagram.com/tu-marca"
+              value={formData.instagramUrl}
+              onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+              inputMode="url"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="tiktokUrl">TikTok</Label>
+            <Input
+              id="tiktokUrl"
+              placeholder="https://www.tiktok.com/@tu-marca"
+              value={formData.tiktokUrl}
+              onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+              inputMode="url"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <Button
+        onClick={handleSubmit}
+        disabled={isSubmitting || isLoading}
           className="w-full"
         >
           {isSubmitting || isLoading ? (

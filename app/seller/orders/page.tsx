@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, LayoutDashboard, LogOut, Package } from 'lucide-react'
+import { ArrowLeft, LayoutDashboard, LogOut, Package, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,6 +60,7 @@ export default function SellerOrdersPage() {
   const [cancelTarget, setCancelTarget] = useState<SellerOrder | null>(null)
   const [cancelReason, setCancelReason] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
+  const [shipBusyId, setShipBusyId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -133,6 +134,27 @@ export default function SellerOrdersPage() {
     }
   }
 
+  const markAsShipped = async (order: SellerOrder) => {
+    if (!seller) return
+    setShipBusyId(order.id)
+    try {
+      const res = await fetch(`/api/seller/orders/${order.id}/ship`, {
+        method: 'POST',
+        headers: sellerApiHeaders(seller),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'No se pudo marcar como enviado')
+      toast.success('Pedido marcado como enviado. Se notificó al comprador por email.')
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, orderStatus: 'shipped' } : o))
+      )
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error')
+    } finally {
+      setShipBusyId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border bg-card">
@@ -198,6 +220,20 @@ export default function SellerOrdersPage() {
                       {order.orderStatus}
                     </Badge>
                     <Badge variant="outline">{order.paymentStatus}</Badge>
+                    {order.orderStatus !== 'cancelled' &&
+                      order.orderStatus !== 'shipped' &&
+                      order.orderStatus !== 'delivered' && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => markAsShipped(order)}
+                          disabled={shipBusyId === order.id}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {shipBusyId === order.id ? 'Marcando…' : 'Producto enviado'}
+                        </Button>
+                      )}
                     {order.orderStatus !== 'cancelled' && (
                       <Button
                         type="button"

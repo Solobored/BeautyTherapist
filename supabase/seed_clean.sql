@@ -35,6 +35,10 @@ INSERT INTO brands (
     brand_slug,
     description,
     logo_url,
+    banner_url,
+    facebook_url,
+    instagram_url,
+    tiktok_url,
     category,
     is_active
   )
@@ -43,6 +47,10 @@ SELECT angelica_seller.id,
   'angebae',
   'Skincare y maquillaje premium para el cuidado de tu piel.',
   'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
+  'https://www.facebook.com/angebae',
+  'https://www.instagram.com/angebae',
+  'https://www.tiktok.com/@angebae',
   'both',
   true
 FROM angelica_seller ON CONFLICT (brand_slug) DO NOTHING;

@@ -70,7 +70,7 @@ type SellerAnalytics = {
 
 export default function SellerDashboardPage() {
   const { language, t } = useLanguage()
-  const { seller, isAuthenticated, logout } = useAuth()
+  const { seller, isAuthenticated, logout, updateSellerProfile } = useAuth()
   const { products, loading } = useSellerProducts()
   const router = useRouter()
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
@@ -266,14 +266,30 @@ export default function SellerDashboardPage() {
             brandLogo={seller.brandLogo}
             brandBanner={seller.brandBanner}
             brandDescription={seller.brandDescription}
+            facebookUrl={seller.facebookUrl}
+            instagramUrl={seller.instagramUrl}
+            tiktokUrl={seller.tiktokUrl}
             onSave={async (data) => {
               setIsLoadingProfile(true)
               try {
-                await new Promise(resolve => setTimeout(resolve, 500))
-                // Here you would normally call an update function
-                // updateSellerProfile(data)
+                const res = await fetch('/api/seller/profile', {
+                  method: 'PUT',
+                  headers: {
+                    ...sellerApiHeaders(seller),
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                })
+                const json = await res.json().catch(() => ({}))
+                if (!res.ok) throw new Error(json.error || 'No se pudo guardar la marca')
+                updateSellerProfile({
+                  ...data,
+                })
                 setSuccessMessage(language === 'es' ? '¡Marca actualizada!' : 'Brand updated!')
                 setTimeout(() => setSuccessMessage(''), 3000)
+              } catch (e) {
+                console.error(e)
+                setSuccessMessage(language === 'es' ? 'No se pudo guardar. Intenta de nuevo.' : 'Save failed. Try again.')
               } finally {
                 setIsLoadingProfile(false)
               }
