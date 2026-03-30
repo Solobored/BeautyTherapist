@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2, ShoppingBag, Store, Upload, X } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ShoppingBag, Upload, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -55,8 +55,11 @@ function RegisterContent() {
   
   useEffect(() => {
     const type = searchParams.get('type')
-    if (type === 'seller' || type === 'buyer') {
-      setAccountType(type)
+    // Solo permitimos buyer por ahora; mantenemos seller para futuro
+    if (type === 'buyer') {
+      setAccountType('buyer')
+    } else {
+      setAccountType('buyer')
     }
   }, [searchParams])
   
@@ -168,6 +171,8 @@ function RegisterContent() {
               <ShoppingBag className="w-4 h-4" />
               {language === 'es' ? 'Comprar como Cliente' : 'Shop as Customer'}
             </button>
+            {/* Toggle de vendedor oculto temporalmente */}
+            {/*
             <button
               onClick={() => setAccountType('seller')}
               className={cn(
@@ -180,6 +185,7 @@ function RegisterContent() {
               <Store className="w-4 h-4" />
               {language === 'es' ? 'Vender mi Marca' : 'Sell my Brand'}
             </button>
+            */}
           </div>
         </div>
         

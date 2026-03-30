@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingBag, Store, ArrowRight } from 'lucide-react'
+import { ShoppingBag, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useLanguage } from '@/contexts/language-context'
@@ -68,7 +68,8 @@ export default function AuthPage() {
             </CardContent>
           </Card>
           
-          {/* Seller Card */}
+          {/* Seller card oculto temporalmente para pausar nuevas marcas */}
+          {/*
           <Card className="relative overflow-hidden group hover:shadow-lg transition-shadow border-2 hover:border-accent/50">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent" />
             <CardHeader className="relative">
@@ -111,6 +112,7 @@ export default function AuthPage() {
               </Link>
             </CardContent>
           </Card>
+          */}
         </div>
         
         <div className="text-center mt-8">

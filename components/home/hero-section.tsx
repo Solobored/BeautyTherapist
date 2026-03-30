@@ -39,6 +39,8 @@ export function HeroSection() {
           >
             <Link href="/shop">{t('hero.shopNow')}</Link>
           </Button>
+          {/* Seller CTA temporalmente oculto para pausar altas de marcas */}
+          {/*
           <Button 
             asChild
             size="lg"
@@ -47,6 +49,7 @@ export function HeroSection() {
           >
             <Link href="/seller/register">{t('hero.sellWithUs')}</Link>
           </Button>
+          */}
         </div>
         
         {/* Featured brands */}

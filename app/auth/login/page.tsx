@@ -65,8 +65,8 @@ function LoginContent() {
             </CardTitle>
             <CardDescription>
               {language === 'es' 
-                ? 'Ingresa a tu cuenta de cliente o vendedor'
-                : 'Sign in to your customer or seller account'}
+                ? 'Ingresa a tu cuenta de cliente (si ya eres vendedor, usa tu misma cuenta)'
+                : 'Sign in to your customer account (existing sellers can sign in too)'}
             </CardDescription>
           </CardHeader>
           <CardContent>

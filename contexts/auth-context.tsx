@@ -228,32 +228,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
   
   const registerSeller = async (data: Omit<Seller, 'id' | 'type'> & { password: string }): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const generateId = (prefix: string) => {
-      if (typeof window === 'undefined') return `${prefix}-temp`
-      return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
-    }
-    
-    const newSeller: Seller = {
-      id: generateId('seller'),
-      type: 'seller',
-      brandName: data.brandName,
-      ownerName: data.ownerName,
-      email: data.email,
-      phone: data.phone,
-      country: data.country,
-      brandLogo: data.brandLogo,
-      brandBanner: data.brandBanner,
-      brandDescription: data.brandDescription,
-      facebookUrl: data.facebookUrl,
-      instagramUrl: data.instagramUrl,
-      tiktokUrl: data.tiktokUrl,
-      category: data.category
-    }
-    
-    setUser(newSeller)
-    return true
+    // Registro de nuevos sellers deshabilitado temporalmente; dejar login intacto
+    await new Promise(resolve => setTimeout(resolve, 200))
+    return false
   }
   
   const logout = () => {
