@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Camera, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,6 +50,20 @@ export function SellerProfileEditor({
   const [previewLogo, setPreviewLogo] = useState<string | null>(null)
   const [previewBanner, setPreviewBanner] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Sincroniza cuando llegan datos nuevos desde el servidor/contexto
+  useEffect(() => {
+    setFormData({
+      brandLogo: brandLogo || '',
+      brandBanner: brandBanner || '',
+      brandDescription: brandDescription || '',
+      facebookUrl: facebookUrl || '',
+      instagramUrl: instagramUrl || '',
+      tiktokUrl: tiktokUrl || ''
+    })
+    setPreviewLogo(null)
+    setPreviewBanner(null)
+  }, [brandLogo, brandBanner, brandDescription, facebookUrl, instagramUrl, tiktokUrl])
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

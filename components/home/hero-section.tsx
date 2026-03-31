@@ -55,7 +55,7 @@ export function HeroSection() {
         {/* Featured brands */}
         <div className="mt-16 pt-8 border-t border-border/50">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">Featured Brand</p>
-          <span className="font-serif text-2xl text-foreground">AngeBae</span>
+          <span className="font-serif text-3xl md:text-4xl text-foreground">AngeBae</span>
         </div>
       </div>
     </section>

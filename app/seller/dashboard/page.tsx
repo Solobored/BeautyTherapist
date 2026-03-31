@@ -88,6 +88,26 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     if (!seller?.email) return
     let cancelled = false
+    // Cargar perfil del vendedor (para reflejar descripción/redes actualizadas)
+    ;(async () => {
+      try {
+        const res = await fetch('/api/seller/profile', { headers: sellerApiHeaders(seller) })
+        const json = await res.json().catch(() => ({}))
+        if (!cancelled && res.ok && json.brand) {
+          updateSellerProfile({
+            brandName: json.brand.brand_name ?? seller.brandName,
+            brandLogo: json.brand.logo_url ?? seller.brandLogo,
+            brandBanner: json.brand.banner_url ?? seller.brandBanner,
+            brandDescription: json.brand.description ?? seller.brandDescription,
+            facebookUrl: json.brand.facebook_url ?? seller.facebookUrl,
+            instagramUrl: json.brand.instagram_url ?? seller.instagramUrl,
+            tiktokUrl: json.brand.tiktok_url ?? seller.tiktokUrl,
+          })
+        }
+      } catch {
+        /* ignore */
+      }
+    })()
     ;(async () => {
       setOrdersLoading(true)
       try {
@@ -204,7 +224,8 @@ export default function SellerDashboardPage() {
               Beauty & Therapy
             </Link>
             
-            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+            {/* Acciones desktop */}
+            <div className="hidden md:flex flex-wrap items-center gap-2 md:gap-3">
               <Button asChild variant="outline" size="sm">
                 <Link href={`/brands/${brandNameToSlug(seller.brandName)}`}>
                   <Store className="h-4 w-4 mr-2" />
@@ -238,6 +259,40 @@ export default function SellerDashboardPage() {
               <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Acciones mobile: barra desplazable */}
+            <div className="md:hidden flex-1 flex justify-end">
+              <div className="flex items-center gap-2 overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <Button asChild variant="outline" size="icon" className="shrink-0">
+                  <Link href={`/brands/${brandNameToSlug(seller.brandName)}`}>
+                    <Store className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                  <Link href="/seller/products">
+                    <Package className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                  <Link href="/seller/orders">
+                    <ClipboardList className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                  <Link href="/seller/blog">
+                    <FileText className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="icon" className="bg-accent hover:bg-accent/90 text-accent-foreground shrink-0">
+                  <Link href="/seller/products/new">
+                    <Plus className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="shrink-0">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
