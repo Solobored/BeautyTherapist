@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
@@ -78,6 +78,7 @@ export default function SellerDashboardPage() {
   const [sellerOrders, setSellerOrders] = useState<SellerOrderRow[]>([])
   const [orderAnalytics, setOrderAnalytics] = useState<SellerAnalytics | null>(null)
   const [ordersLoading, setOrdersLoading] = useState(true)
+  const profileFetched = useRef(false)
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -88,26 +89,32 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     if (!seller?.email) return
     let cancelled = false
-    // Cargar perfil del vendedor (para reflejar descripción/redes actualizadas)
-    ;(async () => {
-      try {
-        const res = await fetch('/api/seller/profile', { headers: sellerApiHeaders(seller) })
-        const json = await res.json().catch(() => ({}))
-        if (!cancelled && res.ok && json.brand) {
-          updateSellerProfile({
-            brandName: json.brand.brand_name ?? seller.brandName,
-            brandLogo: json.brand.logo_url ?? seller.brandLogo,
-            brandBanner: json.brand.banner_url ?? seller.brandBanner,
-            brandDescription: json.brand.description ?? seller.brandDescription,
-            facebookUrl: json.brand.facebook_url ?? seller.facebookUrl,
-            instagramUrl: json.brand.instagram_url ?? seller.instagramUrl,
-            tiktokUrl: json.brand.tiktok_url ?? seller.tiktokUrl,
-          })
+
+    // Cargar perfil del vendedor solo una vez para evitar loop de renders
+    if (!profileFetched.current) {
+      profileFetched.current = true
+      ;(async () => {
+        try {
+          const res = await fetch('/api/seller/profile', { headers: sellerApiHeaders(seller) })
+          const json = await res.json().catch(() => ({}))
+          if (!cancelled && res.ok && json.brand) {
+            const b = json.brand
+            updateSellerProfile({
+              brandName: b.brand_name ?? seller.brandName,
+              brandLogo: b.logo_url ?? seller.brandLogo,
+              brandBanner: b.banner_url ?? seller.brandBanner,
+              brandDescription: b.description ?? seller.brandDescription,
+              facebookUrl: b.facebook_url ?? seller.facebookUrl,
+              instagramUrl: b.instagram_url ?? seller.instagramUrl,
+              tiktokUrl: b.tiktok_url ?? seller.tiktokUrl,
+            })
+          }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
-      }
-    })()
+      })()
+    }
+
     ;(async () => {
       setOrdersLoading(true)
       try {
@@ -148,7 +155,10 @@ export default function SellerDashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [seller])
+    return () => {
+      cancelled = true
+    }
+  }, [seller?.email, updateSellerProfile, seller])
   
   if (!isAuthenticated || !seller) {
     return (
