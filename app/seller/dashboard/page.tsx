@@ -148,7 +148,6 @@ export default function SellerDashboardPage() {
               paymentStatus: o.paymentStatus,
             }))
           )
-          )
           const a = json.analytics as SellerAnalytics | undefined
           setOrderAnalytics(a ?? null)
         }
