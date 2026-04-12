@@ -1,11 +1,53 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
+import { supabase } from '@/lib/supabase'
+import type { Brand } from '@/lib/data'
 
 export function HeroSection() {
   const { t } = useLanguage()
+  const [featuredBrand, setFeaturedBrand] = useState<Brand | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('brands')
+          .select('id, brand_name, brand_slug, description, logo_url, banner_url')
+          .eq('brand_slug', 'angebae')
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (error) throw error
+
+        if (!cancelled && data) {
+          setFeaturedBrand({
+            id: data.id,
+            name: data.brand_name,
+            slug: data.brand_slug,
+            description: data.description || '',
+            logo: data.logo_url || '/placeholder.svg',
+            banner: data.banner_url || '/placeholder.svg',
+          })
+        }
+      } catch (e) {
+        console.error('Error loading featured brand:', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
   
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
@@ -39,24 +81,51 @@ export function HeroSection() {
           >
             <Link href="/shop">{t('hero.shopNow')}</Link>
           </Button>
-          {/* Seller CTA temporalmente oculto para pausar altas de marcas */}
-          {/*
-          <Button 
-            asChild
-            size="lg"
-            variant="outline"
-            className="px-8 rounded-full border-2"
-          >
-            <Link href="/seller/register">{t('hero.sellWithUs')}</Link>
-          </Button>
-          */}
         </div>
         
-        {/* Featured brands */}
-        <div className="mt-16 pt-8 border-t border-border/50">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">Featured Brand</p>
-          <span className="font-serif text-3xl md:text-4xl text-foreground">AngeBae</span>
-        </div>
+        {/* Featured Brand Section */}
+        {!loading && featuredBrand && (
+          <div className="mt-16 pt-8 border-t border-border/50">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6">Featured Brand</p>
+            
+            <Link href={`/brands/${featuredBrand.slug}`} className="inline-block group">
+              <div className="flex flex-col items-center gap-4 mb-4">
+                {/* Logo */}
+                <div className="relative h-20 w-20 rounded-full overflow-hidden border-2 border-accent/30 group-hover:border-accent transition-colors bg-card">
+                  <Image
+                    src={featuredBrand.logo}
+                    alt={featuredBrand.name}
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg'
+                    }}
+                  />
+                </div>
+                
+                {/* Brand Info */}
+                <div>
+                  <h3 className="font-serif text-3xl md:text-4xl font-semibold text-foreground">
+                    {featuredBrand.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                    {featuredBrand.description.substring(0, 100)}...
+                  </p>
+                </div>
+              </div>
+              
+              <Button variant="outline" className="mt-4 rounded-full">
+                Ver Tienda →
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {loading && (
+          <div className="mt-16 pt-8 border-t border-border/50 text-muted-foreground">
+            Cargando marca destacada...
+          </div>
+        )}
       </div>
     </section>
   )
