@@ -125,7 +125,7 @@ const mockSellers: (Seller & { password: string })[] = [
     country: 'United States',
     brandLogo: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
     brandBanner: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
-    brandDescription: 'Skincare y maquillaje premium elaborado con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras.',
+    brandDescription: 'Skincare y maquillaje premium elaborado con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras para revelar tu belleza natural.',
     facebookUrl: 'https://www.facebook.com/angebae',
     instagramUrl: 'https://www.instagram.com/angebae',
     tiktokUrl: 'https://www.tiktok.com/@angebae',
@@ -181,6 +181,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (seller) {
       const { password: _, ...sellerData } = seller
       setUser(sellerData)
+      
+      // También intenta sincronizar datos desde Supabase en backend (sin bloquear)
+      // El dashboard completará la sincronización cuando cargue
+      setTimeout(async () => {
+        try {
+          const res = await fetch('/api/seller/profile', {
+            method: 'GET',
+            headers: {
+              'x-seller-email': seller.email,
+              'x-brand-slug': seller.brandName?.toLowerCase().replace(/\s+/g, '-') || ''
+            }
+          })
+          if (res.ok) {
+            const json = await res.json()
+            if (json.brand) {
+              const b = json.brand
+              // Actualizar el contexto con datos de Supabase
+              setUser(prev => prev && prev.type === 'seller' ? {
+                ...prev,
+                brandName: b.brand_name ?? prev.brandName,
+                brandLogo: b.logo_url ?? prev.brandLogo,
+                brandBanner: b.banner_url ?? prev.brandBanner,
+                brandDescription: b.description ?? prev.brandDescription,
+                facebookUrl: b.facebook_url ?? prev.facebookUrl,
+                instagramUrl: b.instagram_url ?? prev.instagramUrl,
+                tiktokUrl: b.tiktok_url ?? prev.tiktokUrl,
+              } : prev)
+            }
+          }
+        } catch (e) {
+          // Silenciar errores de sincronización post-login
+          console.debug('Profile sync after login failed', e)
+        }
+      }, 100)
+      
       return { success: true, redirectTo: '/seller/dashboard' }
     }
     

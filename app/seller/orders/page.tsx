@@ -278,6 +278,32 @@ export default function SellerOrdersPage() {
                               .filter(Boolean)
                               .join(', ')}
                           </p>
+                          {/* Mostrar geolocalización si está disponible */}
+                          {(order.shippingAddress as Record<string, any>).lat && (order.shippingAddress as Record<string, any>).lng && (
+                            <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                📍 Ubicación exacta
+                              </p>
+                              <p className="font-mono text-xs">
+                                {(order.shippingAddress as Record<string, any>).lat.toFixed(4)}, {(order.shippingAddress as Record<string, any>).lng.toFixed(4)}
+                              </p>
+                              <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="mt-1"
+                              >
+                                <a
+                                  href={`https://www.google.com/maps/?q=${(order.shippingAddress as Record<string, any>).lat},${(order.shippingAddress as Record<string, any>).lng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs"
+                                >
+                                  Ver en Google Maps →
+                                </a>
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SellerProfileEditor } from '@/components/seller-profile-editor'
+import { ShippingLocationsMap } from '@/components/seller/ShippingLocationsMap'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useSellerProducts, sellerApiHeaders } from '@/hooks/use-seller-products'
@@ -51,10 +52,17 @@ const statusColors: Record<string, string> = {
 type SellerOrderRow = {
   id: string
   buyerName: string
+  buyerEmail?: string
+  buyerPhone?: string | null
   items: { name: string; quantity: number }[]
   total: number
   orderStatus: string
   createdAt: string
+  shippingAddress?: Record<string, any> | null
+  subtotal?: number
+  shippingCost?: number
+  discount?: number
+  paymentStatus?: string
 }
 
 type SellerAnalytics = {
@@ -121,24 +129,25 @@ export default function SellerDashboardPage() {
         const res = await fetch('/api/seller/orders', { headers: sellerApiHeaders(seller) })
         const json = await res.json()
         if (!res.ok) throw new Error(json.error || 'orders')
-        const raw = (json.orders ?? []) as {
-          id: string
-          buyerName: string
-          items: { name: string; quantity: number }[]
-          total: number
-          orderStatus: string
-          createdAt: string
-        }[]
+        const raw = (json.orders ?? []) as any[]
         if (!cancelled) {
           setSellerOrders(
             raw.map((o) => ({
               id: o.id,
               buyerName: o.buyerName,
+              buyerEmail: o.buyerEmail,
+              buyerPhone: o.buyerPhone,
               items: o.items ?? [],
               total: o.total,
               orderStatus: o.orderStatus,
               createdAt: o.createdAt,
+              shippingAddress: o.shippingAddress ?? null,
+              subtotal: o.subtotal,
+              shippingCost: o.shippingCost,
+              discount: o.discount,
+              paymentStatus: o.paymentStatus,
             }))
+          )
           )
           const a = json.analytics as SellerAnalytics | undefined
           setOrderAnalytics(a ?? null)
@@ -485,6 +494,32 @@ export default function SellerDashboardPage() {
             </CardContent>
           </Card>
         </div>
+        
+        {/* Shipping Locations Map */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📍 Mapa de Puntos de Envío
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Visualiza todos los puntos de entrega de tus pedidos que tienen geolocalización
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ShippingLocationsMap 
+              locations={sellerOrders
+                .filter(order => (order as any).shippingAddress?.lat && (order as any).shippingAddress?.lng)
+                .map(order => ({
+                  orderId: order.id,
+                  lat: (order as any).shippingAddress?.lat,
+                  lng: (order as any).shippingAddress?.lng,
+                  buyerName: order.buyerName,
+                  city: (order as any).shippingAddress?.city || 'Ciudad desconocida'
+                }))
+              }
+            />
+          </CardContent>
+        </Card>
         
         {/* Recent Orders & Low Stock */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

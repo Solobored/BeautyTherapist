@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 import type { MapPinValue } from '@/components/checkout/AddressMapPicker'
 import { CHILE_SHIPPING_REGIONS } from '@/lib/chile-shipping'
+import { validateCommuneInRegion, getRegionForCommune } from '@/lib/chile-regions-communes'
 
 const AddressMapPicker = dynamic(
   () => import('@/components/checkout/AddressMapPicker').then((m) => m.AddressMapPicker),
@@ -293,6 +294,20 @@ export default function CheckoutPage() {
       setSubmitError('Selecciona región y tipo de entrega y espera la cotización de envío.')
       return
     }
+    
+    // Validar que la región y ciudad sean consistentes en Chile
+    if (isChile && formData.shippingKind === 'national' && formData.chileRegionCode && formData.city) {
+      const detectedRegion = getRegionForCommune(formData.city)
+      if (detectedRegion && detectedRegion !== formData.chileRegionCode) {
+        setSubmitError(
+          `La comuna "${formData.city}" pertenece a la región ${CHILE_SHIPPING_REGIONS.find((r) => r.code === detectedRegion)?.label || detectedRegion}, ` +
+          `pero seleccionaste ${CHILE_SHIPPING_REGIONS.find((r) => r.code === formData.chileRegionCode)?.label || formData.chileRegionCode}. ` +
+          `Por favor, corrige la región o verifica la comuna para evitar fraudes de envío.`
+        )
+        return
+      }
+    }
+    
     setIsSubmitting(true)
     setSubmitError(null)
 
