@@ -18,17 +18,22 @@ interface ShippingMapProps {
   locations: ShippingLocation[]
 }
 
-const DynamicMap = dynamic(() => import('./ShippingMapPreview').then(m => m.ShippingMapPreview), {
-  ssr: false,
-  loading: () => (
-    <div className="h-80 rounded-lg border border-border bg-muted flex items-center justify-center">
-      <p className="text-muted-foreground">Cargando mapa de envíos...</p>
-    </div>
-  ),
-})
+const DynamicMap = dynamic(
+  () => import('./ShippingMapPreview').then(mod => {
+    return mod.ShippingMapPreview as any
+  }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-80 rounded-lg border border-border bg-muted flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando mapa de envíos...</p>
+      </div>
+    ),
+  }
+)
 
 export function ShippingLocationsMap({ locations }: ShippingMapProps) {
-  const hasLocations = useMemo(() => locations.length > 0, [locations])
+  const hasLocations = useMemo(() => locations && locations.length > 0, [locations])
 
   if (!hasLocations) {
     return (
@@ -41,5 +46,9 @@ export function ShippingLocationsMap({ locations }: ShippingMapProps) {
     )
   }
 
-  return <DynamicMap locations={locations} />
+  return (
+    <div className="w-full">
+      <DynamicMap locations={locations} />
+    </div>
+  )
 }
