@@ -561,7 +561,7 @@ export default function CheckoutPage() {
                           onValueChange={(code) => {
                             handleInputChange('chileRegionCode', code)
                             // Actualizar comunas cuando cambia región
-                            const regionData = CHILE_REGIONS_COMMUNES.find((r) => r.code === code)
+                            const regionData = CHILE_REGIONS_COMMUNES[code]
                             if (regionData) {
                               setAvailableCommunes(regionData.communes.sort())
                             }
@@ -612,14 +612,18 @@ export default function CheckoutPage() {
                       <Select
                         value={formData.country}
                         onValueChange={(value) => {
-                          handleInputChange('country', value)
-                          // Limpiar región y ciudad cuando cambia país
-                          setFormData(prev => ({
-                            ...prev,
-                            chileRegionCode: '',
-                            city: '',
-                            state: ''
-                          }))
+                          setFormData(prev => {
+                            const isChile = value === 'Chile'
+                            return {
+                              ...prev,
+                              country: value,
+                              // Auto-select international shipping if not Chile
+                              shippingKind: isChile ? prev.shippingKind : 'international',
+                              chileRegionCode: '',
+                              city: '',
+                              state: ''
+                            }
+                          })
                           setAvailableCommunes([])
                           setMapPin(null)
                         }}
@@ -668,13 +672,25 @@ export default function CheckoutPage() {
                     <Label className="mb-1 block">Ámbito del envío</Label>
                     <RadioGroup
                       value={formData.shippingKind}
-                      onValueChange={(value) =>
+                      onValueChange={(value) => {
+                        // Solo permitir cambiar a 'national' si el país es Chile
+                        if (value === 'national' && formData.country !== 'Chile') {
+                          return
+                        }
                         handleInputChange('shippingKind', value as 'national' | 'international')
-                      }
+                      }}
                       className="space-y-3"
                     >
-                      <label className="flex items-center gap-3 p-4 rounded-xl border border-border cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
-                        <RadioGroupItem value="national" id="ship-national" />
+                      <label className={`flex items-center gap-3 p-4 rounded-xl border border-border transition-colors ${
+                        formData.country === 'Chile' 
+                          ? 'cursor-pointer hover:border-accent has-[:checked]:border-accent has-[:checked]:bg-accent/5'
+                          : 'cursor-not-allowed opacity-50'
+                      }`}>
+                        <RadioGroupItem 
+                          value="national" 
+                          id="ship-national"
+                          disabled={formData.country !== 'Chile'}
+                        />
                         <div className="flex-1">
                           <p className="font-medium">Chile</p>
                           <p className="text-sm text-muted-foreground">

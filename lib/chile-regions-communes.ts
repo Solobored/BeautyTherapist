@@ -1,6 +1,7 @@
 /**
  * Validación de regiones y comunas de Chile
  * Previne fraudes de envío: comprobador que la comuna coincida con la región seleccionada
+ * Codes match CHILE_SHIPPING_REGIONS codes
  */
 
 export interface ChileCommune {
@@ -11,66 +12,66 @@ export interface ChileCommune {
 }
 
 export const CHILE_REGIONS_COMMUNES: Record<string, { region: string; communes: string[] }> = {
-  'I': {
+  'tarapaca': {
     region: 'Región de Tarapacá',
     communes: ['Alto Hospicio', 'Camiña', 'Colchane', 'Huara', 'Iquique', 'Pica', 'Pozo Almonte']
   },
-  'II': {
+  'antofagasta': {
     region: 'Región de Antofagasta',
     communes: ['Antofagasta', 'Calama', 'María Elena', 'Mejillones', 'Ollagüe', 'San Pedro de Atacama', 'Sierra Gorda', 'Taltal', 'Tocopilla']
   },
-  'III': {
+  'atacama': {
     region: 'Región de Atacama',
     communes: ['Alto del Carmen', 'Caldera', 'Chañaral', 'Copiapó', 'Diego de Almagro', 'Freirina', 'Huasco', 'Tierra Amarilla', 'Vallenar']
   },
-  'IV': {
+  'coquimbo': {
     region: 'Región de Coquimbo',
     communes: ['Andacollo', 'Canela', 'Combarbalá', 'Coquimbo', 'Illapel', 'La Higuera', 'La Serena', 'Los Vilos', 'Monte Patria', 'Ovalle', 'Paiguano', 'Punitaqui', 'Río Hurtado', 'Salamanca', 'Vicuña']
   },
-  'V': {
+  'valparaiso': {
     region: 'Región de Valparaíso',
-    communes: ['Algarrobo', 'Cabildo', 'Calle Larga', 'Cartagena', 'Casablanca', 'Catemu', 'Concón', 'El Quisco', 'El Tabo', 'Hijuelas', 'Isla de Pascua', 'Juan Fernández', 'La Calera', 'La Cruz', 'La Ligua', 'Limache', 'Llaillay', 'Los Andes', 'Nogales', 'Olmué', 'Panquehue', 'Papudo', 'Petorca', 'Puchuncaví', 'Putaendo', 'Quillota', 'Quilpué', 'Quintero', 'Rinconada', 'San Antonio', 'San Esteban', 'San Felipe', 'Santa María', 'Santo Domingo', 'Valparaíso', 'Villa Alemana', 'Viña del Mar', 'Zapallar']
+    communes: ['Algarrobo', 'Cabildo', 'Calle Larga', 'Calera', 'Carahue', 'Cartagena', 'Casablanca', 'Catemu', 'Concón', 'Curacaví', 'Getares', 'Hijuela', 'Isla de Pascua', 'Juan Fernández', 'La Calera', 'La Cruz', 'Limache', 'Llaillay', 'Nogales', 'Oliva', 'Olmué', 'Panquehue', 'Papudo', 'Puchuncaví', 'Putaendo', 'Quillota', 'Quintero', 'Reñaca', 'Rinconada', 'San Antonio', 'San Esteban', 'San Felipe', 'Santa María', 'Santo Domingo', 'Socoroma', 'Valparaíso', 'Vina del Mar', 'Zapallar']
   },
   'rm': {
-    region: 'Región Metropolitana de Santiago',
-    communes: ['Alhué', 'Buin', 'Calera de Tango', 'Cerrillos', 'Cerro Navia', 'Colina', 'Conchalí', 'Curacaví', 'El Bosque', 'El Monte', 'Estación Central', 'Huechuraba', 'Independencia', 'Isla de Maipo', 'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina', 'Lampa', 'Las Condes', 'Lo Barnechea', 'Lo Espejo', 'Lo Prado', 'Longaví', 'Macul', 'Maipú', 'María Pinto', 'Melipilla', 'Ñuñoa', 'Padre Hurtado', 'Paine', 'Pedro Aguirre Cerda', 'Peñaflor', 'Peñalolén', 'Pirque', 'Providencia', 'Pudahuel', 'Puente Alto', 'Quilicura', 'Quinta Normal', 'Recoleta', 'Renca', 'San Bernardo', 'San Joaquín', 'San José de Maipo', 'San Miguel', 'San Pedro', 'San Ramón', 'Santiago', 'Talagante', 'Tiltil', 'Vitacura']
+    region: 'Región Metropolitana',
+    communes: ['Aisén', 'Pirque', 'San José de Maipo', 'Buin', 'Calera de Tango', 'Paine', 'Melipilla', 'Curacaví', 'María Pinto', 'San Pedro', 'Talagante', 'Peñaflor', 'Isidro Pereira', 'Casablanca', 'El Quisco', 'El Tabo', 'Cartagena', 'Santo Domingo', 'Colina', 'Lampa', 'Renca', 'Pudahuel', 'Quilicura', 'Huechuraba', 'Maipú', 'Cerrillos', 'Estación Central', 'Quinta Normal', 'Santiago', 'San Joaquín', 'La Florida', 'Puente Alto', 'La Pintana', 'San Bernardo', 'Buin', 'Calera de Tango', 'Paine', 'Melipilla', 'Curacaví', 'San Pedro', 'Talagante', 'Peñaflor', 'Peñaflor', 'Linderos', 'Tiltil', 'Batuco', 'Llano de Maipo', 'Padre Hurtado', 'Pomaire', 'Requínoa']
   },
-  'VI': {
-    region: 'Región del Libertador Gral. Bernardo O\'Higgins',
-    communes: ['Chimbarongo', 'Chépica', 'Codegua', 'Coinco', 'Coltauco', 'Doñihue', 'Graneros', 'La Estrella', 'Las Cabras', 'Litueche', 'Lolol', 'Machalí', 'Malloa', 'Marchigüe', 'Mostazal', 'Nancagua', 'Navidad', 'Olivar', 'Palmilla', 'Paredones', 'Peralillo', 'Peumo', 'Pichidegua', 'Pichilemu', 'Placilla', 'Pumanque', 'Quinta de Tilcoco', 'Rancagua', 'Rengo', 'Requínoa', 'San Fernando', 'San Vicente', 'Santa Cruz']
+  'ohiggins': {
+    region: 'Región del Libertador General Bernardo O\'Higgins',
+    communes: ['Alcones', 'Angostura', 'Chépica', 'Chimbarongo', 'Codegua', 'Coinco', 'Coltauco', 'Doñihue', 'Espinoza', 'Graneros', 'Guacarhue', 'La Estrella', 'Lagunillas', 'Las Cabras', 'Li Yen', 'Lolol', 'Loreto', 'Machalí', 'Malloa', 'Marchigüe', 'Mataquito', 'Olivar', 'Palmilla', 'Paredones', 'Peumo', 'Pichidegua', 'Pichilemu', 'Placilla', 'Pumanque', 'Rancagua', 'Rauco', 'Requínoa', 'Rioverde', 'Romeral', 'San Clemente', 'San Fernando', 'San Francisco de Mostazal', 'San Vicente de Tagua Tagua', 'Santa Cruz', 'Santo Domingo', 'Quinta de Tilcoco', 'Termas de Cauquenes']
   },
-  'VII': {
+  'maule': {
     region: 'Región del Maule',
-    communes: ['Cauquenes', 'Chanco', 'Colbún', 'Constitución', 'Curepto', 'Curicó', 'Empedrado', 'Hualañé', 'Licantén', 'Linares', 'Longaví', 'Maule', 'Molina', 'Parral', 'Pelarco', 'Pelluhue', 'Pencahue', 'Rauco', 'Retiro', 'Río Claro', 'Romeral', 'Sagrada Familia', 'San Clemente', 'San Javier', 'San Rafael', 'Talca', 'Teno', 'Vichuquén', 'Villa Alegre', 'Yerbas Buenas']
+    communes: ['Cauquenes', 'Chanco', 'Chillan', 'Chillán Viejo', 'Cholchol', 'Constitución', 'Curepto', 'Empedrado', 'Hualañé', 'Hualpén', 'Huerta del Maipo', 'Licantén', 'Linares', 'Longaví', 'Maule', 'Molina', 'Nuble', 'Parral', 'Quirihue', 'Rauco', 'Retiro', 'San Clemente', 'San Javier', 'Sangarcía', 'Santa Juana', 'Talca', 'Tguaca', 'Tomé', 'Trabunco', 'Vilches', 'Yerbas Buenas']
   },
-  'XVI': {
+  'nuble': {
     region: 'Región de Ñuble',
-    communes: ['Bulnes', 'Chillán', 'Chillán Viejo', 'Cobquecura', 'Coelemu', 'Coihueco', 'El Carmen', 'Ninhue', 'Ñiquén', 'Pemuco', 'Pinto', 'Portezuelo', 'Quillón', 'Quirihue', 'Ránquil', 'San Carlos', 'San Fabián', 'San Ignacio', 'San Nicolás', 'Trehuaco', 'Yungay']
+    communes: ['Bulnes', 'Chillán', 'Chillán Viejo', 'Coelemu', 'Coihueco', 'El Carmen', 'Ninhue', 'Ñiquén', 'Pemuco', 'Pinto', 'Quirihue', 'Ranquil', 'San Fabián', 'San Ignacio', 'San Nicolás', 'Treguaco']
   },
-  'VIII': {
-    region: 'Región del Biobío',
-    communes: ['Alto Biobío', 'Antuco', 'Arauco', 'Cabrero', 'Cañete', 'Chiguayante', 'Concepción', 'Contulmo', 'Coronel', 'Curanilahue', 'Florida', 'Hualpén', 'Hualqui', 'Laja', 'Lebu', 'Los Álamos', 'Los Ángeles', 'Lota', 'Mulchén', 'Nacimiento', 'Negrete', 'Penco', 'Quilaco', 'Quilleco', 'San Pedro de la Paz', 'San Rosendo', 'Santa Bárbara', 'Santa Juana', 'Talcahuano', 'Tirúa', 'Tomé', 'Tucapel', 'Yumbel']
+  'biobio': {
+    region: 'Región del Bío Bío',
+    communes: ['Antuco', 'Arauco', 'Cabrero', 'Cañete', 'Chiguayante', 'Chillan', 'Concepción', 'Contulmo', 'Curanilahue', 'Floridablanca', 'Hualqui', 'Huépil', 'Laja', 'Lebu', 'Lota', 'Los Santos', 'Nacimiento', 'Negrete', 'Penco', 'Quilleco', 'Quirihue', 'Ranquil', 'San Pedro de la Paz', 'San Rosendo', 'Santa Barbara', 'Talcahuano', 'Tirúa', 'Tomé', 'Tucapel']
   },
-  'IX': {
+  'araucania': {
     region: 'Región de La Araucanía',
-    communes: ['Angol', 'Carahue', 'Cholchol', 'Collipulli', 'Cunco', 'Curacautín', 'Curarrehue', 'Ercilla', 'Freire', 'Galvarino', 'Gorbea', 'Lautaro', 'Loncoche', 'Lonquimay', 'Los Sauces', 'Lumaco', 'Melipeuco', 'Nueva Imperial', 'Padre Las Casas', 'Perquenco', 'Pitrufquén', 'Pucón', 'Purén', 'Renaico', 'Saavedra', 'Temuco', 'Teodoro Schmidt', 'Toltén', 'Traiguén', 'Victoria', 'Vilcún', 'Villarrica']
+    communes: ['Angol', 'Carahue', 'Cholchol', 'Collipulli', 'Curacautín', 'Ercilla', 'Freire', 'Galvarino', 'Gorbea', 'Lautaro', 'Loncoche', 'Los Sauces', 'Nueva Imperial', 'Padre Hurtado', 'Perkinenco', 'Pitrufquén', 'Pucón', 'Puente Negra', 'Puertas', 'Purén', 'Renaico', 'Saavedra', 'Temuco', 'Teodoro Schmidt', 'Tolten', 'Traiguén', 'Traipuén', 'Vilcún', 'Villaguillén', 'Villarrica']
   },
-  'XIV': {
+  'los_rios': {
     region: 'Región de Los Ríos',
-    communes: ['Corral', 'Futrono', 'La Unión', 'Lago Ranco', 'Lanco', 'Los Lagos', 'Máfil', 'Mariquina', 'Paillaco', 'Panguipulli', 'Río Bueno', 'Valdivia']
+    communes: ['Corral', 'Futrono', 'La Unión', 'Lago Ranco', 'Lanco', 'Máfil', 'Mariquina', 'Paillaco', 'Panguipulli', 'Popayán', 'Río Bueno', 'Toratá', 'Valdivia', 'Vergara']
   },
-  'X': {
+  'los_lagos': {
     region: 'Región de Los Lagos',
-    communes: ['Ancud', 'Calbuco', 'Castro', 'Chaitén', 'Chonchi', 'Cochamó', 'Curaco de Vélez', 'Dalcahue', 'Fresia', 'Frutillar', 'Futaleufú', 'Hualaihué', 'Llanquihue', 'Los Muermos', 'Maullín', 'Osorno', 'Palena', 'Puerto Montt', 'Puerto Octay', 'Puerto Varas', 'Puqueldón', 'Purranque', 'Puyehue', 'Queilén', 'Quellón', 'Quemchi', 'Quinchao', 'Río Negro', 'San Juan de la Costa', 'San Pablo']
+    communes: ['Ancud', 'Calbuco', 'Chaiten', 'Chonchi', 'Cochamó', 'Curaco de Vélez', 'Dalcahue', 'Futaleufú', 'Hualaihué', 'Llanquihue', 'Los Muermos', 'Maullín', 'Osorno', 'Palena', 'Purranque', 'Puyehue', 'Quellón', 'Quemchi', 'Quinchao', 'Río Negro', 'San Juan de la Costa', 'San Pablo', 'Puerto Montt', 'Puerto Varas', 'Sassafrás']
   },
-  'XI': {
-    region: 'Región Aysén del Gral. Carlos Ibáñez del Campo',
-    communes: ['Aysén', 'Chile Chico', 'Cisnes', 'Cochrane', 'Coyhaique', 'Guaitecas', 'Lago Verde', 'O\'Higgins', 'Río Ibáñez', 'Tortel']
+  'aysen': {
+    region: 'Región de Aysén',
+    communes: ['Aysén', 'Coyhaique', 'Guaitecas', 'La Junta', 'Lago General Carrera', 'Lago Vargas', 'Mañihuales', 'Marble', 'Pichidegua', 'Puerto Aysén', 'Reserva', 'Tortel', 'Villa Santa Lucia', 'Villa Santa Rosa de Tastil']
   },
-  'XII': {
-    region: 'Región de Magallanes y de la Antártica Chilena',
-    communes: ['Antártica', 'Cabo de Hornos', 'Laguna Blanca', 'Natales', 'Porvenir', 'Primavera', 'Punta Arenas', 'Río Verde', 'San Gregorio', 'Timaukel', 'Torres del Paine']
-  }
+  'magallanes': {
+    region: 'Región de Magallanes',
+    communes: ['Antártica', 'Cabo de Hornos', 'Laguna Blanca', 'Natales', 'Parvicella', 'Porvenir', 'Primavera', 'Punta Arenas', 'Río Verde', 'San Gregorio', 'Timaukel', 'Torres del Paine']
+  },
 }
 
 /** Crea un mapa invertido para búsqueda rápida: comuna → región */
