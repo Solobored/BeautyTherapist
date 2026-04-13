@@ -19,17 +19,30 @@ interface ShippingMapPreviewProps {
   locations: ShippingLocation[]
 }
 
-// Fix Leaflet default icon issue
-const fixLeafletIcons = () => {
-  if (typeof window === 'undefined') return
+// Create colored SVG icons for markers
+const createColoredIcon = (color: string) => {
+  const colors: Record<string, string> = {
+    'red': '#ef4444',
+    'blue': '#3b82f6',
+    'green': '#22c55e',
+    'purple': '#a855f7',
+    'orange': '#f97316',
+    'darkred': '#991b1b',
+    'darkblue': '#1e40af',
+    'darkgreen': '#15803d'
+  }
+
+  const svgColor = colors[color] || colors['blue']
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 40" width="30" height="40"><path fill="${svgColor}" stroke="white" stroke-width="1.5" d="M15 1C8.4 1 3 6.4 3 13c0 10 12 26 12 26s12-16 12-26c0-6.6-5.4-12-12-12zm0 17c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/></svg>`
   
-  const iconProto = L.Icon.Default.prototype as unknown as { _getIconUrl?: () => string }
-  delete iconProto._getIconUrl
+  const blob = new Blob([svgString], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
   
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  return L.icon({
+    iconUrl: url,
+    iconSize: [30, 40],
+    iconAnchor: [15, 40],
+    popupAnchor: [0, -40]
   })
 }
 
@@ -51,9 +64,6 @@ export function ShippingMapPreview({ locations }: ShippingMapPreviewProps) {
     }
 
     try {
-      // Fijar los iconos de Leaflet
-      fixLeafletIcons()
-
       // Inicializar mapa
       const map = L.map(mapRef.current, { 
         preferCanvas: false 
@@ -74,31 +84,16 @@ export function ShippingMapPreview({ locations }: ShippingMapPreviewProps) {
           if (!location.lat || !location.lng) return
           
           const latlng = L.latLng(location.lat, location.lng)
-          const marker = L.marker(latlng).addTo(map)
+          const marker = L.marker(latlng, {
+            icon: createColoredIcon(colors[idx % colors.length])
+          }).addTo(map)
           
           marker.bindPopup(
-            `<div class="text-sm"><strong>${location.buyerName}</strong><br/>${location.city}<br/><small>${location.orderId.slice(0, 8)}…</small></div>`
+            `<div style="font-size: 12px; line-height: 1.5;"><strong>${location.buyerName}</strong><br/>${location.city}<br/><small style="color: #666;">${location.orderId.slice(0, 8)}...</small></div>`,
+            { maxWidth: 200 }
           )
 
           bounds.extend(latlng)
-
-          // Cambiar color del marcador cada 3 pedidos
-          const color = colors[idx % colors.length]
-          
-          try {
-            marker.setIcon(
-              L.icon({
-                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-${color}.png`,
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41],
-              })
-            )
-          } catch (e) {
-            console.warn('Error setting custom marker icon, using default:', e)
-          }
         } catch (e) {
           console.warn('Error adding marker for location:', location, e)
         }
