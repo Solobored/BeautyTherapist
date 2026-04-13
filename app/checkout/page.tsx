@@ -19,7 +19,8 @@ import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 import type { MapPinValue } from '@/components/checkout/AddressMapPicker'
 import { CHILE_SHIPPING_REGIONS } from '@/lib/chile-shipping'
-import { validateCommuneInRegion, getRegionForCommune, normalizeRegionCode } from '@/lib/chile-regions-communes'
+import { validateCommuneInRegion, getRegionForCommune, normalizeRegionCode, CHILE_REGIONS_COMMUNES } from '@/lib/chile-regions-communes'
+import { LATIN_AMERICA_COUNTRIES, getCountryByName } from '@/lib/latin-america-data'
 
 const AddressMapPicker = dynamic(
   () => import('@/components/checkout/AddressMapPicker').then((m) => m.AddressMapPicker),
@@ -78,6 +79,7 @@ export default function CheckoutPage() {
     regionLabel: string
   } | null>(null)
   const [mapPin, setMapPin] = useState<MapPinValue | null>(null)
+  const [availableCommunes, setAvailableCommunes] = useState<string[]>([])
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -290,6 +292,13 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validar que se haya seleccionado un punto en el mapa
+    if (!mapPin) {
+      setSubmitError('Debes seleccionar un punto exacto en el mapa para completar tu compra.')
+      return
+    }
+    
     if (chileShippingBlocked) {
       setSubmitError('Selecciona región y tipo de entrega y espera la cotización de envío.')
       return
@@ -507,25 +516,84 @@ export default function CheckoutPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="city">{t('checkout.city')}</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        required
-                        className="mt-1"
-                      />
+                      <Label htmlFor="city">Ciudad/Comuna</Label>
+                      {formData.country === 'Chile' && formData.chileRegionCode ? (
+                        <Select
+                          value={formData.city}
+                          onValueChange={(commune) => {
+                            setFormData(prev => ({ ...prev, city: commune }))
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una comuna" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[280px]">
+                            {availableCommunes.length > 0 ? (
+                              availableCommunes.map((commune) => (
+                                <SelectItem key={commune} value={commune}>
+                                  {commune}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <div className="p-2 text-sm text-muted-foreground">
+                                Selecciona una región primero
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id="city"
+                          value={formData.city}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          required
+                          className="mt-1"
+                          placeholder="Ej: Buenos Aires, Bogotá..."
+                        />
+                      )}
                     </div>
                     
                     <div>
-                      <Label htmlFor="state">{t('checkout.state')}</Label>
-                      <Input
-                        id="state"
-                        value={formData.state}
-                        onChange={(e) => handleInputChange('state', e.target.value)}
-                        required
-                        className="mt-1"
-                      />
+                      <Label htmlFor="state">Región/Provincia</Label>
+                      {formData.country === 'Chile' ? (
+                        <Select
+                          value={formData.chileRegionCode}
+                          onValueChange={(code) => {
+                            handleInputChange('chileRegionCode', code)
+                            // Actualizar comunas cuando cambia región
+                            const regionData = CHILE_REGIONS_COMMUNES.find((r) => r.code === code)
+                            if (regionData) {
+                              setAvailableCommunes(regionData.communes.sort())
+                            }
+                            // Limpiar ciudad seleccionada
+                            setFormData(prev => ({
+                              ...prev,
+                              city: '',
+                              state: CHILE_SHIPPING_REGIONS.find(r => r.code === code)?.label || ''
+                            }))
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona región" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[280px]">
+                            {CHILE_SHIPPING_REGIONS.map((r) => (
+                              <SelectItem key={r.code} value={r.code}>
+                                {r.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id="state"
+                          value={formData.state}
+                          onChange={(e) => handleInputChange('state', e.target.value)}
+                          required
+                          className="mt-1"
+                          placeholder="Ej: Buenos Aires, São Paulo..."
+                        />
+                      )}
                     </div>
                     
                     <div>
@@ -541,18 +609,39 @@ export default function CheckoutPage() {
                     
                     <div>
                       <Label htmlFor="country">{t('checkout.country')}</Label>
-                      <Input
-                        id="country"
+                      <Select
                         value={formData.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        required
-                        className="mt-1"
-                      />
+                        onValueChange={(value) => {
+                          handleInputChange('country', value)
+                          // Limpiar región y ciudad cuando cambia país
+                          setFormData(prev => ({
+                            ...prev,
+                            chileRegionCode: '',
+                            city: '',
+                            state: ''
+                          }))
+                          setAvailableCommunes([])
+                          setMapPin(null)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona país" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LATIN_AMERICA_COUNTRIES.map((country) => (
+                            <SelectItem key={country.code} value={country.name}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="md:col-span-2 space-y-2 pt-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label className="text-foreground">Ubicación en el mapa (opcional)</Label>
+                        <Label className="text-foreground">
+                          Ubicación en el mapa {formData.country !== 'Chile' && '(requerido para confirmar compra)'}
+                        </Label>
                         {mapPin != null && (
                           <Button type="button" variant="ghost" size="sm" onClick={() => setMapPin(null)}>
                             Quitar marcador
@@ -560,10 +649,17 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Haz clic en el mapa para marcar el punto de entrega (ayuda al repartidor; el costo del envío se
-                        calcula por peso total del pedido y región).
+                        Haz clic en el mapa para marcar el punto exacto de entrega. El mapa está centrado en la capital de {formData.country}.
                       </p>
-                      <AddressMapPicker value={mapPin} onChange={setMapPin} />
+                      {(() => {
+                        const country = getCountryByName(formData.country)
+                        const center: [number, number] = country 
+                          ? [country.lat, country.lng]
+                          : [-33.4489, -70.6693]
+                        return (
+                          <AddressMapPicker value={mapPin} onChange={setMapPin} center={center} />
+                        )
+                      })()}
                     </div>
                   </div>
                   
