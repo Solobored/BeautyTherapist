@@ -517,30 +517,36 @@ export default function CheckoutPage() {
                     
                     <div>
                       <Label htmlFor="city">Ciudad/Comuna</Label>
-                      {formData.country === 'Chile' && formData.chileRegionCode ? (
-                        <Select
-                          value={formData.city}
-                          onValueChange={(commune) => {
-                            setFormData(prev => ({ ...prev, city: commune }))
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una comuna" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[280px]">
-                            {availableCommunes.length > 0 ? (
-                              availableCommunes.map((commune) => (
-                                <SelectItem key={commune} value={commune}>
-                                  {commune}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <div className="p-2 text-sm text-muted-foreground">
-                                Selecciona una región primero
-                              </div>
-                            )}
-                          </SelectContent>
-                        </Select>
+                      {formData.country === 'Chile' ? (
+                        formData.chileRegionCode ? (
+                          <Select
+                            value={formData.city}
+                            onValueChange={(commune) => {
+                              setFormData(prev => ({ ...prev, city: commune }))
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una comuna" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[280px]">
+                              {availableCommunes.length > 0 ? (
+                                availableCommunes.map((commune) => (
+                                  <SelectItem key={commune} value={commune}>
+                                    {commune}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No hay comunas disponibles
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="p-3 rounded-lg bg-muted/50 border border-border text-sm text-muted-foreground">
+                            Selecciona una región primero para ver las comunas disponibles
+                          </div>
+                        )
                       ) : (
                         <Input
                           id="city"

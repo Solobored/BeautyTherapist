@@ -30,11 +30,11 @@ export const CHILE_REGIONS_COMMUNES: Record<string, { region: string; communes: 
   },
   'valparaiso': {
     region: 'Región de Valparaíso',
-    communes: ['Algarrobo', 'Cabildo', 'Calle Larga', 'Calera', 'Carahue', 'Cartagena', 'Casablanca', 'Catemu', 'Concón', 'Curacaví', 'Getares', 'Hijuela', 'Isla de Pascua', 'Juan Fernández', 'La Calera', 'La Cruz', 'Limache', 'Llaillay', 'Nogales', 'Oliva', 'Olmué', 'Panquehue', 'Papudo', 'Puchuncaví', 'Putaendo', 'Quillota', 'Quintero', 'Reñaca', 'Rinconada', 'San Antonio', 'San Esteban', 'San Felipe', 'Santa María', 'Santo Domingo', 'Socoroma', 'Valparaíso', 'Vina del Mar', 'Zapallar']
+    communes: ['Algarrobo', 'Cabildo', 'Calle Larga', 'Cartagena', 'Casablanca', 'Catemu', 'Concón', 'El Quisco', 'El Tabo', 'Hijuelas', 'Isla de Pascua', 'Juan Fernández', 'La Calera', 'La Cruz', 'La Ligua', 'Limache', 'Llaillay', 'Los Andes', 'Nogales', 'Olmué', 'Panquehue', 'Papudo', 'Petorca', 'Puchuncaví', 'Putaendo', 'Quillota', 'Quilpué', 'Quintero', 'Rinconada', 'San Antonio', 'San Esteban', 'San Felipe', 'Santa María', 'Santo Domingo', 'Valparaíso', 'Villa Alemana', 'Viña del Mar', 'Zapallar']
   },
   'rm': {
     region: 'Región Metropolitana',
-    communes: ['Aisén', 'Pirque', 'San José de Maipo', 'Buin', 'Calera de Tango', 'Paine', 'Melipilla', 'Curacaví', 'María Pinto', 'San Pedro', 'Talagante', 'Peñaflor', 'Isidro Pereira', 'Casablanca', 'El Quisco', 'El Tabo', 'Cartagena', 'Santo Domingo', 'Colina', 'Lampa', 'Renca', 'Pudahuel', 'Quilicura', 'Huechuraba', 'Maipú', 'Cerrillos', 'Estación Central', 'Quinta Normal', 'Santiago', 'San Joaquín', 'La Florida', 'Puente Alto', 'La Pintana', 'San Bernardo', 'Buin', 'Calera de Tango', 'Paine', 'Melipilla', 'Curacaví', 'San Pedro', 'Talagante', 'Peñaflor', 'Peñaflor', 'Linderos', 'Tiltil', 'Batuco', 'Llano de Maipo', 'Padre Hurtado', 'Pomaire', 'Requínoa']
+    communes: ['Alhué', 'Buin', 'Calera de Tango', 'Cerrillos', 'Cerro Navia', 'Colina', 'Conchalí', 'Curacaví', 'El Bosque', 'El Monte', 'Estación Central', 'Huechuraba', 'Independencia', 'Isla de Maipo', 'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina', 'Lampa', 'Las Condes', 'Lo Barnechea', 'Lo Espejo', 'Lo Prado', 'Macul', 'Maipú', 'María Pinto', 'Melipilla', 'Ñuñoa', 'Padre Hurtado', 'Paine', 'Pedro Aguirre Cerda', 'Peñaflor', 'Peñalolén', 'Pirque', 'Providencia', 'Pudahuel', 'Puente Alto', 'Quilicura', 'Quinta Normal', 'Recoleta', 'Renca', 'San Bernardo', 'San Joaquín', 'San José de Maipo', 'San Miguel', 'San Ramón', 'Santiago', 'Talagante', 'Tiltil', 'Vitacura']
   },
   'ohiggins': {
     region: 'Región del Libertador General Bernardo O\'Higgins',
@@ -42,15 +42,15 @@ export const CHILE_REGIONS_COMMUNES: Record<string, { region: string; communes: 
   },
   'maule': {
     region: 'Región del Maule',
-    communes: ['Cauquenes', 'Chanco', 'Chillan', 'Chillán Viejo', 'Cholchol', 'Constitución', 'Curepto', 'Empedrado', 'Hualañé', 'Hualpén', 'Huerta del Maipo', 'Licantén', 'Linares', 'Longaví', 'Maule', 'Molina', 'Nuble', 'Parral', 'Quirihue', 'Rauco', 'Retiro', 'San Clemente', 'San Javier', 'Sangarcía', 'Santa Juana', 'Talca', 'Tguaca', 'Tomé', 'Trabunco', 'Vilches', 'Yerbas Buenas']
+    communes: ['Cauquenes', 'Chanco', 'Colbún', 'Constitución', 'Curepto', 'Curicó', 'Empedrado', 'Hualañé', 'Licantén', 'Linares', 'Longaví', 'Maule', 'Molina', 'Parral', 'Pelarco', 'Pelluhue', 'Pencahue', 'Rauco', 'Retiro', 'Río Claro', 'Romeral', 'Sagrada Familia', 'San Clemente', 'San Javier', 'San Rafael', 'Talca', 'Teno', 'Vichuquén', 'Villa Alegre', 'Yerbas Buenas']
   },
   'nuble': {
     region: 'Región de Ñuble',
-    communes: ['Bulnes', 'Chillán', 'Chillán Viejo', 'Coelemu', 'Coihueco', 'El Carmen', 'Ninhue', 'Ñiquén', 'Pemuco', 'Pinto', 'Quirihue', 'Ranquil', 'San Fabián', 'San Ignacio', 'San Nicolás', 'Treguaco']
+    communes: ['Bulnes', 'Chillán', 'Chillán Viejo', 'Cobquecura', 'Coelemu', 'Coihueco', 'El Carmen', 'Ninhue', 'Ñiquén', 'Pemuco', 'Pinto', 'Portezuelo', 'Quillón', 'Quirihue', 'Ránquil', 'San Carlos', 'San Fabián', 'San Ignacio', 'San Nicolás', 'Trehuaco', 'Yungay']
   },
   'biobio': {
     region: 'Región del Bío Bío',
-    communes: ['Antuco', 'Arauco', 'Cabrero', 'Cañete', 'Chiguayante', 'Chillan', 'Concepción', 'Contulmo', 'Curanilahue', 'Floridablanca', 'Hualqui', 'Huépil', 'Laja', 'Lebu', 'Lota', 'Los Santos', 'Nacimiento', 'Negrete', 'Penco', 'Quilleco', 'Quirihue', 'Ranquil', 'San Pedro de la Paz', 'San Rosendo', 'Santa Barbara', 'Talcahuano', 'Tirúa', 'Tomé', 'Tucapel']
+    communes: ['Alto Biobío', 'Antuco', 'Arauco', 'Cabrero', 'Cañete', 'Chiguayante', 'Concepción', 'Contulmo', 'Coronel', 'Curanilahue', 'Florida', 'Hualpén', 'Hualqui', 'Laja', 'Lebu', 'Los Álamos', 'Los Ángeles', 'Lota', 'Mulchén', 'Nacimiento', 'Negrete', 'Penco', 'Quilaco', 'Quilleco', 'San Pedro de la Paz', 'San Rosendo', 'Santa Bárbara', 'Santa Juana', 'Talcahuano', 'Tirúa', 'Tomé', 'Tucapel', 'Yumbel']
   },
   'araucania': {
     region: 'Región de La Araucanía',
