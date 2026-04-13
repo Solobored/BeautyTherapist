@@ -19,7 +19,7 @@ import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 import type { MapPinValue } from '@/components/checkout/AddressMapPicker'
 import { CHILE_SHIPPING_REGIONS } from '@/lib/chile-shipping'
-import { validateCommuneInRegion, getRegionForCommune } from '@/lib/chile-regions-communes'
+import { validateCommuneInRegion, getRegionForCommune, normalizeRegionCode } from '@/lib/chile-regions-communes'
 
 const AddressMapPicker = dynamic(
   () => import('@/components/checkout/AddressMapPicker').then((m) => m.AddressMapPicker),
@@ -298,13 +298,17 @@ export default function CheckoutPage() {
     // Validar que la región y ciudad sean consistentes en Chile
     if (isChile && formData.shippingKind === 'national' && formData.chileRegionCode && formData.city) {
       const detectedRegion = getRegionForCommune(formData.city)
-      if (detectedRegion && detectedRegion !== formData.chileRegionCode) {
-        setSubmitError(
-          `La comuna "${formData.city}" pertenece a la región ${CHILE_SHIPPING_REGIONS.find((r) => r.code === detectedRegion)?.label || detectedRegion}, ` +
-          `pero seleccionaste ${CHILE_SHIPPING_REGIONS.find((r) => r.code === formData.chileRegionCode)?.label || formData.chileRegionCode}. ` +
-          `Por favor, corrige la región o verifica la comuna para evitar fraudes de envío.`
-        )
-        return
+      if (detectedRegion) {
+        const normalizedDetected = normalizeRegionCode(detectedRegion)
+        const normalizedSelected = normalizeRegionCode(formData.chileRegionCode)
+        if (normalizedDetected !== normalizedSelected) {
+          setSubmitError(
+            `La comuna "${formData.city}" pertenece a la región ${CHILE_SHIPPING_REGIONS.find((r) => r.code === normalizedDetected)?.label || detectedRegion}, ` +
+            `pero seleccionaste ${CHILE_SHIPPING_REGIONS.find((r) => r.code === normalizedSelected)?.label || formData.chileRegionCode}. ` +
+            `Por favor, corrige la región o verifica la comuna para evitar fraudes de envío.`
+          )
+          return
+        }
       }
     }
     
@@ -371,7 +375,26 @@ export default function CheckoutPage() {
   }
   
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value }
+      
+      // Auto-detectar región cuando ingresa une en Chile
+      if (field === 'city' && value && isChile && formData.shippingKind === 'national') {
+        const detectedRegion = getRegionForCommune(String(value))
+        if (detectedRegion) {
+          const row = CHILE_SHIPPING_REGIONS.find((r) => r.code === normalizeRegionCode(detectedRegion))
+          if (row) {
+            updated.chileRegionCode = row.code
+            // Disparar cotización automáticamente
+            setTimeout(() => {
+              // La próxima vez que se renderize, fetchChileShippingQuote se ejecutará
+            }, 100)
+          }
+        }
+      }
+      
+      return updated
+    })
   }
   
   if (items.length === 0) {

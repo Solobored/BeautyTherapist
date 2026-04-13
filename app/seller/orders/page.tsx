@@ -61,6 +61,8 @@ export default function SellerOrdersPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
   const [shipBusyId, setShipBusyId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SellerOrder | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -152,6 +154,26 @@ export default function SellerOrdersPage() {
       toast.error(e instanceof Error ? e.message : 'Error')
     } finally {
       setShipBusyId(null)
+    }
+  }
+
+  const submitDeleteOrder = async () => {
+    if (!seller || !deleteTarget) return
+    setDeleteBusy(true)
+    try {
+      const res = await fetch(`/api/seller/orders/${deleteTarget.id}/delete`, {
+        method: 'POST',
+        headers: sellerApiHeaders(seller),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'No se pudo borrar el pedido')
+      toast.success('Pedido eliminado correctamente.')
+      setOrders((prev) => prev.filter((o) => o.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error')
+    } finally {
+      setDeleteBusy(false)
     }
   }
 
@@ -248,6 +270,16 @@ export default function SellerOrdersPage() {
                         Anular pedido
                       </Button>
                     )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600/40 hover:bg-red-600/10"
+                      onClick={() => setDeleteTarget(order)}
+                      disabled={deleteBusy}
+                    >
+                      🗑️ Borrar
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -387,6 +419,38 @@ export default function SellerOrdersPage() {
               }}
             >
               {cancelBusy ? 'Procesando…' : 'Confirmar anulación'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Order Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro de borrar este pedido?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El pedido será eliminado permanentemente de tu dashboard.
+              {deleteTarget && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">ID: {deleteTarget.id.slice(0, 8)}…</p>
+                  <p className="text-sm">Cliente: {deleteTarget.buyerName}</p>
+                  <p className="text-sm">Total: ${deleteTarget.total}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={deleteBusy}
+              onClick={(e) => {
+                e.preventDefault()
+                void submitDeleteOrder()
+              }}
+            >
+              {deleteBusy ? 'Borrando…' : 'Sí, borrar pedido'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
