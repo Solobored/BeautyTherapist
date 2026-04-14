@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,9 @@ export default function CheckoutPage() {
   const { t } = useLanguage()
   const { items, subtotal } = useCart()
   const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
+  const searchParams = useSearchParams()
+  const submitLock = useRef(false)
+  const handledReturnRef = useRef<string | null>(null)
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -80,6 +84,7 @@ export default function CheckoutPage() {
   } | null>(null)
   const [mapPin, setMapPin] = useState<MapPinValue | null>(null)
   const [availableCommunes, setAvailableCommunes] = useState<string[]>([])
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -127,6 +132,27 @@ export default function CheckoutPage() {
     () => items.map((i) => ({ productId: i.id, quantity: i.quantity })),
     [items]
   )
+
+  // Detect return from Mercado Pago with failure/pending and cancel stale order
+  useEffect(() => {
+    const status = searchParams.get('status')
+    const orderId = searchParams.get('order')
+    if (!status || !orderId) return
+    const lowered = status.toLowerCase()
+    if (!['failure', 'pending', 'cancelled', 'canceled', 'back'].includes(lowered)) return
+    if (handledReturnRef.current === orderId) return
+
+    handledReturnRef.current = orderId
+    setStatusMessage('Producto no comprado, intenta de nuevo.')
+
+    void fetch('/api/checkout/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, status: lowered }),
+    }).catch(() => {
+      // Silently ignore; this is a best-effort cancellation
+    })
+  }, [searchParams])
 
   const fetchChileShippingQuote = useCallback(async () => {
     if (formData.shippingKind !== 'national' || !isChile) return
@@ -292,15 +318,20 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (submitLock.current) return
+    submitLock.current = true
     
     // Validar que se haya seleccionado un punto en el mapa
     if (!mapPin) {
       setSubmitError('Debes seleccionar un punto exacto en el mapa para completar tu compra.')
+      submitLock.current = false
       return
     }
     
     if (chileShippingBlocked) {
       setSubmitError('Selecciona región y tipo de entrega y espera la cotización de envío.')
+      submitLock.current = false
       return
     }
     
@@ -316,6 +347,7 @@ export default function CheckoutPage() {
             `pero seleccionaste ${CHILE_SHIPPING_REGIONS.find((r) => r.code === normalizedSelected)?.label || formData.chileRegionCode}. ` +
             `Por favor, corrige la región o verifica la comuna para evitar fraudes de envío.`
           )
+          submitLock.current = false
           return
         }
       }
@@ -380,6 +412,7 @@ export default function CheckoutPage() {
       setSubmitError(message)
     } finally {
       setIsSubmitting(false)
+      submitLock.current = false
     }
   }
   
@@ -438,6 +471,12 @@ export default function CheckoutPage() {
           </nav>
           
           <h1 className="font-serif text-3xl font-semibold text-foreground mb-8">{t('checkout.title')}</h1>
+          
+          {statusMessage && (
+            <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {statusMessage}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

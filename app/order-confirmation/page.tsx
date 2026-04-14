@@ -41,6 +41,7 @@ function OrderConfirmationContent() {
             <div className="bg-secondary rounded-2xl p-6 mb-8">
               <p className="text-sm text-muted-foreground mb-1">{t('confirmation.orderNumber')}</p>
               <p className="font-mono text-2xl font-semibold text-foreground">{orderNumber}</p>
+              <p className="text-xs text-muted-foreground mt-2">{t('confirmation.keepNumber')}</p>
             </div>
             
             {/* Info Cards */}

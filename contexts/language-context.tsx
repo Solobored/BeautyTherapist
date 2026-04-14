@@ -116,9 +116,10 @@ const translations: Record<string, string> = {
   'checkout.createAccount': 'Crear cuenta para seguir tu pedido',
   
   // Order Confirmation
-  'confirmation.title': '¡Pedido Confirmado!',
-  'confirmation.message': 'Gracias por tu compra. Te enviaremos un correo con los detalles.',
-  'confirmation.orderNumber': 'Número de Pedido',
+  'confirmation.title': '¡Gracias por tu compra!',
+  'confirmation.message': 'Tu pago fue aprobado. Enviamos los detalles y el seguimiento a tu correo.',
+  'confirmation.orderNumber': 'Número de seguimiento',
+  'confirmation.keepNumber': 'Guarda este número para revisar tu envío cuando quieras.',
   
   // Seller Auth
   'seller.login': 'Iniciar Sesión',

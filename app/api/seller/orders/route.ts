@@ -56,7 +56,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: oErr.message }, { status: 500 })
     }
 
-    const filtered = (orders ?? []).filter((order) => {
+    const paidOrders = (orders ?? []).filter(
+      (order) => String(order.payment_status || '').toLowerCase() === 'completed'
+    )
+
+    const filtered = paidOrders.filter((order) => {
       const items = (order.items ?? []) as OrderItem[]
       return items.some((i) => i.product_id && productIds.has(i.product_id))
     })
