@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
@@ -43,7 +43,7 @@ function normCountry(s: string) {
   return s.trim().toLowerCase()
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const { t } = useLanguage()
   const { items, subtotal } = useCart()
   const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
@@ -1017,5 +1017,29 @@ export default function CheckoutPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+function CheckoutFallback() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="rounded-2xl border border-border/50 bg-card p-6 text-sm text-muted-foreground">
+            Cargando checkout...
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutFallback />}>
+      <CheckoutContent />
+    </Suspense>
   )
 }
