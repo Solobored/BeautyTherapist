@@ -21,15 +21,15 @@ type Post = {
 
 export default function SellerBlogListPage() {
   const { t } = useLanguage()
-  const { seller, isAuthenticated, logout } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading, logout } = useAuth()
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated) router.push('/seller/login')
-  }, [isAuthenticated, router])
+    if (!isAuthLoading && !isAuthenticated) router.push('/seller/login')
+  }, [isAuthLoading, isAuthenticated, router])
 
   useEffect(() => {
     if (!seller?.email) return
@@ -55,7 +55,7 @@ export default function SellerBlogListPage() {
     }
   }, [seller])
 
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>
@@ -89,7 +89,7 @@ export default function SellerBlogListPage() {
                   Nuevo post
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => { logout(); router.push('/seller/login') }}>
+              <Button variant="ghost" size="icon" onClick={() => { void logout() }}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>

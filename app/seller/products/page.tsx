@@ -28,7 +28,7 @@ import { toast } from 'sonner'
 
 export default function SellerProductsPage() {
   const { t } = useLanguage()
-  const { seller, isAuthenticated, logout } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading, logout } = useAuth()
   const { products, loading, error, refresh } = useSellerProducts()
   const router = useRouter()
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -36,12 +36,12 @@ export default function SellerProductsPage() {
   const [statusBusy, setStatusBusy] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push('/seller/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthLoading, isAuthenticated, router])
 
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>
@@ -49,9 +49,8 @@ export default function SellerProductsPage() {
     )
   }
 
-  const handleLogout = () => {
-    logout()
-    router.push('/seller/login')
+  const handleLogout = async () => {
+    await logout()
   }
 
   const storeSlug = brandNameToSlug(seller.brandName)

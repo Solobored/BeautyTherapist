@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 
 export default function SellerBlogNewPage() {
   const { t } = useLanguage()
-  const { seller, isAuthenticated } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -24,10 +24,10 @@ export default function SellerBlogNewPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) router.push('/seller/login')
-  }, [isAuthenticated, router])
+    if (!isAuthLoading && !isAuthenticated) router.push('/seller/login')
+  }, [isAuthLoading, isAuthenticated, router])
 
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>

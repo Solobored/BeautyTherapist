@@ -11,6 +11,26 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- Seller server-side auth credentials
+CREATE TABLE seller_auth_credentials (
+  seller_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE CHECK (email = lower(email)),
+  password_hash TEXT NOT NULL,
+  password_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+-- Seller server-side auth sessions
+CREATE TABLE seller_auth_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  last_seen_at TIMESTAMPTZ DEFAULT NOW(),
+  revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 -- Seller brands
 CREATE TABLE brands (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -177,6 +197,8 @@ CREATE TABLE product_reviews (
 );
 -- Indexes
 CREATE INDEX idx_profiles_email ON profiles(email);
+CREATE INDEX idx_seller_auth_credentials_email ON seller_auth_credentials(email);
+CREATE INDEX idx_seller_auth_sessions_seller_id ON seller_auth_sessions(seller_id);
 CREATE INDEX idx_brands_owner_id ON brands(owner_id);
 CREATE INDEX idx_brands_slug ON brands(brand_slug);
 CREATE INDEX idx_products_brand_id ON products(brand_id);
@@ -198,6 +220,8 @@ CREATE INDEX idx_product_reviews_status ON product_reviews(status);
 -- Row Level Security (RLS) Policies
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seller_auth_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seller_auth_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE brands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;

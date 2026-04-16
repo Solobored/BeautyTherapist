@@ -3,23 +3,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import type { Product } from '@/hooks/use-products'
-import { brandNameToSlug } from '@/lib/seller-utils'
+import { buildSellerApiHeaders } from '@/lib/seller-identity'
 
 export function sellerApiHeaders(seller: { email: string; brandName: string }) {
-  return {
-    'x-seller-email': seller.email,
-    'x-brand-slug': brandNameToSlug(seller.brandName),
-    'x-brand-name': seller.brandName,
-  } as Record<string, string>
+  return buildSellerApiHeaders(seller)
 }
 
 export function useSellerProducts() {
-  const { seller } = useAuth()
+  const { seller, isAuthLoading } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    if (isAuthLoading) {
+      setLoading(true)
+      return
+    }
     if (!seller?.email) {
       setProducts([])
       setLoading(false)
@@ -40,7 +40,7 @@ export function useSellerProducts() {
     } finally {
       setLoading(false)
     }
-  }, [seller])
+  }, [seller, isAuthLoading])
 
   useEffect(() => {
     refresh()

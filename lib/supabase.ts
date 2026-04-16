@@ -39,6 +39,32 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
       };
+      seller_auth_credentials: {
+        Row: {
+          seller_id: string;
+          email: string;
+          password_hash: string;
+          password_updated_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Database['public']['Tables']['seller_auth_credentials']['Row'];
+        Update: Partial<Database['public']['Tables']['seller_auth_credentials']['Row']>;
+      };
+      seller_auth_sessions: {
+        Row: {
+          id: string;
+          seller_id: string;
+          token_hash: string;
+          expires_at: string;
+          last_seen_at: string | null;
+          revoked_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['seller_auth_sessions']['Row'], 'id'>;
+        Update: Partial<Database['public']['Tables']['seller_auth_sessions']['Row']>;
+      };
       brands: {
         Row: {
           id: string;

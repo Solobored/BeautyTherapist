@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -16,16 +16,9 @@ function normalizeUrl(url?: string | null): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  const email = request.headers.get('x-seller-email')?.trim() ?? ''
-  const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-
-  if (!email) {
-    return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-  }
-
-  const brandId = await resolveBrandIdForSeller(supabaseServer, email, slug || undefined)
-  if (!brandId) {
-    return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+  const session = await getSellerSessionFromRequest(request)
+  if (!session) {
+    return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
   }
 
   const { data, error } = await supabaseServer
@@ -33,7 +26,7 @@ export async function GET(request: NextRequest) {
     .select(
       'id, brand_name, brand_slug, description, logo_url, banner_url, facebook_url, instagram_url, tiktok_url'
     )
-    .eq('id', brandId)
+    .eq('id', session.brandId)
     .maybeSingle()
 
   if (error) {
@@ -45,16 +38,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const email = request.headers.get('x-seller-email')?.trim() ?? ''
-  const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-
-  if (!email) {
-    return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-  }
-
-  const brandId = await resolveBrandIdForSeller(supabaseServer, email, slug || undefined)
-  if (!brandId) {
-    return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+  const session = await getSellerSessionFromRequest(request)
+  if (!session) {
+    return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
   }
 
   let body: Record<string, any> = {}
@@ -74,7 +60,7 @@ export async function PUT(request: NextRequest) {
     updated_at: new Date().toISOString(),
   }
 
-  const { error } = await supabaseServer.from('brands').update(update).eq('id', brandId)
+  const { error } = await supabaseServer.from('brands').update(update).eq('id', session.brandId)
   if (error) {
     console.error(error)
     return NextResponse.json({ error: 'No se pudo actualizar la marca' }, { status: 500 })

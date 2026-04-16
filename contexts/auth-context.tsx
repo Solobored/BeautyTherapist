@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { normalizeEmail } from '@/lib/seller-identity'
 
 export type UserType = 'buyer' | 'seller'
 
@@ -88,6 +89,7 @@ export type User = Buyer | Seller
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
+  isAuthLoading: boolean
   userType: UserType | null
   buyer?: Buyer
   seller?: Seller
@@ -95,7 +97,12 @@ interface AuthContextType {
   register: (email: string, password: string, type: 'buyer' | 'seller', data?: any) => Promise<boolean>
   registerBuyer: (data: Omit<Buyer, 'id' | 'type' | 'addresses' | 'wishlist' | 'coupons' | 'orders' | 'beautyPreferences'> & { password: string }) => Promise<boolean>
   registerSeller: (data: Omit<Seller, 'id' | 'type'> & { password: string }) => Promise<boolean>
-  logout: () => void
+  changeSellerCredentials: (data: {
+    currentPassword: string
+    newEmail?: string
+    newPassword?: string
+  }) => Promise<{ success: boolean; message: string }>
+  logout: () => Promise<void>
   updateBuyerProfile: (data: Partial<Buyer>) => void
   updateSellerProfile: (data: Partial<Seller>) => void
   addAddress: (address: Omit<Address, 'id'>) => void
@@ -111,53 +118,74 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Mock buyer data - Empty, buyers should register via Supabase
 const mockBuyers: (Buyer & { password: string })[] = []
-
-// Mock seller data
-const mockSellers: (Seller & { password: string })[] = [
-  {
-    id: 'f486c511-c72d-4c32-a562-af8606a448df',
-    type: 'seller',
-    brandName: 'AngeBae',
-    ownerName: 'Angelica Baeriswyl',
-    email: 'angebae@gmail.com',
-    password: 'password123',
-    phone: '+1 555 123 4567',
-    country: 'United States',
-    brandLogo: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=200&h=200&fit=crop',
-    brandBanner: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
-    brandDescription: 'Skincare y maquillaje premium elaborado con amor. Nuestros productos combinan ingredientes naturales con fórmulas innovadoras para revelar tu belleza natural.',
-    facebookUrl: 'https://www.facebook.com/angebae',
-    instagramUrl: 'https://www.instagram.com/angebae',
-    tiktokUrl: 'https://www.tiktok.com/@angebae',
-    category: 'both'
-  }
-]
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
   const router = useRouter()
   
   useEffect(() => {
+    let cancelled = false
     const legacy = localStorage.getItem('beauty-therapist-auth')
     if (legacy && !localStorage.getItem('beauty-therapy-auth')) {
       localStorage.setItem('beauty-therapy-auth', legacy)
       localStorage.removeItem('beauty-therapist-auth')
     }
+
     const savedAuth = localStorage.getItem('beauty-therapy-auth')
+    let buyerFromStorage: Buyer | null = null
     if (savedAuth) {
       try {
-        setUser(JSON.parse(savedAuth))
+        const parsed = JSON.parse(savedAuth) as User
+        if (parsed?.type === 'buyer') {
+          buyerFromStorage = parsed
+          setUser(parsed)
+        } else {
+          localStorage.removeItem('beauty-therapy-auth')
+        }
       } catch {
         console.error('Failed to parse auth from localStorage')
       }
     }
-    setIsHydrated(true)
+
+    const syncSellerSession = async () => {
+      try {
+        const res = await fetch('/api/seller/auth/session', {
+          method: 'GET',
+          cache: 'no-store',
+        })
+        const json = await res.json().catch(() => ({}))
+        if (cancelled) return
+
+        if (res.ok && json.seller) {
+          setUser(json.seller as Seller)
+        } else if (!buyerFromStorage) {
+          setUser(null)
+        }
+      } catch {
+        if (!cancelled && !buyerFromStorage) {
+          setUser(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true)
+          setIsAuthLoading(false)
+        }
+      }
+    }
+
+    void syncSellerSession()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
   
   useEffect(() => {
     if (isHydrated) {
-      if (user) {
+      if (user?.type === 'buyer') {
         localStorage.setItem('beauty-therapy-auth', JSON.stringify(user))
       } else {
         localStorage.removeItem('beauty-therapy-auth')
@@ -166,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, isHydrated])
   
   const login = async (email: string, password: string): Promise<{ success: boolean; redirectTo: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const normalizedEmail = normalizeEmail(email)
     
     // Check buyers first
     const buyer = mockBuyers.find(b => b.email === email && b.password === password)
@@ -176,47 +204,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true, redirectTo: '/account/dashboard' }
     }
     
-    // Check sellers
-    const seller = mockSellers.find(s => s.email === email && s.password === password)
-    if (seller) {
-      const { password: _, ...sellerData } = seller
-      setUser(sellerData)
-      
-      // También intenta sincronizar datos desde Supabase en backend (sin bloquear)
-      // El dashboard completará la sincronización cuando cargue
-      setTimeout(async () => {
-        try {
-          const res = await fetch('/api/seller/profile', {
-            method: 'GET',
-            headers: {
-              'x-seller-email': seller.email,
-              'x-brand-slug': seller.brandName?.toLowerCase().replace(/\s+/g, '-') || ''
-            }
-          })
-          if (res.ok) {
-            const json = await res.json()
-            if (json.brand) {
-              const b = json.brand
-              // Actualizar el contexto con datos de Supabase
-              setUser(prev => prev && prev.type === 'seller' ? {
-                ...prev,
-                brandName: b.brand_name ?? prev.brandName,
-                brandLogo: b.logo_url ?? prev.brandLogo,
-                brandBanner: b.banner_url ?? prev.brandBanner,
-                brandDescription: b.description ?? prev.brandDescription,
-                facebookUrl: b.facebook_url ?? prev.facebookUrl,
-                instagramUrl: b.instagram_url ?? prev.instagramUrl,
-                tiktokUrl: b.tiktok_url ?? prev.tiktokUrl,
-              } : prev)
-            }
-          }
-        } catch (e) {
-          // Silenciar errores de sincronización post-login
-          console.debug('Profile sync after login failed', e)
-        }
-      }, 100)
-      
-      return { success: true, redirectTo: '/seller/dashboard' }
+    try {
+      const res = await fetch('/api/seller/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      })
+      const json = await res.json().catch(() => ({}))
+
+      if (res.ok && json.seller) {
+        setUser(json.seller as Seller)
+        return { success: true, redirectTo: '/seller/dashboard' }
+      }
+    } catch {
+      // ignore and fall through to invalid credentials response
     }
     
     return { success: false, redirectTo: '' }
@@ -267,10 +268,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await new Promise(resolve => setTimeout(resolve, 200))
     return false
   }
+
+  const changeSellerCredentials = async ({
+    currentPassword,
+    newEmail,
+    newPassword,
+  }: {
+    currentPassword: string
+    newEmail?: string
+    newPassword?: string
+  }): Promise<{ success: boolean; message: string }> => {
+    if (user?.type !== 'seller') {
+      return { success: false, message: 'No hay una sesión de vendedor activa.' }
+    }
+
+    const trimmedCurrentPassword = currentPassword.trim()
+    const trimmedNewPassword = newPassword?.trim() ?? ''
+    const normalizedNewEmail = newEmail?.trim() ? normalizeEmail(newEmail) : ''
+
+    if (!trimmedCurrentPassword) {
+      return { success: false, message: 'Debes ingresar tu contraseña actual.' }
+    }
+
+    if (!normalizedNewEmail && !trimmedNewPassword) {
+      return { success: false, message: 'Ingresa un nuevo correo o una nueva contraseña.' }
+    }
+
+    if (normalizedNewEmail && !EMAIL_PATTERN.test(normalizedNewEmail)) {
+      return { success: false, message: 'Ingresa un correo válido.' }
+    }
+
+    if (trimmedNewPassword && trimmedNewPassword.length < 8) {
+      return { success: false, message: 'La nueva contraseña debe tener al menos 8 caracteres.' }
+    }
+    if (normalizedNewEmail && normalizedNewEmail === normalizeEmail(user.email) && !trimmedNewPassword) {
+      return { success: false, message: 'No hay cambios para guardar.' }
+    }
+
+    try {
+      const res = await fetch('/api/seller/account', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: trimmedCurrentPassword,
+          newEmail: normalizedNewEmail || undefined,
+          newPassword: trimmedNewPassword || undefined,
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        return {
+          success: false,
+          message: json.error || 'No se pudo actualizar la cuenta del vendedor.',
+        }
+      }
+
+      if (json.seller) {
+        setUser(json.seller as Seller)
+      }
+
+      if (normalizedNewEmail && trimmedNewPassword) {
+        return { success: true, message: 'Correo y contraseña actualizados correctamente.' }
+      }
+      if (normalizedNewEmail) {
+        return { success: true, message: 'Correo actualizado correctamente.' }
+      }
+      return { success: true, message: 'Contraseña actualizada correctamente.' }
+    } catch {
+      return {
+        success: false,
+        message: 'No se pudo actualizar la cuenta del vendedor. Intenta de nuevo.',
+      }
+    }
+  }
   
-  const logout = () => {
+  const logout = async () => {
+    const currentUserType = user?.type
+
+    if (currentUserType === 'seller') {
+      try {
+        await fetch('/api/seller/auth/logout', {
+          method: 'POST',
+        })
+      } catch {
+        /* noop */
+      }
+    }
+
     setUser(null)
-    router.push('/')
+    router.push(currentUserType === 'seller' ? '/seller/login' : '/')
   }
   
   const updateBuyerProfile = (data: Partial<Buyer>) => {
@@ -369,6 +458,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue: AuthContextType = {
     user,
     isAuthenticated: !!user,
+    isAuthLoading,
     userType: user?.type || null,
     seller: user?.type === 'seller' ? (user as Seller) : undefined,
     buyer: user?.type === 'buyer' ? (user as Buyer) : undefined,
@@ -376,6 +466,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     registerBuyer,
     registerSeller,
+    changeSellerCredentials,
     logout,
     updateBuyerProfile,
     updateSellerProfile,

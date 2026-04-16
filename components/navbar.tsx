@@ -290,7 +290,7 @@ export function Navbar() {
                   </Link>
                   <button
                     onClick={() => {
-                      logout()
+                      void logout()
                       setMobileMenuOpen(false)
                     }}
                     className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors py-2 text-left"
@@ -319,7 +319,7 @@ export function Navbar() {
                   </Link>
                   <button
                     onClick={() => {
-                      logout()
+                      void logout()
                       setMobileMenuOpen(false)
                     }}
                     className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors py-2 text-left"

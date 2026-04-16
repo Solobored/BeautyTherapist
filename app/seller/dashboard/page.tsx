@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SellerProfileEditor } from '@/components/seller-profile-editor'
+import { SellerAccountCredentialsCard } from '@/components/seller/SellerAccountCredentialsCard'
 import { ShippingLocationsMap } from '@/components/seller/ShippingLocationsMap'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
@@ -78,7 +79,7 @@ type SellerAnalytics = {
 
 export default function SellerDashboardPage() {
   const { language, t } = useLanguage()
-  const { seller, isAuthenticated, logout, updateSellerProfile } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading, logout, updateSellerProfile } = useAuth()
   const { products, loading } = useSellerProducts()
   const router = useRouter()
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
@@ -89,10 +90,10 @@ export default function SellerDashboardPage() {
   const profileFetched = useRef(false)
   
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push('/seller/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthLoading, isAuthenticated, router])
 
   useEffect(() => {
     if (!seller?.email) return
@@ -168,7 +169,7 @@ export default function SellerDashboardPage() {
     }
   }, [seller?.email, updateSellerProfile, seller])
   
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>
@@ -227,9 +228,8 @@ export default function SellerDashboardPage() {
     .filter((o) => o.orderStatus !== 'cancelled')
     .slice(0, 5)
   
-  const handleLogout = () => {
-    logout()
-    router.push('/seller/login')
+  const handleLogout = async () => {
+    await logout()
   }
   
   return (
@@ -369,6 +369,10 @@ export default function SellerDashboardPage() {
             }}
             isLoading={isLoadingProfile}
           />
+        </div>
+
+        <div className="mb-8 max-w-2xl">
+          <SellerAccountCredentialsCard />
         </div>
         
         {/* Metrics Cards */}

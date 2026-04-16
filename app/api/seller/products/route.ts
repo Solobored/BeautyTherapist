@@ -1,34 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { mapDbProductToProduct } from '@/lib/seller-product-map'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-function sellerHeaders(request: NextRequest) {
-  const email = request.headers.get('x-seller-email')?.trim() ?? ''
-  const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-  return { email, slug }
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const { email, slug } = sellerHeaders(request)
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json(
-        { error: 'Marca no encontrada. Verifica el correo del vendedor o el slug de la marca en la base de datos.' },
-        { status: 404 }
-      )
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
     const { data, error } = await supabaseServer
@@ -54,7 +36,7 @@ export async function GET(request: NextRequest) {
         product_images (url, position, is_primary)
       `
       )
-      .eq('brand_id', brandId)
+      .eq('brand_id', session.brandId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -62,7 +44,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const products = (data ?? []).map((row) => mapDbProductToProduct(row as Parameters<typeof mapDbProductToProduct>[0]))
+    const products = (data ?? []).map((row) =>
+      mapDbProductToProduct(row as Parameters<typeof mapDbProductToProduct>[0])
+    )
     return NextResponse.json({ products })
   } catch (e) {
     console.error(e)
@@ -81,28 +65,16 @@ type CreateBody = {
   stock: number
   status: 'active' | 'draft' | 'inactive'
   images: { url: string; position: number }[]
-  /** ml netos por unidad (cosmética); opcional si usas peso directo. */
   netContentMl?: number | null
-  /** g/ml; por defecto 1. */
   gramsPerMl?: number | null
-  /** Peso por unidad en g; si se envía, anula el cálculo por ml. */
   weightOverrideG?: number | null
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, slug } = sellerHeaders(request)
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
     const body = (await request.json()) as CreateBody
@@ -141,7 +113,7 @@ export async function POST(request: NextRequest) {
     const { data: product, error: insertErr } = await supabaseServer
       .from('products')
       .insert({
-        brand_id: brandId,
+        brand_id: session.brandId,
         name_es: name,
         name_en: name,
         description_es: desc,

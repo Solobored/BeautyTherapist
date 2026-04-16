@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { mapDbProductToProduct } from '@/lib/seller-product-map'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +13,7 @@ async function assertProductOwned(brandId: string, productId: string) {
     .eq('id', productId)
     .eq('brand_id', brandId)
     .maybeSingle()
+
   if (error || !data) return false
   return true
 }
@@ -22,23 +23,13 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
+    }
+
     const { id } = await context.params
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
-    }
-
-    const ok = await assertProductOwned(brandId, id)
+    const ok = await assertProductOwned(session.brandId, id)
     if (!ok) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
@@ -73,7 +64,9 @@ export async function GET(
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
 
-    return NextResponse.json({ product: mapDbProductToProduct(data as Parameters<typeof mapDbProductToProduct>[0]) })
+    return NextResponse.json({
+      product: mapDbProductToProduct(data as Parameters<typeof mapDbProductToProduct>[0]),
+    })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -101,23 +94,13 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
+    }
+
     const { id } = await context.params
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
-    }
-
-    const ok = await assertProductOwned(brandId, id)
+    const ok = await assertProductOwned(session.brandId, id)
     if (!ok) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
@@ -199,23 +182,13 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
+    }
+
     const { id } = await context.params
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
-    }
-
-    const ok = await assertProductOwned(brandId, id)
+    const ok = await assertProductOwned(session.brandId, id)
     if (!ok) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -17,25 +17,15 @@ function slugifyBase(title: string) {
 
 export async function GET(request: NextRequest) {
   try {
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
     const { data, error } = await supabaseServer
       .from('blog_posts')
       .select('id, title_es, title_en, slug, category, author, published_at, created_at, cover_image, brand_id')
-      .eq('brand_id', brandId)
+      .eq('brand_id', session.brandId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -66,21 +56,9 @@ type PostBody = {
 
 export async function POST(request: NextRequest) {
   try {
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    const brandName = request.headers.get('x-brand-name')?.trim() ?? 'Marca'
-
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
     const body = (await request.json()) as PostBody
@@ -90,8 +68,7 @@ export async function POST(request: NextRequest) {
 
     const title = body.title.trim()
     const content = body.content.trim()
-    let base = slugifyBase(title) || 'post'
-    const unique = `${base}-${Math.random().toString(36).slice(2, 8)}`
+    const unique = `${slugifyBase(title) || 'post'}-${Math.random().toString(36).slice(2, 8)}`
 
     const row = {
       title_es: title,
@@ -101,9 +78,9 @@ export async function POST(request: NextRequest) {
       content_en: content,
       cover_image: body.coverImage ?? null,
       category: body.category?.trim() || 'wellness',
-      author: brandName,
+      author: session.seller.brandName,
       published_at: new Date().toISOString(),
-      brand_id: brandId,
+      brand_id: session.brandId,
     }
 
     const { data, error } = await supabaseServer.from('blog_posts').insert(row).select('id, slug').single()
@@ -120,7 +97,7 @@ export async function POST(request: NextRequest) {
             content_en: content,
             cover_image: body.coverImage ?? null,
             category: body.category?.trim() || 'wellness',
-            author: brandName,
+            author: session.seller.brandName,
             published_at: new Date().toISOString(),
           })
           .select('id, slug')

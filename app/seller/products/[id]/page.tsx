@@ -9,16 +9,16 @@ import { SellerProductForm, SellerProductFormHeader } from '@/components/seller/
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { t } = useLanguage()
-  const { seller, isAuthenticated } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push('/seller/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthLoading, isAuthenticated, router])
 
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>

@@ -52,7 +52,7 @@ const statusClass: Record<string, string> = {
 
 export default function SellerOrdersPage() {
   const { t } = useLanguage()
-  const { seller, isAuthenticated, logout } = useAuth()
+  const { seller, isAuthenticated, isAuthLoading, logout } = useAuth()
   const router = useRouter()
   const [orders, setOrders] = useState<SellerOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,10 +65,10 @@ export default function SellerOrdersPage() {
   const [deleteBusy, setDeleteBusy] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push('/seller/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthLoading, isAuthenticated, router])
 
   useEffect(() => {
     if (!seller?.email) return
@@ -94,7 +94,7 @@ export default function SellerOrdersPage() {
     }
   }, [seller])
 
-  if (!isAuthenticated || !seller) {
+  if (isAuthLoading || !isAuthenticated || !seller) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>{t('common.loading')}</p>
@@ -102,9 +102,8 @@ export default function SellerOrdersPage() {
     )
   }
 
-  const handleLogout = () => {
-    logout()
-    router.push('/seller/login')
+  const handleLogout = async () => {
+    await logout()
   }
 
   const submitCancelOrder = async () => {

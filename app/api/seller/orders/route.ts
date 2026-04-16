@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { computeSellerOrderAnalytics, type OrderRowForAnalytics } from '@/lib/seller-order-analytics'
 
 export const dynamic = 'force-dynamic'
@@ -16,25 +16,15 @@ type OrderItem = {
 
 export async function GET(request: NextRequest) {
   try {
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(
-      supabaseServer,
-      email,
-      slug || email.split('@')[0]?.toLowerCase() || undefined
-    )
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
     const { data: brandProducts, error: pErr } = await supabaseServer
       .from('products')
       .select('id, category')
-      .eq('brand_id', brandId)
+      .eq('brand_id', session.brandId)
 
     if (pErr) {
       console.error(pErr)

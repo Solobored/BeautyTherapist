@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -11,13 +11,19 @@ import { useAuth } from '@/contexts/auth-context'
 
 export default function SellerLoginPage() {
   const { t } = useLanguage()
-  const { login } = useAuth()
+  const { login, isAuthenticated, isAuthLoading, userType } = useAuth()
   const router = useRouter()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && userType === 'seller') {
+      router.replace('/seller/dashboard')
+    }
+  }, [isAuthLoading, isAuthenticated, router, userType])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

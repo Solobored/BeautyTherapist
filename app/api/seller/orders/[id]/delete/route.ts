@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
-import { resolveBrandIdForSeller } from '@/lib/seller-server'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,24 +10,17 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSellerSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
+    }
+
     const { id: orderId } = await ctx.params
-    const email = request.headers.get('x-seller-email')?.trim() ?? ''
-    const slug = request.headers.get('x-brand-slug')?.trim() ?? ''
 
-    if (!email) {
-      return NextResponse.json({ error: 'Missing x-seller-email header' }, { status: 400 })
-    }
-
-    const brandId = await resolveBrandIdForSeller(supabaseServer, email, slug || undefined)
-    if (!brandId) {
-      return NextResponse.json({ error: 'Marca no encontrada' }, { status: 404 })
-    }
-
-    // Verificar que el pedido tiene productos de esta marca
     const { data: brandProducts } = await supabaseServer
       .from('products')
       .select('id')
-      .eq('brand_id', brandId)
+      .eq('brand_id', session.brandId)
 
     const productIds = new Set((brandProducts ?? []).map((p) => p.id))
 
@@ -41,7 +34,7 @@ export async function POST(
       return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
     }
 
-    const items = (order.items ?? []) as any[]
+    const items = (order.items ?? []) as Array<{ product_id?: string }>
     const hasOurProducts = items.some((i) => i.product_id && productIds.has(i.product_id))
 
     if (!hasOurProducts) {
@@ -51,7 +44,6 @@ export async function POST(
       )
     }
 
-    // Borrar el pedido
     const { error: deleteErr } = await supabaseServer.from('orders').delete().eq('id', orderId)
 
     if (deleteErr) {
