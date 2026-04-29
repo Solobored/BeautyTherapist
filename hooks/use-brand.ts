@@ -15,6 +15,8 @@ function mapBrand(row: any): Brand {
     facebook: row.facebook_url ?? undefined,
     instagram: row.instagram_url ?? undefined,
     tiktok: row.tiktok_url ?? undefined,
+    customReviews: row.custom_reviews ?? undefined,
+    featuredProductIds: row.featured_product_ids ?? undefined,
   }
 }
 
@@ -33,7 +35,7 @@ export function useBrand(slug: string) {
         const { data, error: qErr } = await supabase
           .from('brands')
           .select(
-            'id, brand_name, brand_slug, description, logo_url, banner_url, facebook_url, instagram_url, tiktok_url'
+            'id, brand_name, brand_slug, description, logo_url, banner_url, facebook_url, instagram_url, tiktok_url, custom_reviews, featured_product_ids'
           )
           .eq('brand_slug', slug)
           .maybeSingle()

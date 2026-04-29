@@ -8,6 +8,13 @@ export interface Brand {
   facebook?: string
   instagram?: string
   tiktok?: string
+  customReviews?: Array<{
+    id: string
+    customerName: string
+    text: string
+    rating: number
+  }>
+  featuredProductIds?: string[]
 }
 
 export interface BlogPost {

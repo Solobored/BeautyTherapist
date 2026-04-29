@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseServer
     .from('brands')
     .select(
-      'id, brand_name, brand_slug, description, logo_url, banner_url, facebook_url, instagram_url, tiktok_url'
+      'id, brand_name, brand_slug, description, logo_url, banner_url, facebook_url, instagram_url, tiktok_url, custom_reviews, featured_product_ids'
     )
     .eq('id', session.brandId)
     .maybeSingle()
@@ -51,19 +51,47 @@ export async function PUT(request: NextRequest) {
   }
 
   const update: Record<string, any> = {
-    description: body.brandDescription ?? null,
-    logo_url: body.brandLogo ?? null,
-    banner_url: body.brandBanner ?? null,
-    facebook_url: normalizeUrl(body.facebookUrl),
-    instagram_url: normalizeUrl(body.instagramUrl),
-    tiktok_url: normalizeUrl(body.tiktokUrl),
     updated_at: new Date().toISOString(),
+  }
+
+  // Only update fields that are explicitly provided in the request
+  if (body.brandDescription !== undefined) {
+    update.description = body.brandDescription
+  }
+  if (body.brandLogo !== undefined) {
+    update.logo_url = body.brandLogo
+  }
+  if (body.brandBanner !== undefined) {
+    update.banner_url = body.brandBanner
+  }
+  if (body.facebookUrl !== undefined) {
+    update.facebook_url = normalizeUrl(body.facebookUrl)
+  }
+  if (body.instagramUrl !== undefined) {
+    update.instagram_url = normalizeUrl(body.instagramUrl)
+  }
+  if (body.tiktokUrl !== undefined) {
+    update.tiktok_url = normalizeUrl(body.tiktokUrl)
+  }
+
+  // Handle custom_reviews if provided
+  if (body.customReviews !== undefined) {
+    update.custom_reviews = body.customReviews
+  }
+
+  // Handle featured_product_ids if provided
+  if (body.featuredProductIds !== undefined) {
+    update.featured_product_ids = body.featuredProductIds
   }
 
   const { error } = await supabaseServer.from('brands').update(update).eq('id', session.brandId)
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'No se pudo actualizar la marca' }, { status: 500 })
+    console.error('Supabase error updating brand:', error)
+    return NextResponse.json({ 
+      error: 'No se pudo actualizar la marca',
+      details: error.message,
+      code: error.code
+    }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
