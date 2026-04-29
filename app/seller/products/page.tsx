@@ -100,10 +100,11 @@ export default function SellerProductsPage() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Link href="/seller/dashboard" className="font-serif text-xl font-semibold">
-              Beauty & Therapy
+              <span className="md:hidden">B&T</span>
+              <span className="hidden md:inline">Beauty & Therapy</span>
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/seller/dashboard">
                   <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -119,6 +120,24 @@ export default function SellerProductsPage() {
               <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
               </Button>
+            </div>
+
+            <div className="md:hidden flex-1 flex justify-end">
+              <div className="flex items-center gap-2 overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                  <Link href="/seller/dashboard">
+                    <LayoutDashboard className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="icon" className="shrink-0">
+                  <Link href={`/brands/${storeSlug}`}>
+                    <Store className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="shrink-0">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -149,7 +168,8 @@ export default function SellerProductsPage() {
               No hay productos aún. Crea uno nuevo o verifica tu conexión a Supabase.
             </p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[80px]">Imagen</TableHead>
@@ -231,6 +251,7 @@ export default function SellerProductsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </div>
       </main>

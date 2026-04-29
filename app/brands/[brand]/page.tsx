@@ -161,8 +161,8 @@ export default function BrandPage({ params }: { params: Promise<{ brand: string 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {featuredProducts.map((product) => (
                   <div key={product.id} className="relative">
-                    <div className="absolute -top-2 -right-2 z-10">
-                      <span className="bg-accent text-accent-foreground text-xs font-bold px-3 py-1 rounded-full">
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-full">
                         Destacado
                       </span>
                     </div>

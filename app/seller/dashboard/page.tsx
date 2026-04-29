@@ -457,7 +457,7 @@ export default function SellerDashboardPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="resumen" className="space-y-6">
-          <TabsList>
+          <TabsList className="w-full overflow-x-auto justify-start md:justify-center">
             <TabsTrigger value="resumen">Resumen</TabsTrigger>
             <TabsTrigger value="mi-marca">Mi Marca</TabsTrigger>
             <TabsTrigger value="reseñas">Reseñas</TabsTrigger>
@@ -626,17 +626,18 @@ export default function SellerDashboardPage() {
                   </Link>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Order ID</TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                       {ordersLoading ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center text-muted-foreground">
@@ -676,6 +677,7 @@ export default function SellerDashboardPage() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -885,18 +887,18 @@ export default function SellerDashboardPage() {
                     Guardando cambios...
                   </div>
                 )}
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-x-auto">
                   {products.filter(p => p.status === 'active').map((product) => {
                     const isFeatured = featuredProductIds.includes(product.id)
                     return (
                       <div
                         key={product.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border-2 transition-colors gap-3 ${
                           isFeatured ? 'border-accent bg-accent/5' : 'border-border'
                         }`}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden">
+                          <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden shrink-0">
                             {product.imageUrl && (
                               <img
                                 src={product.imageUrl}
@@ -905,8 +907,8 @@ export default function SellerDashboardPage() {
                               />
                             )}
                           </div>
-                          <div>
-                            <p className="font-medium">{language === 'es' ? product.nameEs : product.name}</p>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{language === 'es' ? product.nameEs : product.name}</p>
                             <p className="text-sm text-muted-foreground">
                               {formatClp(product.price)} · Stock: {product.stock}
                             </p>
@@ -917,6 +919,7 @@ export default function SellerDashboardPage() {
                           size="sm"
                           onClick={() => toggleFeaturedProduct(product.id)}
                           disabled={isSavingFeatured}
+                          className="w-full sm:w-auto shrink-0"
                         >
                           {isFeatured ? (
                             <>

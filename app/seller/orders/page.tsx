@@ -188,10 +188,11 @@ export default function SellerOrdersPage() {
                 </Link>
               </Button>
               <Link href="/seller/dashboard" className="font-serif text-xl font-semibold">
-                Beauty & Therapy
+                <span className="md:hidden">B&T</span>
+                <span className="hidden md:inline">Beauty & Therapy</span>
               </Link>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/seller/dashboard">
                   <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -201,6 +202,19 @@ export default function SellerOrdersPage() {
               <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
               </Button>
+            </div>
+
+            <div className="md:hidden flex-1 flex justify-end">
+              <div className="flex items-center gap-2 overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <Button asChild variant="ghost" size="icon" className="shrink-0">
+                  <Link href="/seller/dashboard">
+                    <LayoutDashboard className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="shrink-0">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -236,49 +250,54 @@ export default function SellerOrdersPage() {
                       {new Date(order.createdAt).toLocaleString('es-CL')}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={statusClass[order.orderStatus] ?? 'bg-secondary'}>
-                      {order.orderStatus}
-                    </Badge>
-                    <Badge variant="outline">{order.paymentStatus}</Badge>
-                    {order.orderStatus !== 'cancelled' &&
-                      order.orderStatus !== 'shipped' &&
-                      order.orderStatus !== 'delivered' && (
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                      <Badge className={statusClass[order.orderStatus] ?? 'bg-secondary'}>
+                        {order.orderStatus}
+                      </Badge>
+                      <Badge variant="outline">{order.paymentStatus}</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                      {order.orderStatus !== 'cancelled' &&
+                        order.orderStatus !== 'shipped' &&
+                        order.orderStatus !== 'delivered' && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => markAsShipped(order)}
+                            disabled={shipBusyId === order.id}
+                            className="flex-1 sm:flex-none"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            {shipBusyId === order.id ? 'Marcando…' : 'Producto enviado'}
+                          </Button>
+                        )}
+                      {order.orderStatus !== 'cancelled' && (
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="outline"
                           size="sm"
-                          onClick={() => markAsShipped(order)}
-                          disabled={shipBusyId === order.id}
+                          className="text-destructive border-destructive/40 hover:bg-destructive/10 flex-1 sm:flex-none"
+                          onClick={() => {
+                            setCancelTarget(order)
+                            setCancelReason('')
+                          }}
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          {shipBusyId === order.id ? 'Marcando…' : 'Producto enviado'}
+                          Anular pedido
                         </Button>
                       )}
-                    {order.orderStatus !== 'cancelled' && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="text-destructive border-destructive/40 hover:bg-destructive/10"
-                        onClick={() => {
-                          setCancelTarget(order)
-                          setCancelReason('')
-                        }}
+                        className="text-red-600 border-red-600/40 hover:bg-red-600/10 flex-1 sm:flex-none"
+                        onClick={() => setDeleteTarget(order)}
+                        disabled={deleteBusy}
                       >
-                        Anular pedido
+                        🗑️ Borrar
                       </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600/40 hover:bg-red-600/10"
-                      onClick={() => setDeleteTarget(order)}
-                      disabled={deleteBusy}
-                    >
-                      🗑️ Borrar
-                    </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
