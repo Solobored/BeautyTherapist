@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
@@ -23,6 +23,7 @@ interface ImageUploadZoneProps {
   initialImages?: UploadedImage[];
   /** Solo WebP (recomendado para panel vendedor). */
   webpOnly?: boolean;
+  folder?: string;
 }
 
 export function ImageUploadZone({
@@ -30,11 +31,16 @@ export function ImageUploadZone({
   maxImages = 8,
   initialImages = [],
   webpOnly = false,
+  folder,
 }: ImageUploadZoneProps) {
   const [images, setImages] = useState<UploadedImage[]>(initialImages);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setImages(initialImages);
+  }, [initialImages]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -85,6 +91,7 @@ export function ImageUploadZone({
           const formData = new FormData();
           formData.append('file', file);
           if (webpOnly) formData.append('webpOnly', 'true');
+          if (folder) formData.append('folder', folder);
 
           // Show compression in progress
           const originalSize = file.size;
@@ -132,7 +139,7 @@ export function ImageUploadZone({
         setLoading(false);
       }
     },
-    [images, maxImages, onImagesChange, webpOnly]
+    [images, maxImages, onImagesChange, webpOnly, folder]
   );
 
   const handleDrop = (e: React.DragEvent) => {

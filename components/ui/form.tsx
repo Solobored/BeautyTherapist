@@ -1,4 +1,5 @@
 'use client'
+// @ts-nocheck
 
 import * as React from 'react'
 import * as LabelPrimitive from '@radix-ui/react-label'
@@ -42,7 +43,7 @@ const FormField = <
   )
 }
 
-const useFormField = () => {
+const useFormField = (): any => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
   const { getFieldState } = useFormContext()

@@ -75,6 +75,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       addItem({
         id: product.id,
         name: displayName,
+        nameEs: displayName,
         brand: product.brand,
         price: product.price,
         image: product.images[0] || '/placeholder.svg',
@@ -269,6 +270,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <TabsContent value="reviews" className="pt-6">
               <ProductReviews
                 productId={product.id}
+                brandId={product.brandId}
                 reviews={[]}
                 averageRating={product.rating}
                 totalReviews={product.reviewCount}

@@ -49,13 +49,11 @@ export default function SellerRegisterPage() {
     
     setIsLoading(true)
     
-    const success = await register({
+    const success = await register(formData.email, formData.password, 'seller', {
       brandName: formData.brandName,
       ownerName: formData.ownerName,
-      email: formData.email,
-      password: formData.password,
       phone: formData.phone,
-      country: formData.country
+      country: formData.country,
     })
     
     if (success) {

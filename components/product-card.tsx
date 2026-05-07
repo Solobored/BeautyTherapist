@@ -30,6 +30,7 @@ export function ProductCard({ product }: ProductCardProps) {
     addItem({
       id: product.id,
       name: cardTitle,
+      nameEs: cardTitle,
       brand: product.brand,
       price: product.price,
       image: cardImage,

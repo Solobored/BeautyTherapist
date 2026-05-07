@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { ImageUploadZone } from '@/components/checkout/ImageUploadZone'
 import { useLanguage } from '@/contexts/language-context'
@@ -18,6 +19,8 @@ import { formatClp } from '@/lib/utils'
 import { toast } from 'sonner'
 
 type UploadedImage = { url: string; publicId: string; position: number }
+type ShippingMode = 'blue_express' | 'chile_express' | 'custom_group'
+type ShippingGroup = { id: string; name: string; carrier: string }
 
 type Props = {
   seller: Seller
@@ -40,9 +43,38 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
   const [gramsPerMl, setGramsPerMl] = useState('1')
   const [weightOverrideG, setWeightOverrideG] = useState('')
   const [active, setActive] = useState(false)
+  const [shippingMode, setShippingMode] = useState<ShippingMode>('blue_express')
+  const [shippingGroupId, setShippingGroupId] = useState('')
+  const [shippingGroups, setShippingGroups] = useState<ShippingGroup[]>([])
   const [images, setImages] = useState<UploadedImage[]>([])
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!seller?.email) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/seller/shipping-groups', {
+          headers: sellerApiHeaders(seller),
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || 'Error')
+        if (!cancelled) {
+          setShippingGroups((json.groups ?? []).map((group: Record<string, unknown>) => ({
+            id: String(group.id),
+            name: String(group.name),
+            carrier: String(group.carrier),
+          })))
+        }
+      } catch {
+        if (!cancelled) setShippingGroups([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [seller])
 
   useEffect(() => {
     if (mode !== 'edit' || !productId) return
@@ -69,6 +101,8 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
           p.gramsPerMl != null && Number(p.gramsPerMl) > 0 ? String(p.gramsPerMl) : '1'
         )
         setWeightOverrideG(p.weightOverrideG != null ? String(p.weightOverrideG) : '')
+        setShippingMode((p.shippingMode as ShippingMode | undefined) ?? 'blue_express')
+        setShippingGroupId(p.shippingGroupId ?? '')
         setActive(p.status === 'active')
         setImages(
           (p.images ?? []).map((url: string, i: number) => ({
@@ -113,6 +147,10 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
       toast.error('Sube al menos una imagen WebP')
       return
     }
+    if (shippingMode === 'custom_group' && !shippingGroupId) {
+      toast.error('Selecciona un grupo personalizado para este producto')
+      return
+    }
 
     const gramsPerMlNum = gramsPerMl.trim() === '' ? 1 : parseFloat(gramsPerMl.replace(',', '.'))
     if (!Number.isFinite(gramsPerMlNum) || gramsPerMlNum <= 0) {
@@ -148,6 +186,8 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
         netContentMl: netMlNum,
         gramsPerMl: gramsPerMlNum,
         weightOverrideG: overrideG,
+        shippingMode,
+        shippingGroupId: shippingMode === 'custom_group' ? shippingGroupId || null : null,
       }
 
       if (mode === 'create') {
@@ -198,6 +238,7 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
       : Number.isFinite(previewNetMl) && previewNetMl > 0 && Number.isFinite(previewGramsPerMl) && previewGramsPerMl > 0
         ? Math.round(previewNetMl * previewGramsPerMl * 100) / 100
         : null
+  const requiresBlueExpressWeight = shippingMode === 'blue_express'
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
@@ -345,12 +386,58 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
           </div>
 
           <div className="bg-card rounded-2xl p-6 border border-border/50">
+            <h2 className="font-semibold mb-4">Metodo de envio</h2>
+            <div className="space-y-4">
+              <RadioGroup value={shippingMode} onValueChange={(value) => setShippingMode(value as ShippingMode)}>
+                <div className="flex items-start gap-3 rounded-xl border border-border/60 p-4">
+                  <RadioGroupItem value="blue_express" id="ship-blue" />
+                  <div>
+                    <Label htmlFor="ship-blue" className="font-medium">Blue Express</Label>
+                    <p className="text-sm text-muted-foreground">Calculado por peso automaticamente. Recomendado.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-xl border border-border/60 p-4">
+                  <RadioGroupItem value="chile_express" id="ship-chilex" />
+                  <div>
+                    <Label htmlFor="ship-chilex" className="font-medium">Chile Express</Label>
+                    <p className="text-sm text-muted-foreground">RM $7.000 · Sur $9.000 · Norte $10.000 · Extremo $16.000</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-xl border border-border/60 p-4">
+                  <RadioGroupItem value="custom_group" id="ship-group" />
+                  <div className="w-full">
+                    <Label htmlFor="ship-group" className="font-medium">Grupo personalizado</Label>
+                    <p className="text-sm text-muted-foreground mb-3">Selecciona uno de tus grupos configurados.</p>
+                    <Select value={shippingGroupId || undefined} onValueChange={setShippingGroupId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un grupo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shippingGroups.map((group) => (
+                          <SelectItem key={group.id} value={group.id}>
+                            {group.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 border border-border/50">
             <h2 className="font-semibold mb-4">Peso para envío (Chile)</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Se usa para cotizar XS/S (hasta 0,5 kg / 3 kg). Indica el contenido en ml y gramos por ml
               (≈1 en productos acuosos), o un peso en gramos por unidad si prefieres fijarlo a mano (incluye
               envase si quieres).
             </p>
+            {!requiresBlueExpressWeight && (
+              <p className="mb-4 rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
+                Estos campos son opcionales mientras el producto no use Blue Express.
+              </p>
+            )}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="netContentMl">Contenido neto (ml por unidad)</Label>

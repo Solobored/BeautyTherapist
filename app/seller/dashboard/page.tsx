@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { SellerProfileEditor } from '@/components/seller-profile-editor'
 import { SellerAccountCredentialsCard } from '@/components/seller/SellerAccountCredentialsCard'
+import { ShippingGroupsManager } from '@/components/seller/ShippingGroupsManager'
+import { SellerVideosManager } from '@/components/seller/SellerVideosManager'
 import { ShippingLocationsMap } from '@/components/seller/ShippingLocationsMap'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
@@ -460,6 +462,8 @@ export default function SellerDashboardPage() {
           <TabsList className="w-full overflow-x-auto justify-start md:justify-center">
             <TabsTrigger value="resumen">Resumen</TabsTrigger>
             <TabsTrigger value="mi-marca">Mi Marca</TabsTrigger>
+            <TabsTrigger value="envios">Metodos de Envio</TabsTrigger>
+            <TabsTrigger value="videos">Mis Videos</TabsTrigger>
             <TabsTrigger value="reseñas">Reseñas</TabsTrigger>
             <TabsTrigger value="productos-destacados">Productos Destacados</TabsTrigger>
           </TabsList>
@@ -779,6 +783,32 @@ export default function SellerDashboardPage() {
             <div className="max-w-2xl">
               <SellerAccountCredentialsCard />
             </div>
+          </TabsContent>
+
+          <TabsContent value="envios" className="space-y-6">
+            <ShippingGroupsManager
+              seller={seller}
+              products={products.map((product) => ({
+                id: product.id,
+                name: product.name,
+                nameEs: product.nameEs,
+                shippingMode: product.shippingMode,
+                shippingGroupId: product.shippingGroupId,
+                netContentMl: product.netContentMl,
+                weightOverrideG: product.weightOverrideG,
+              }))}
+            />
+          </TabsContent>
+
+          <TabsContent value="videos" className="space-y-6">
+            <SellerVideosManager
+              seller={seller}
+              products={products.map((product) => ({
+                id: product.id,
+                name: product.name,
+                nameEs: product.nameEs,
+              }))}
+            />
           </TabsContent>
 
           {/* Tab: Reseñas */}

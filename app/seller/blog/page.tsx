@@ -9,14 +9,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
 import { sellerApiHeaders } from '@/hooks/use-seller-products'
+import { toast } from 'sonner'
 
 type Post = {
   id: string
-  title_es: string
+  title: string
   slug: string
-  category: string | null
-  published_at: string | null
-  created_at: string
+  category: string
+  publishedAt: string | null
+  createdAt: string
+  images?: { url: string }[]
+  products?: { id: string }[]
 }
 
 export default function SellerBlogListPage() {
@@ -54,6 +57,21 @@ export default function SellerBlogListPage() {
       c = true
     }
   }, [seller])
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/seller/blog/${id}`, {
+        method: 'DELETE',
+        headers: sellerApiHeaders(seller!),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'No se pudo eliminar')
+      setPosts((current) => current.filter((post) => post.id !== id))
+      toast.success('Post eliminado')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar post')
+    }
+  }
 
   if (isAuthLoading || !isAuthenticated || !seller) {
     return (
@@ -119,14 +137,25 @@ export default function SellerBlogListPage() {
                 <Card>
                   <CardContent className="py-4 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-medium">{p.title_es}</p>
+                      <p className="font-medium">{p.title}</p>
                       <p className="text-xs text-muted-foreground font-mono">{p.slug}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.images?.length ?? 0} imagenes · {p.products?.length ?? 0} productos
+                      </p>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {p.published_at
-                        ? new Date(p.published_at).toLocaleDateString('es-CL')
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                      {p.publishedAt
+                        ? new Date(p.publishedAt).toLocaleDateString('es-CL')
                         : '—'}
-                    </span>
+                      </span>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/seller/blog/${p.id}/edit`}>Editar</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => void handleDelete(p.id)}>
+                        Eliminar
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </li>

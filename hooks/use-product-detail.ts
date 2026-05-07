@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { StoreProduct } from '@/lib/product-types'
+import { isMissingShippingSchemaError } from '@/lib/products-compat'
 
 const PLACEHOLDER = '/placeholder.svg'
 
@@ -15,6 +16,7 @@ function mapRow(item: any): StoreProduct {
       .filter(Boolean) || []
   return {
     id: item.id,
+    brandId: item.brand_id,
     name: item.name_en,
     nameEs: item.name_es,
     brand: brand?.brand_name || 'Marca',
@@ -28,15 +30,51 @@ function mapRow(item: any): StoreProduct {
     howToUse: item.how_to_use || '',
     howToUseEs: item.how_to_use || '',
     images: urls.length > 0 ? urls : [PLACEHOLDER],
+    imageUrl: urls[0] || PLACEHOLDER,
     rating: 0,
     reviewCount: 0,
     stock: Number(item.stock ?? 0),
     status: item.status,
+    shippingMode:
+      item.shipping_mode === 'chile_express' || item.shipping_mode === 'custom_group'
+        ? item.shipping_mode
+        : 'blue_express',
+    shippingGroupId: item.product_shipping_groups?.[0]?.shipping_group_id ?? null,
   }
 }
 
 const selectFields = `
   id,
+  brand_id,
+  name_en,
+  name_es,
+  description_en,
+  description_es,
+  ingredients,
+  how_to_use,
+  price,
+  compare_at_price,
+  stock,
+  category,
+  status,
+  shipping_mode,
+  product_images (
+    url,
+    position,
+    is_primary
+  ),
+  product_shipping_groups (
+    shipping_group_id
+  ),
+  brands (
+    brand_name,
+    brand_slug
+  )
+`
+
+const legacySelectFields = `
+  id,
+  brand_id,
   name_en,
   name_es,
   description_en,
@@ -78,12 +116,23 @@ export function useProductDetail(id: string) {
         setLoading(true)
         setError(null)
 
-        const { data: row, error: pErr } = await supabase
+        let { data: row, error: pErr }: { data: any | null; error: any } = await supabase
           .from('products')
           .select(selectFields)
           .eq('id', id)
           .eq('status', 'active')
           .maybeSingle()
+
+        if (pErr && isMissingShippingSchemaError(pErr)) {
+          const legacyResult: { data: any | null; error: any } = await supabase
+            .from('products')
+            .select(legacySelectFields)
+            .eq('id', id)
+            .eq('status', 'active')
+            .maybeSingle()
+          row = legacyResult.data
+          pErr = legacyResult.error
+        }
 
         if (cancelled) return
 
@@ -97,7 +146,7 @@ export function useProductDetail(id: string) {
         const mapped = mapRow(row)
         setProduct(mapped)
 
-        const { data: relatedRows, error: rErr } = await supabase
+        let { data: relatedRows, error: rErr }: { data: any[] | null; error: any } = await supabase
           .from('products')
           .select(selectFields)
           .eq('status', 'active')
@@ -105,6 +154,19 @@ export function useProductDetail(id: string) {
           .neq('id', mapped.id)
           .order('created_at', { ascending: false })
           .limit(4)
+
+        if (rErr && isMissingShippingSchemaError(rErr)) {
+          const legacyRelated: { data: any[] | null; error: any } = await supabase
+            .from('products')
+            .select(legacySelectFields)
+            .eq('status', 'active')
+            .eq('category', mapped.category)
+            .neq('id', mapped.id)
+            .order('created_at', { ascending: false })
+            .limit(4)
+          relatedRows = legacyRelated.data
+          rErr = legacyRelated.error
+        }
 
         if (cancelled) return
 

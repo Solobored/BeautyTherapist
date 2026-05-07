@@ -1,6 +1,7 @@
 /** Map DB row (+ joined brand + images) to the Product shape used in the storefront hook. */
 export function mapDbProductToProduct(row: {
   id: string
+  brand_id?: string
   name_en: string
   name_es: string
   description_en: string | null
@@ -15,10 +16,13 @@ export function mapDbProductToProduct(row: {
   net_content_ml?: number | null
   grams_per_ml?: number | null
   weight_override_g?: number | null
+  shipping_mode?: string | null
+  product_shipping_groups?: { shipping_group_id: string }[] | null
   brands: { brand_name: string; brand_slug: string } | { brand_name: string; brand_slug: string }[] | null
   product_images?: { url: string; position: number | null; is_primary: boolean | null }[] | null
 }) {
   const brand = Array.isArray(row.brands) ? row.brands[0] : row.brands
+  const productShippingGroups = row.product_shipping_groups ?? []
   const images = (row.product_images ?? [])
     .slice()
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
@@ -26,6 +30,7 @@ export function mapDbProductToProduct(row: {
 
   return {
     id: row.id,
+    brandId: row.brand_id,
     name: row.name_en,
     nameEs: row.name_es,
     brand: brand?.brand_name ?? 'Marca',
@@ -39,12 +44,18 @@ export function mapDbProductToProduct(row: {
     howToUse: row.how_to_use ?? '',
     howToUseEs: row.how_to_use ?? '',
     images: images.length > 0 ? images : ['/placeholder.svg'],
+    imageUrl: images[0] ?? '/placeholder.svg',
     rating: 4.5,
     reviewCount: 0,
     stock: row.stock,
     netContentMl: row.net_content_ml != null ? Number(row.net_content_ml) : null,
     gramsPerMl: row.grams_per_ml != null && Number(row.grams_per_ml) > 0 ? Number(row.grams_per_ml) : 1,
     weightOverrideG: row.weight_override_g != null ? Number(row.weight_override_g) : null,
+    shippingMode:
+      row.shipping_mode === 'chile_express' || row.shipping_mode === 'custom_group'
+        ? row.shipping_mode
+        : 'blue_express',
+    shippingGroupId: productShippingGroups[0]?.shipping_group_id ?? null,
     status:
       row.status === 'draft'
         ? 'draft'

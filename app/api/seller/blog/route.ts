@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
+import { fetchSellerBlogPosts } from '@/lib/blog-posts'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -22,25 +23,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
-    const { data, error } = await supabaseServer
-      .from('blog_posts')
-      .select('id, title_es, title_en, slug, category, author, published_at, created_at, cover_image, brand_id')
-      .eq('brand_id', session.brandId)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      if (error.message?.includes('brand_id') || error.code === '42703') {
-        return NextResponse.json({
-          posts: [],
-          notice:
-            'Ejecuta la migración en Supabase (columna brand_id en blog_posts) para listar entradas por marca.',
-        })
-      }
-      console.error(error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ posts: data ?? [] })
+    const posts = await fetchSellerBlogPosts(session.brandId)
+    return NextResponse.json({ posts })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -52,6 +36,9 @@ type PostBody = {
   content: string
   category?: string
   coverImage?: string | null
+  imagePublicIds?: string[]
+  images?: { url: string; publicId: string; altText?: string | null; position: number }[]
+  productIds?: string[]
 }
 
 export async function POST(request: NextRequest) {
@@ -86,30 +73,40 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseServer.from('blog_posts').insert(row).select('id, slug').single()
 
     if (error) {
-      if (error.message?.includes('brand_id') || error.code === '42703') {
-        const { data: d2, error: e2 } = await supabaseServer
-          .from('blog_posts')
-          .insert({
-            title_es: title,
-            title_en: title,
-            slug: unique,
-            content_es: content,
-            content_en: content,
-            cover_image: body.coverImage ?? null,
-            category: body.category?.trim() || 'wellness',
-            author: session.seller.brandName,
-            published_at: new Date().toISOString(),
-          })
-          .select('id, slug')
-          .single()
-        if (e2) {
-          console.error(e2)
-          return NextResponse.json({ error: e2.message }, { status: 500 })
-        }
-        return NextResponse.json({ ok: true, id: d2?.id, slug: d2?.slug })
-      }
       console.error(error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const images = body.images ?? []
+    if (images.length > 0 && data?.id) {
+      const { error: imagesError } = await supabaseServer.from('blog_post_images').insert(
+        images.map((image, index) => ({
+          blog_post_id: data.id,
+          cloudinary_url: image.url,
+          cloudinary_public_id:
+            image.publicId || body.imagePublicIds?.[index] || image.url,
+          alt_text: image.altText ?? null,
+          position: image.position ?? index,
+        }))
+      )
+
+      if (imagesError) {
+        return NextResponse.json({ error: imagesError.message }, { status: 500 })
+      }
+    }
+
+    if (body.productIds?.length && data?.id) {
+      const { error: productsError } = await supabaseServer.from('blog_post_products').insert(
+        body.productIds.map((productId, index) => ({
+          blog_post_id: data.id,
+          product_id: productId,
+          position: index,
+        }))
+      )
+
+      if (productsError) {
+        return NextResponse.json({ error: productsError.message }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ ok: true, id: data?.id, slug: data?.slug })

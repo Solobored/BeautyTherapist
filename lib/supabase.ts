@@ -103,6 +103,7 @@ export type Database = {
           net_content_ml: number | null;
           grams_per_ml: number | null;
           weight_override_g: number | null;
+          shipping_mode: 'blue_express' | 'chile_express' | 'custom_group';
           created_at: string;
           updated_at: string;
         };
@@ -206,6 +207,7 @@ export type Database = {
       };
       blog_posts: {
         Row: {
+          brand_id?: string | null;
           id: string;
           title_es: string;
           title_en: string;
@@ -221,6 +223,98 @@ export type Database = {
         };
         Insert: Omit<Database['public']['Tables']['blog_posts']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['blog_posts']['Insert']>;
+      };
+      shipping_groups: {
+        Row: {
+          id: string;
+          seller_id: string;
+          name: string;
+          carrier: 'blue_express' | 'chile_express' | 'custom';
+          rate_rm: number | null;
+          rate_sur: number | null;
+          rate_norte: number | null;
+          rate_extremo: number | null;
+          rate_prioritario: number | null;
+          free_shipping_threshold: number | null;
+          eta_rm: string | null;
+          eta_sur: string | null;
+          eta_norte: string | null;
+          eta_extremo: string | null;
+          notes: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['shipping_groups']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['shipping_groups']['Insert']>;
+      };
+      product_shipping_groups: {
+        Row: {
+          product_id: string;
+          shipping_group_id: string;
+        };
+        Insert: Database['public']['Tables']['product_shipping_groups']['Row'];
+        Update: Partial<Database['public']['Tables']['product_shipping_groups']['Row']>;
+      };
+      blog_post_images: {
+        Row: {
+          id: string;
+          blog_post_id: string;
+          cloudinary_url: string;
+          cloudinary_public_id: string;
+          alt_text: string | null;
+          position: number;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['blog_post_images']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['blog_post_images']['Insert']>;
+      };
+      blog_post_products: {
+        Row: {
+          blog_post_id: string;
+          product_id: string;
+          position: number;
+        };
+        Insert: Database['public']['Tables']['blog_post_products']['Row'];
+        Update: Partial<Database['public']['Tables']['blog_post_products']['Row']>;
+      };
+      reviews: {
+        Row: {
+          id: string;
+          reviewer_name: string;
+          rating: number;
+          title: string | null;
+          content: string;
+          verified_purchase: boolean | null;
+          helpful_count: number | null;
+          product_id: string | null;
+          referenced_product_id: string | null;
+          brand_id: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['reviews']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['reviews']['Insert']>;
+      };
+      seller_videos: {
+        Row: {
+          id: string;
+          seller_id: string;
+          brand_id: string | null;
+          title: string;
+          description: string | null;
+          cloudinary_url: string;
+          cloudinary_public_id: string;
+          thumbnail_url: string | null;
+          duration_seconds: number | null;
+          featured_product_ids: string[] | null;
+          views_count: number;
+          likes_count: number;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['seller_videos']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['seller_videos']['Insert']>;
       };
     };
   };

@@ -32,14 +32,15 @@ describe('Authentication', () => {
   describe('Buyer Registration', () => {
     it('should register buyer with valid data successfully', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signUp as jest.Mock).mockResolvedValue({
         data: { user: { id: 'user-123' } },
         error: null,
       });
 
       // This would test the actual registration component
       // For now, we're testing the auth flow logic
-      const result = await supabase.auth.signUp({
+      const result = await auth.signUp({
         email: 'buyer@test.com',
         password: 'SecurePass123!',
       });
@@ -50,12 +51,13 @@ describe('Authentication', () => {
 
     it('should show error with invalid email format', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signUp as jest.Mock).mockResolvedValue({
         data: null,
         error: { message: 'Invalid email format' },
       });
 
-      const result = await supabase.auth.signUp({
+      const result = await auth.signUp({
         email: 'invalid-email',
         password: 'SecurePass123!',
       });
@@ -66,12 +68,13 @@ describe('Authentication', () => {
 
     it('should show error with weak password', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signUp as jest.Mock).mockResolvedValue({
         data: null,
         error: { message: 'Password must be at least 8 characters' },
       });
 
-      const result = await supabase.auth.signUp({
+      const result = await auth.signUp({
         email: 'buyer@test.com',
         password: 'weak',
       });
@@ -83,12 +86,13 @@ describe('Authentication', () => {
   describe('Seller Registration', () => {
     it('should register seller with valid data successfully', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signUp as jest.Mock).mockResolvedValue({
         data: { user: { id: 'seller-123' } },
         error: null,
       });
 
-      const result = await supabase.auth.signUp({
+      const result = await auth.signUp({
         email: 'seller@test.com',
         password: 'SecurePass123!',
       });
@@ -99,12 +103,13 @@ describe('Authentication', () => {
 
     it('should handle duplicate email error', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signUp as jest.Mock).mockResolvedValue({
         data: null,
         error: { message: 'User already exists' },
       });
 
-      const result = await supabase.auth.signUp({
+      const result = await auth.signUp({
         email: 'existing@test.com',
         password: 'SecurePass123!',
       });
@@ -116,12 +121,13 @@ describe('Authentication', () => {
   describe('Login', () => {
     it('should login successfully with correct credentials', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signInWithPassword as jest.Mock).mockResolvedValue({
         data: { user: { id: 'user-123', user_metadata: { user_type: 'buyer' } } },
         error: null,
       });
 
-      const result = await supabase.auth.signInWithPassword({
+      const result = await auth.signInWithPassword({
         email: 'buyer@test.com',
         password: 'SecurePass123!',
       });
@@ -132,12 +138,13 @@ describe('Authentication', () => {
 
     it('should show error with wrong password', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signInWithPassword as jest.Mock).mockResolvedValue({
         data: null,
         error: { message: 'Invalid login credentials' },
       });
 
-      const result = await supabase.auth.signInWithPassword({
+      const result = await auth.signInWithPassword({
         email: 'buyer@test.com',
         password: 'WrongPassword123!',
       });
@@ -148,12 +155,13 @@ describe('Authentication', () => {
 
     it('should redirect buyer to /account/dashboard after login', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signInWithPassword as jest.Mock).mockResolvedValue({
         data: { user: { id: 'buyer-123', user_metadata: { user_type: 'buyer' } } },
         error: null,
       });
 
-      await supabase.auth.signInWithPassword({
+      await auth.signInWithPassword({
         email: 'buyer@test.com',
         password: 'SecurePass123!',
       });
@@ -165,12 +173,13 @@ describe('Authentication', () => {
 
     it('should redirect seller to /seller/dashboard after login', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
+      const auth = (supabase as any).auth;
+      (auth.signInWithPassword as jest.Mock).mockResolvedValue({
         data: { user: { id: 'seller-123', user_metadata: { user_type: 'seller' } } },
         error: null,
       });
 
-      await supabase.auth.signInWithPassword({
+      await auth.signInWithPassword({
         email: 'seller@test.com',
         password: 'SecurePass123!',
       });
@@ -191,12 +200,13 @@ describe('Authentication', () => {
   describe('Logout', () => {
     it('should sign out user successfully', async () => {
       const { supabase } = await import('@/lib/supabase');
-      (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
+      const auth = (supabase as any).auth;
+      (auth.signOut as jest.Mock).mockResolvedValue({ error: null });
 
-      const result = await supabase.auth.signOut();
+      const result = await auth.signOut();
 
       expect(result.error).toBeNull();
-      expect(supabase.auth.signOut).toHaveBeenCalled();
+      expect(auth.signOut).toHaveBeenCalled();
     });
   });
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { mapDbProductToProduct } from '@/lib/seller-product-map'
+import { isMissingShippingSchemaError } from '@/lib/products-compat'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -13,11 +14,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
     }
 
-    const { data, error } = await supabaseServer
-      .from('products')
-      .select(
-        `
+    const nextSelect = `
         id,
+        brand_id,
+        name_en,
+        name_es,
+        description_en,
+        description_es,
+        ingredients,
+        how_to_use,
+        price,
+        compare_at_price,
+        stock,
+        category,
+        status,
+        net_content_ml,
+        grams_per_ml,
+        weight_override_g,
+        shipping_mode,
+        product_shipping_groups (shipping_group_id),
+        brands (brand_name, brand_slug),
+        product_images (url, position, is_primary)
+      `
+
+    const legacySelect = `
+        id,
+        brand_id,
         name_en,
         name_es,
         description_en,
@@ -35,9 +57,22 @@ export async function GET(request: NextRequest) {
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
-      )
+
+    let { data, error }: { data: any[] | null; error: any } = await supabaseServer
+      .from('products')
+      .select(nextSelect)
       .eq('brand_id', session.brandId)
       .order('created_at', { ascending: false })
+
+    if (error && isMissingShippingSchemaError(error)) {
+      const legacyResult: { data: any[] | null; error: any } = await supabaseServer
+        .from('products')
+        .select(legacySelect)
+        .eq('brand_id', session.brandId)
+        .order('created_at', { ascending: false })
+      data = legacyResult.data
+      error = legacyResult.error
+    }
 
     if (error) {
       console.error('seller products GET:', error)
@@ -68,6 +103,8 @@ type CreateBody = {
   netContentMl?: number | null
   gramsPerMl?: number | null
   weightOverrideG?: number | null
+  shippingMode?: 'blue_express' | 'chile_express' | 'custom_group'
+  shippingGroupId?: string | null
 }
 
 export async function POST(request: NextRequest) {
@@ -110,7 +147,7 @@ export async function POST(request: NextRequest) {
         ? body.status
         : 'draft'
 
-    const { data: product, error: insertErr } = await supabaseServer
+    let { data: product, error: insertErr }: { data: { id: string } | null; error: any } = await supabaseServer
       .from('products')
       .insert({
         brand_id: session.brandId,
@@ -128,9 +165,39 @@ export async function POST(request: NextRequest) {
         net_content_ml: netContentMl,
         grams_per_ml: gramsPerMl,
         weight_override_g: weightOverrideG,
+        shipping_mode:
+          body.shippingMode === 'chile_express' || body.shippingMode === 'custom_group'
+            ? body.shippingMode
+            : 'blue_express',
       })
       .select('id')
       .single()
+
+    if (insertErr && isMissingShippingSchemaError(insertErr)) {
+      const legacyInsert: { data: { id: string } | null; error: any } = await supabaseServer
+        .from('products')
+        .insert({
+          brand_id: session.brandId,
+          name_es: name,
+          name_en: name,
+          description_es: desc,
+          description_en: desc,
+          ingredients: ing,
+          how_to_use: how,
+          price: body.price,
+          compare_at_price: body.comparePrice ?? null,
+          stock: Math.max(0, Math.floor(body.stock)),
+          category: body.category,
+          status,
+          net_content_ml: netContentMl,
+          grams_per_ml: gramsPerMl,
+          weight_override_g: weightOverrideG,
+        })
+        .select('id')
+        .single()
+      product = legacyInsert.data
+      insertErr = legacyInsert.error
+    }
 
     if (insertErr || !product) {
       console.error(insertErr)
@@ -149,6 +216,20 @@ export async function POST(request: NextRequest) {
       await supabaseServer.from('products').delete().eq('id', product.id)
       console.error(imgErr)
       return NextResponse.json({ error: imgErr.message }, { status: 500 })
+    }
+
+    if (body.shippingGroupId?.trim()) {
+      const { error: groupErr } = await supabaseServer.from('product_shipping_groups').insert({
+        product_id: product.id,
+        shipping_group_id: body.shippingGroupId.trim(),
+      })
+
+      if (groupErr) {
+        if (!isMissingShippingSchemaError(groupErr)) {
+          console.error(groupErr)
+          return NextResponse.json({ error: groupErr.message }, { status: 500 })
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, id: product.id })

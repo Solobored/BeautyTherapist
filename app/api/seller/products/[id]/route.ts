@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { mapDbProductToProduct } from '@/lib/seller-product-map'
+import { isMissingShippingSchemaError } from '@/lib/products-compat'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -34,11 +35,32 @@ export async function GET(
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
 
-    const { data, error } = await supabaseServer
-      .from('products')
-      .select(
-        `
+    const nextSelect = `
         id,
+        brand_id,
+        name_en,
+        name_es,
+        description_en,
+        description_es,
+        ingredients,
+        how_to_use,
+        price,
+        compare_at_price,
+        stock,
+        category,
+        status,
+        net_content_ml,
+        grams_per_ml,
+        weight_override_g,
+        shipping_mode,
+        product_shipping_groups (shipping_group_id),
+        brands (brand_name, brand_slug),
+        product_images (url, position, is_primary)
+      `
+
+    const legacySelect = `
+        id,
+        brand_id,
         name_en,
         name_es,
         description_en,
@@ -56,9 +78,22 @@ export async function GET(
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
-      )
+
+    let { data, error }: { data: any | null; error: any } = await supabaseServer
+      .from('products')
+      .select(nextSelect)
       .eq('id', id)
       .single()
+
+    if (error && isMissingShippingSchemaError(error)) {
+      const legacyResult: { data: any | null; error: any } = await supabaseServer
+        .from('products')
+        .select(legacySelect)
+        .eq('id', id)
+        .single()
+      data = legacyResult.data
+      error = legacyResult.error
+    }
 
     if (error || !data) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
@@ -87,6 +122,8 @@ type PatchBody = {
   netContentMl?: number | null
   gramsPerMl?: number | null
   weightOverrideG?: number | null
+  shippingMode?: 'blue_express' | 'chile_express' | 'custom_group'
+  shippingGroupId?: string | null
 }
 
 export async function PATCH(
@@ -145,10 +182,21 @@ export async function PATCH(
           ? body.weightOverrideG
           : null
     }
+    if (body.shippingMode !== undefined) {
+      patch.shipping_mode =
+        body.shippingMode === 'chile_express' || body.shippingMode === 'custom_group'
+          ? body.shippingMode
+          : 'blue_express'
+    }
 
     if (Object.keys(patch).length > 0) {
       patch.updated_at = new Date().toISOString()
-      const { error: upErr } = await supabaseServer.from('products').update(patch).eq('id', id)
+      let { error: upErr } = await supabaseServer.from('products').update(patch).eq('id', id)
+      if (upErr && isMissingShippingSchemaError(upErr)) {
+        const { shipping_mode: _shippingMode, ...legacyPatch } = patch
+        const legacyResult = await supabaseServer.from('products').update(legacyPatch).eq('id', id)
+        upErr = legacyResult.error
+      }
       if (upErr) {
         console.error(upErr)
         return NextResponse.json({ error: upErr.message }, { status: 500 })
@@ -167,6 +215,29 @@ export async function PATCH(
       if (imgErr) {
         console.error(imgErr)
         return NextResponse.json({ error: imgErr.message }, { status: 500 })
+      }
+    }
+
+    if (body.shippingGroupId !== undefined) {
+      const { error: deleteGroupError } = await supabaseServer
+        .from('product_shipping_groups')
+        .delete()
+        .eq('product_id', id)
+      if (deleteGroupError && !isMissingShippingSchemaError(deleteGroupError)) {
+        console.error(deleteGroupError)
+        return NextResponse.json({ error: deleteGroupError.message }, { status: 500 })
+      }
+      if (body.shippingGroupId?.trim()) {
+        const { error: groupErr } = await supabaseServer.from('product_shipping_groups').insert({
+          product_id: id,
+          shipping_group_id: body.shippingGroupId.trim(),
+        })
+        if (groupErr) {
+          if (!isMissingShippingSchemaError(groupErr)) {
+            console.error(groupErr)
+            return NextResponse.json({ error: groupErr.message }, { status: 500 })
+          }
+        }
       }
     }
 

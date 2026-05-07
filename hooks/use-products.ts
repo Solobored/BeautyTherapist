@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { StoreProduct } from '@/lib/product-types'
+import { isMissingShippingSchemaError } from '@/lib/products-compat'
 
 export type { StoreProduct as Product } from '@/lib/product-types'
 
@@ -17,6 +18,7 @@ function mapRow(item: any): StoreProduct {
       .filter(Boolean) || []
   return {
     id: item.id,
+    brandId: item.brand_id,
     name: item.name_en,
     nameEs: item.name_es,
     brand: brand?.brand_name || 'Marca',
@@ -30,10 +32,16 @@ function mapRow(item: any): StoreProduct {
     howToUse: item.how_to_use || '',
     howToUseEs: item.how_to_use || '',
     images: urls.length > 0 ? urls : [PLACEHOLDER],
+    imageUrl: urls[0] || PLACEHOLDER,
     rating: 0,
     reviewCount: 0,
     stock: Number(item.stock ?? 0),
     status: item.status,
+    shippingMode:
+      item.shipping_mode === 'chile_express' || item.shipping_mode === 'custom_group'
+        ? item.shipping_mode
+        : 'blue_express',
+    shippingGroupId: item.product_shipping_groups?.[0]?.shipping_group_id ?? null,
   }
 }
 
@@ -48,11 +56,37 @@ export function useProducts() {
         setLoading(true)
         setError(null)
 
-        const { data, error: qErr } = await supabase
-          .from('products')
-          .select(
-            `
+        const nextSelect = `
             id,
+            brand_id,
+            name_en,
+            name_es,
+            description_en,
+            description_es,
+            ingredients,
+            how_to_use,
+            price,
+            compare_at_price,
+            stock,
+            category,
+            status,
+            shipping_mode,
+            product_images (
+              url,
+              position,
+              is_primary
+            ),
+            product_shipping_groups (
+              shipping_group_id
+            ),
+            brands (
+              brand_name,
+              brand_slug
+            )
+          `
+        const legacySelect = `
+            id,
+            brand_id,
             name_en,
             name_es,
             description_en,
@@ -74,9 +108,22 @@ export function useProducts() {
               brand_slug
             )
           `
-          )
+
+        let { data, error: qErr }: { data: any[] | null; error: any } = await supabase
+          .from('products')
+          .select(nextSelect)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
+
+        if (qErr && isMissingShippingSchemaError(qErr)) {
+          const legacyResult: { data: any[] | null; error: any } = await supabase
+            .from('products')
+            .select(legacySelect)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+          data = legacyResult.data
+          qErr = legacyResult.error
+        }
 
         if (qErr) {
           setError(qErr.message)

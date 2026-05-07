@@ -12,26 +12,42 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const webpOnly = formData.get('webpOnly') === 'true';
+    const resourceType = formData.get('resourceType') === 'video' ? 'video' : 'image';
+    const folder = String(
+      formData.get('folder') ??
+        (resourceType === 'video' ? 'beauty-therapy/seller-videos' : 'beauty-therapy/uploads')
+    ).trim();
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const allowedTypes = webpOnly ? ['image/webp'] : ALLOWED_TYPES;
+    const allowedTypes =
+      resourceType === 'video'
+        ? ALLOWED_VIDEO_TYPES
+        : webpOnly
+          ? ['image/webp']
+          : ALLOWED_IMAGE_TYPES;
+    const maxFileSize = resourceType === 'video' ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
 
     // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > maxFileSize) {
       return NextResponse.json(
         {
-          error: `File size exceeds 5MB limit. Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+          error:
+            resourceType === 'video'
+              ? `El video supera el limite de 100MB. Tamano: ${(file.size / 1024 / 1024).toFixed(2)}MB`
+              : `File size exceeds 5MB limit. Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
         },
         { status: 400 }
       );
@@ -53,30 +69,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Upload to Cloudinary with aggressive optimization
+    const uploadOptions =
+      resourceType === 'video'
+        ? {
+            folder,
+            resource_type: 'video' as const,
+            format: 'mp4',
+            transformation: [{ quality: 'auto' }, { fetch_format: 'auto' }],
+            eager: [{ width: 400, height: 711, crop: 'fill', format: 'webp', start_offset: '0' }],
+            eager_async: true,
+          }
+        : {
+            folder,
+            resource_type: 'image' as const,
+            format: 'webp',
+            quality: 'auto',
+            fetch_format: 'auto',
+            flags: ['progressive', 'immutable_cache'],
+            transformation: [{ quality: 'auto', fetch_format: 'webp', flags: 'progressive' }],
+            colors: true,
+            default_source: true,
+            responsive_width: true,
+            eager_async: true,
+          }
+
     return new Promise((resolve) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'beauty-therapy/products',
-          resource_type: 'auto',
-          // Aggressive compression settings
-          quality: 'auto:eco', // Auto quality with emphasis on compression
-          fetch_format: 'auto', // Auto format (WebP for modern browsers)
-          flags: ['progressive', 'immutable_cache'], // Progressive JPEG, caching
-          transformation: [
-            {
-              quality: 'auto:eco',
-              fetch_format: 'auto',
-              flags: 'progressive',
-            },
-          ],
-          // Metadata removal to reduce file size
-          colors: true, // Generate color palette (useful for placeholders)
-          default_source: true,
-          // Responsive image generation
-          responsive_width: true,
-          eager_async: true,
-        },
+        uploadOptions,
         (error, result) => {
           if (error) {
             console.error('Cloudinary upload error:', error);
@@ -96,6 +115,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 size: result.bytes,
                 format: result.format,
                 colors: result.colors || [],
+                resourceType,
+                thumbnailUrl:
+                  resourceType === 'video'
+                    ? result.eager?.[0]?.secure_url ||
+                      result.secure_url.replace(
+                        '/video/upload/',
+                        '/video/upload/so_0,f_webp,w_400,h_711,c_fill/'
+                      )
+                    : undefined,
+                duration: resourceType === 'video' ? result.duration : undefined,
               })
             );
           }

@@ -3,7 +3,7 @@
  */
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, type ComponentType } from 'react'
 import dynamic from 'next/dynamic'
 
 type ShippingLocation = {
@@ -30,7 +30,7 @@ const DynamicMap = dynamic(
       </div>
     ),
   }
-)
+) as ComponentType<ShippingMapProps>
 
 export function ShippingLocationsMap({ locations }: ShippingMapProps) {
   const hasLocations = useMemo(() => locations && locations.length > 0, [locations])
