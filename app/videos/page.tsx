@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function VideosPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-black">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1">
         <VideosPageClient />
