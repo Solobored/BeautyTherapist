@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,6 +50,7 @@ export function SellerVideosManager({
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
   const [uploadState, setUploadState] = useState<UploadState | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [editingVideoId, setEditingVideoId] = useState<string | null>(null)
 
   async function loadVideos() {
     setLoading(true)
@@ -79,61 +80,168 @@ export function SellerVideosManager({
     )
   }, [productSearch, products])
 
-  function uploadVideo(file: File) {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('resourceType', 'video')
-    formData.append('folder', 'beauty-therapy/seller-videos')
-
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', '/api/upload')
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        setUploadState((current) => ({
-          url: current?.url ?? '',
-          publicId: current?.publicId ?? '',
-          thumbnailUrl: current?.thumbnailUrl,
-          duration: current?.duration,
-          progress: Math.round((event.loaded / event.total) * 100),
-          fileName: current?.fileName ?? file.name,
-        }))
-      }
-    }
-    xhr.onload = () => {
-      try {
-        const raw = xhr.responseText?.trim() ?? ''
-        const contentType = xhr.getResponseHeader('content-type') ?? ''
-        if (!raw) {
-          throw new Error('El servidor respondio vacio al subir el video.')
-        }
-        if (!contentType.toLowerCase().includes('application/json')) {
-          throw new Error(`Respuesta inesperada del upload: ${raw.slice(0, 180)}`)
-        }
-        const json = JSON.parse(raw)
-        if (xhr.status >= 400) throw new Error(json.error || 'Error al subir video')
-        setUploadState({
-          url: json.url,
-          publicId: json.publicId,
-          thumbnailUrl: json.thumbnailUrl,
-          duration: json.duration,
-          progress: 100,
-          fileName: file.name,
-        })
-        toast.success('Video subido correctamente')
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Error al subir video')
-        setUploadState(null)
-      }
-    }
-    xhr.onerror = () => {
-      toast.error('No se pudo subir el video')
-      setUploadState(null)
-    }
-    setUploadState({ url: '', publicId: '', progress: 0, fileName: file.name })
-    xhr.send(formData)
+  function resetForm() {
+    setEditingVideoId(null)
+    setShowForm(false)
+    setTitle('')
+    setDescription('')
+    setProductSearch('')
+    setSelectedProductIds([])
+    setUploadState(null)
+    setSubmitting(false)
   }
 
-  async function createVideo() {
+  function beginCreateVideo() {
+    resetForm()
+    setShowForm(true)
+  }
+
+  function beginEditVideo(video: SellerVideo) {
+    setEditingVideoId(video.id)
+    setShowForm(true)
+    setTitle(video.title ?? '')
+    setDescription(video.description ?? '')
+    setSelectedProductIds((video.featured_product_ids ?? []).slice(0, 3))
+    setProductSearch('')
+    setUploadState({
+      url: video.cloudinary_url,
+      publicId: video.cloudinary_public_id,
+      thumbnailUrl: video.thumbnail_url ?? undefined,
+      duration: video.duration_seconds ?? undefined,
+      progress: 100,
+      fileName: video.title,
+    })
+  }
+
+  async function readVideoDuration(file: File) {
+    return await new Promise<number>((resolve, reject) => {
+      const preview = document.createElement('video')
+      preview.preload = 'metadata'
+      preview.onloadedmetadata = () => {
+        const duration = preview.duration
+        URL.revokeObjectURL(preview.src)
+        if (!Number.isFinite(duration) || duration <= 0) {
+          reject(new Error('No se pudo leer la duracion del video.'))
+          return
+        }
+        resolve(duration)
+      }
+      preview.onerror = () => {
+        URL.revokeObjectURL(preview.src)
+        reject(new Error('No se pudo validar el archivo de video.'))
+      }
+      preview.src = URL.createObjectURL(file)
+    })
+  }
+
+  async function uploadVideo(file: File) {
+    try {
+      const duration = await readVideoDuration(file)
+      if (duration > 60 * 60) {
+        toast.error('El video supera el maximo permitido de 60 minutos.')
+        return
+      }
+
+      const signatureRes = await fetch('/api/upload/video-signature', {
+        method: 'POST',
+        headers: sellerApiHeaders(seller),
+      })
+      const signatureRaw = await signatureRes.text()
+      let signatureJson: Record<string, unknown> = {}
+      try {
+        signatureJson = signatureRaw ? (JSON.parse(signatureRaw) as Record<string, unknown>) : {}
+      } catch {
+        throw new Error(`Respuesta inesperada al preparar la subida: ${signatureRaw.slice(0, 180)}`)
+      }
+      if (!signatureRes.ok) {
+        throw new Error(String(signatureJson.error ?? 'No se pudo preparar la subida del video'))
+      }
+
+      const cloudName = String(signatureJson.cloudName ?? '')
+      const apiKey = String(signatureJson.apiKey ?? '')
+      const timestamp = String(signatureJson.timestamp ?? '')
+      const signature = String(signatureJson.signature ?? '')
+      const folder = String(signatureJson.folder ?? 'beauty-therapy/seller-videos')
+      const eager = String(signatureJson.eager ?? '')
+      const transformation = String(signatureJson.transformation ?? '')
+      const format = String(signatureJson.format ?? 'mp4')
+
+      if (!cloudName || !apiKey || !timestamp || !signature) {
+        throw new Error('Faltan datos para la subida directa del video.')
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('api_key', apiKey)
+      formData.append('timestamp', timestamp)
+      formData.append('signature', signature)
+      formData.append('folder', folder)
+      formData.append('eager', eager)
+      formData.append('transformation', transformation)
+      formData.append('format', format)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`)
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          setUploadState((current) => ({
+            url: current?.url ?? '',
+            publicId: current?.publicId ?? '',
+            thumbnailUrl: current?.thumbnailUrl,
+            duration,
+            progress: Math.round((event.loaded / event.total) * 100),
+            fileName: current?.fileName ?? file.name,
+          }))
+        }
+      }
+      xhr.onload = () => {
+        try {
+          const raw = xhr.responseText?.trim() ?? ''
+          if (!raw) {
+            throw new Error('Cloudinary respondio vacio al subir el video.')
+          }
+          const json = JSON.parse(raw) as {
+            error?: { message?: string }
+            secure_url?: string
+            public_id?: string
+            eager?: Array<{ secure_url?: string }>
+            duration?: number
+          }
+          if (xhr.status >= 400) throw new Error(json.error?.message || 'Error al subir video')
+          const uploadedUrl = String(json.secure_url ?? '').trim()
+          const publicId = String(json.public_id ?? '').trim()
+          if (!uploadedUrl || !publicId) {
+            throw new Error('Cloudinary no devolvio un video valido.')
+          }
+          setUploadState({
+            url: uploadedUrl,
+            publicId,
+            thumbnailUrl:
+              json.eager?.[0]?.secure_url ||
+              uploadedUrl.replace('/video/upload/', '/video/upload/so_0,f_webp,w_400,h_711,c_fill/'),
+            duration: typeof json.duration === 'number' ? json.duration : duration,
+            progress: 100,
+            fileName: file.name,
+          })
+          toast.success('Video subido correctamente')
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : 'Error al subir video')
+          setUploadState(null)
+        }
+      }
+      xhr.onerror = () => {
+        toast.error('No se pudo subir el video')
+        setUploadState(null)
+      }
+      setUploadState({ url: '', publicId: '', duration, progress: 0, fileName: file.name })
+      xhr.send(formData)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al preparar el video')
+      setUploadState(null)
+    }
+  }
+
+  async function saveVideo() {
     if (!uploadState?.url || !title.trim()) {
       toast.error('Sube un video y agrega un titulo')
       return
@@ -141,8 +249,9 @@ export function SellerVideosManager({
 
     setSubmitting(true)
     try {
-      const res = await fetch('/api/seller/videos', {
-        method: 'POST',
+      const isEditing = Boolean(editingVideoId)
+      const res = await fetch(isEditing ? `/api/seller/videos/${editingVideoId}` : '/api/seller/videos', {
+        method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...sellerApiHeaders(seller),
@@ -165,15 +274,11 @@ export function SellerVideosManager({
         throw new Error(`Respuesta inesperada al guardar video: ${raw.slice(0, 180)}`)
       }
       if (!res.ok) throw new Error(String(json.error ?? 'No se pudo guardar el video'))
-      toast.success('Video publicado')
-      setShowForm(false)
-      setTitle('')
-      setDescription('')
-      setSelectedProductIds([])
-      setUploadState(null)
+      toast.success(isEditing ? 'Video actualizado' : 'Video publicado')
+      resetForm()
       await loadVideos()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al publicar video')
+      toast.error(error instanceof Error ? error.message : 'Error al guardar video')
     } finally {
       setSubmitting(false)
     }
@@ -201,7 +306,7 @@ export function SellerVideosManager({
           <CardTitle>Mis videos</CardTitle>
           <p className="text-sm text-muted-foreground">Sube videos cortos para mostrar tus productos.</p>
         </div>
-        <Button type="button" onClick={() => setShowForm((current) => !current)}>
+        <Button type="button" onClick={beginCreateVideo}>
           <Plus className="mr-2 h-4 w-4" />
           Subir video
         </Button>
@@ -209,6 +314,14 @@ export function SellerVideosManager({
       <CardContent className="space-y-6">
         {showForm && (
           <div className="rounded-2xl border border-border/60 bg-secondary/30 p-5">
+            <div className="mb-4">
+              <p className="font-medium">{editingVideoId ? 'Editar video' : 'Subir video'}</p>
+              <p className="text-sm text-muted-foreground">
+                {editingVideoId
+                  ? 'Modifica titulo, descripcion, productos relacionados o reemplaza el archivo.'
+                  : 'Sube un video nuevo. Ahora el archivo va directo a Cloudinary para evitar cortes por tamano.'}
+              </p>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label>Archivo de video</Label>
@@ -228,7 +341,7 @@ export function SellerVideosManager({
                   </div>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
-                  El video se convierte automaticamente a MP4 optimizado para ahorrar espacio.
+                  El video se sube directo a Cloudinary, se optimiza automaticamente y acepta hasta 60 minutos.
                 </p>
               </div>
               <div>
@@ -281,10 +394,10 @@ export function SellerVideosManager({
             </div>
 
             <div className="mt-4 flex gap-3">
-              <Button type="button" onClick={() => void createVideo()} disabled={submitting}>
-                {submitting ? 'Publicando...' : 'Publicar'}
+              <Button type="button" onClick={() => void saveVideo()} disabled={submitting}>
+                {submitting ? (editingVideoId ? 'Guardando...' : 'Publicando...') : editingVideoId ? 'Guardar cambios' : 'Publicar'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+              <Button type="button" variant="outline" onClick={resetForm}>
                 Cancelar
               </Button>
             </div>
@@ -309,8 +422,9 @@ export function SellerVideosManager({
                 <p className="font-medium">{video.title}</p>
                 <p className="text-sm text-muted-foreground">👁 {video.views_count}</p>
                 <div className="mt-3 flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => setShowForm(true)}>
-                    Editar manualmente
+                  <Button type="button" variant="outline" size="sm" onClick={() => beginEditVideo(video)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
                   </Button>
                   <Button type="button" variant="outline" size="icon" onClick={() => void deleteVideo(video.id)}>
                     <Trash2 className="h-4 w-4" />
