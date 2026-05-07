@@ -77,10 +77,22 @@ function CheckoutContent() {
   const [chileQuoteLoading, setChileQuoteLoading] = useState(false)
   const [chileQuoteNote, setChileQuoteNote] = useState<string | null>(null)
   const [chileQuoteDetail, setChileQuoteDetail] = useState<{
-    totalGrams: number
-    parcelLabel: string
-    eta: string
-    regionLabel: string
+    totalGrams?: number
+    parcelLabel?: string
+    eta?: string
+    regionLabel?: string | null
+    shipmentCount?: number
+    breakdown?: Array<{
+      key: string
+      carrier: 'blue_express' | 'chile_express' | 'custom'
+      label: string
+      shippingClp: number
+      eta?: string | null
+      notes?: string | null
+      parcelLabel?: string
+      totalGrams?: number
+      itemCount: number
+    }>
   } | null>(null)
   const [mapPin, setMapPin] = useState<MapPinValue | null>(null)
   const [availableCommunes, setAvailableCommunes] = useState<string[]>([])
@@ -189,10 +201,10 @@ function CheckoutContent() {
           parcelLabel: data.parcel?.label ?? '',
           eta: data.eta ?? '',
           regionLabel: data.regionLabel ?? '',
+          shipmentCount: typeof data.shipmentCount === 'number' ? data.shipmentCount : undefined,
+          breakdown: Array.isArray(data.breakdown) ? data.breakdown : [],
         })
-        setChileQuoteNote(
-          `~${data.totalGrams} g totales · ${data.parcel?.label ?? ''} · ${data.eta ?? ''}`
-        )
+        setChileQuoteNote(typeof data.note === 'string' ? data.note : null)
       }
     } catch {
       setChileQuoteNote('Error de red al cotizar envío.')
@@ -807,8 +819,8 @@ function CheckoutContent() {
                             </label>
                           </RadioGroup>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Bulto XS hasta 0,5 kg; S hasta 3 kg. Si superas 3 kg se cotizan varios bultos S. Asegúrate
-                            de que cada producto tenga ml y conversión a gramos cargados en la tienda.
+                            Esto aplica solo a Blue Express: bulto XS hasta 0,5 kg; S hasta 3 kg. Si superas 3 kg se
+                            cotizan varios bultos S. Chile Express y grupos personalizados usan su propia tarifa.
                           </p>
                         </div>
 
@@ -816,12 +828,30 @@ function CheckoutContent() {
                           {chileQuoteLoading && <p>Cotizando envío…</p>}
                           {!chileQuoteLoading && chileQuoteNote && <p>{chileQuoteNote}</p>}
                           {!chileQuoteLoading && chileQuoteClp != null && chileQuoteDetail && (
-                            <p className="text-foreground font-medium">
-                              Envío: {formatClp(chileQuoteClp)}{' '}
-                              <span className="font-normal text-muted-foreground">
-                                · {chileQuoteDetail.parcelLabel}
-                              </span>
-                            </p>
+                            <div className="space-y-1">
+                              <p className="text-foreground font-medium">Envío: {formatClp(chileQuoteClp)}</p>
+                              {chileQuoteDetail.shipmentCount && chileQuoteDetail.shipmentCount > 1 && chileQuoteDetail.breakdown?.length ? (
+                                <div className="space-y-1 text-xs text-muted-foreground">
+                                  {chileQuoteDetail.breakdown.map((part) => (
+                                    <p key={part.key}>
+                                      {part.label}: {formatClp(part.shippingClp)}
+                                      {part.eta ? ` · ${part.eta}` : ''}
+                                    </p>
+                                  ))}
+                                </div>
+                              ) : chileQuoteDetail.parcelLabel ? (
+                                <p className="text-xs text-muted-foreground">
+                                  {chileQuoteDetail.totalGrams ? `~${chileQuoteDetail.totalGrams} g totales · ` : ''}
+                                  {chileQuoteDetail.parcelLabel}
+                                  {chileQuoteDetail.eta ? ` · ${chileQuoteDetail.eta}` : ''}
+                                </p>
+                              ) : chileQuoteDetail.breakdown?.[0] ? (
+                                <p className="text-xs text-muted-foreground">
+                                  {chileQuoteDetail.breakdown[0].label}
+                                  {chileQuoteDetail.breakdown[0].eta ? ` · ${chileQuoteDetail.breakdown[0].eta}` : ''}
+                                </p>
+                              ) : null}
+                            </div>
                           )}
                         </div>
                       </div>
