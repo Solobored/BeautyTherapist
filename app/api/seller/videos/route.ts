@@ -74,7 +74,10 @@ export async function POST(request: NextRequest) {
         cloudinary_public_id: body.cloudinaryPublicId?.trim(),
         thumbnail_url: body.thumbnailUrl?.trim() || null,
         featured_product_ids: (body.featuredProductIds ?? []).slice(0, 3),
-        duration_seconds: body.durationSeconds ?? null,
+        duration_seconds:
+          body.durationSeconds != null && Number.isFinite(body.durationSeconds)
+            ? Math.max(0, Math.round(body.durationSeconds))
+            : null,
         active: body.active ?? true,
       })
       .select('*')

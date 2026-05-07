@@ -54,7 +54,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           ? body.featuredProductIds.slice(0, 3)
           : current.featured_product_ids,
         duration_seconds:
-          typeof body.durationSeconds === 'number' ? body.durationSeconds : current.duration_seconds,
+          typeof body.durationSeconds === 'number'
+            ? Math.max(0, Math.round(body.durationSeconds))
+            : current.duration_seconds,
         active: typeof body.active === 'boolean' ? body.active : current.active,
         updated_at: new Date().toISOString(),
       })

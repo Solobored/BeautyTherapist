@@ -13,7 +13,7 @@ cloudinary.config({
 });
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEO_SIZE = 250 * 1024 * 1024; // 250MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         {
           error:
             resourceType === 'video'
-              ? `El video supera el limite de 100MB. Tamano: ${(file.size / 1024 / 1024).toFixed(2)}MB`
+              ? `El video supera el limite de 250MB. Tamano: ${(file.size / 1024 / 1024).toFixed(2)}MB`
               : `File size exceeds 5MB limit. Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
         },
         { status: 400 }
@@ -82,7 +82,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             folder,
             resource_type: 'video' as const,
             format: 'mp4',
-            transformation: [{ quality: 'auto' }, { fetch_format: 'auto' }],
+            transformation: [
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' },
+              { video_codec: 'h264', audio_codec: 'aac', bit_rate: '1200k' },
+            ],
             eager: [{ width: 400, height: 711, crop: 'fill', format: 'webp', start_offset: '0' }],
             eager_async: true,
           }

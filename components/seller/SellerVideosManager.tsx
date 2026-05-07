@@ -46,6 +46,7 @@ export function SellerVideosManager({
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [productSearch, setProductSearch] = useState('')
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
   const [uploadState, setUploadState] = useState<UploadState | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -70,6 +71,13 @@ export function SellerVideosManager({
   }, [seller])
 
   const selectedProductSet = useMemo(() => new Set(selectedProductIds), [selectedProductIds])
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase()
+    if (!query) return products
+    return products.filter((product) =>
+      `${product.nameEs || ''} ${product.name || ''}`.toLowerCase().includes(query)
+    )
+  }, [productSearch, products])
 
   function uploadVideo(file: File) {
     const formData = new FormData()
@@ -219,6 +227,9 @@ export function SellerVideosManager({
                     <p>{uploadState.url ? `Archivo listo: ${uploadState.fileName ?? 'video'}` : 'Subiendo video...'}</p>
                   </div>
                 )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  El video se convierte automaticamente a MP4 optimizado para ahorrar espacio.
+                </p>
               </div>
               <div>
                 <Label>Titulo</Label>
@@ -233,8 +244,14 @@ export function SellerVideosManager({
 
             <div className="mt-4">
               <Label>Productos relacionados (max. 3)</Label>
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {products.map((product) => {
+              <Input
+                value={productSearch}
+                onChange={(event) => setProductSearch(event.target.value)}
+                placeholder="Buscar productos..."
+                className="mt-2"
+              />
+              <div className="mt-2 grid max-h-56 gap-2 overflow-y-auto md:grid-cols-2">
+                {filteredProducts.map((product) => {
                   const checked = selectedProductSet.has(product.id)
                   return (
                     <button
@@ -257,6 +274,9 @@ export function SellerVideosManager({
                     </button>
                   )
                 })}
+                {filteredProducts.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No se encontraron productos con esa busqueda.</p>
+                )}
               </div>
             </div>
 
