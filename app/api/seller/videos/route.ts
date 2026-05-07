@@ -19,6 +19,15 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
+      if (
+        error.code === '42P01' ||
+        String(error.message ?? '').toLowerCase().includes('seller_videos')
+      ) {
+        return NextResponse.json({
+          videos: [],
+          notice: 'Activa la migracion de videos en Supabase para poder publicar videos.',
+        })
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -47,6 +56,13 @@ export async function POST(request: NextRequest) {
       active?: boolean
     }
 
+    if (!body.title?.trim() || !body.cloudinaryUrl?.trim() || !body.cloudinaryPublicId?.trim()) {
+      return NextResponse.json(
+        { error: 'Titulo, video y publicId son obligatorios.' },
+        { status: 400 }
+      )
+    }
+
     const { data, error } = await supabaseServer
       .from('seller_videos')
       .insert({
@@ -65,6 +81,15 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
+      if (
+        error.code === '42P01' ||
+        String(error.message ?? '').toLowerCase().includes('seller_videos')
+      ) {
+        return NextResponse.json(
+          { error: 'Aun no existe la tabla de videos en Supabase. Ejecuta la migracion de videos primero.' },
+          { status: 400 }
+        )
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 

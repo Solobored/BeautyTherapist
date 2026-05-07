@@ -142,8 +142,14 @@ export function SellerBlogPostForm({ seller, mode, postId, initialPost }: Props)
         },
         body: JSON.stringify(payload),
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'No se pudo guardar el post')
+      const raw = await res.text()
+      let json: Record<string, unknown> = {}
+      try {
+        json = raw ? (JSON.parse(raw) as Record<string, unknown>) : {}
+      } catch {
+        throw new Error(`Respuesta inesperada al guardar el post: ${raw.slice(0, 180)}`)
+      }
+      if (!res.ok) throw new Error(String(json.error ?? 'No se pudo guardar el post'))
       toast.success(mode === 'create' ? 'Post publicado' : 'Post actualizado')
       router.push('/seller/blog')
     } catch (error) {

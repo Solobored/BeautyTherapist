@@ -103,12 +103,24 @@ export function ImageUploadZone({
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
+            const raw = await response.text();
+            let errorData: { error?: string } = {};
+            try {
+              errorData = raw ? JSON.parse(raw) : {};
+            } catch {
+              errorData = { error: raw || 'Upload failed' };
+            }
             toast.dismiss(toastId);
             throw new Error(errorData.error || 'Upload failed');
           }
 
-          const data = await response.json();
+          const raw = await response.text();
+          let data: { url: string; publicId: string; size: number };
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            throw new Error(`Respuesta inesperada del upload: ${raw.slice(0, 180)}`);
+          }
           const compressedSize = data.size;
           const saved = originalSize - compressedSize;
           const savedPercentage = Math.round((saved / originalSize) * 100);

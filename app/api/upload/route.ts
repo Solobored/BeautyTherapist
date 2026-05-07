@@ -32,6 +32,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json(
+        { error: 'Falta configurar Cloudinary en las variables de entorno.' },
+        { status: 500 }
+      );
+    }
+
     const allowedTypes =
       resourceType === 'video'
         ? ALLOWED_VIDEO_TYPES
@@ -101,7 +108,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             console.error('Cloudinary upload error:', error);
             resolve(
               NextResponse.json(
-                { error: 'Error al subir la imagen' },
+                {
+                  error:
+                    resourceType === 'video'
+                      ? 'Error al subir el video a Cloudinary'
+                      : 'Error al subir la imagen a Cloudinary',
+                },
                 { status: 500 }
               )
             );
@@ -114,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 height: result.height,
                 size: result.bytes,
                 format: result.format,
-                colors: result.colors || [],
+                colors: resourceType === 'image' ? result.colors || [] : [],
                 resourceType,
                 thumbnailUrl:
                   resourceType === 'video'
@@ -126,6 +138,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                     : undefined,
                 duration: resourceType === 'video' ? result.duration : undefined,
               })
+            );
+          }
+          else {
+            resolve(
+              NextResponse.json(
+                { error: 'Cloudinary no devolvio un resultado valido.' },
+                { status: 500 }
+              )
             );
           }
         }

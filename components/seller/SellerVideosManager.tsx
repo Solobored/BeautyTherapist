@@ -31,6 +31,7 @@ type UploadState = {
   thumbnailUrl?: string
   duration?: number
   progress: number
+  fileName?: string
 }
 
 export function SellerVideosManager({
@@ -86,12 +87,21 @@ export function SellerVideosManager({
           thumbnailUrl: current?.thumbnailUrl,
           duration: current?.duration,
           progress: Math.round((event.loaded / event.total) * 100),
+          fileName: current?.fileName ?? file.name,
         }))
       }
     }
     xhr.onload = () => {
       try {
-        const json = JSON.parse(xhr.responseText)
+        const raw = xhr.responseText?.trim() ?? ''
+        const contentType = xhr.getResponseHeader('content-type') ?? ''
+        if (!raw) {
+          throw new Error('El servidor respondio vacio al subir el video.')
+        }
+        if (!contentType.toLowerCase().includes('application/json')) {
+          throw new Error(`Respuesta inesperada del upload: ${raw.slice(0, 180)}`)
+        }
+        const json = JSON.parse(raw)
         if (xhr.status >= 400) throw new Error(json.error || 'Error al subir video')
         setUploadState({
           url: json.url,
@@ -99,6 +109,7 @@ export function SellerVideosManager({
           thumbnailUrl: json.thumbnailUrl,
           duration: json.duration,
           progress: 100,
+          fileName: file.name,
         })
         toast.success('Video subido correctamente')
       } catch (error) {
@@ -110,7 +121,7 @@ export function SellerVideosManager({
       toast.error('No se pudo subir el video')
       setUploadState(null)
     }
-    setUploadState({ url: '', publicId: '', progress: 0 })
+    setUploadState({ url: '', publicId: '', progress: 0, fileName: file.name })
     xhr.send(formData)
   }
 
@@ -138,8 +149,14 @@ export function SellerVideosManager({
           featuredProductIds: selectedProductIds.slice(0, 3),
         }),
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'No se pudo guardar el video')
+      const raw = await res.text()
+      let json: Record<string, unknown> = {}
+      try {
+        json = raw ? (JSON.parse(raw) as Record<string, unknown>) : {}
+      } catch {
+        throw new Error(`Respuesta inesperada al guardar video: ${raw.slice(0, 180)}`)
+      }
+      if (!res.ok) throw new Error(String(json.error ?? 'No se pudo guardar el video'))
       toast.success('Video publicado')
       setShowForm(false)
       setTitle('')
@@ -196,7 +213,12 @@ export function SellerVideosManager({
                     if (file) uploadVideo(file)
                   }}
                 />
-                {uploadState && <p className="mt-2 text-sm text-muted-foreground">Progreso: {uploadState.progress}%</p>}
+                {uploadState && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    <p>Progreso: {uploadState.progress}%</p>
+                    <p>{uploadState.url ? `Archivo listo: ${uploadState.fileName ?? 'video'}` : 'Subiendo video...'}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <Label>Titulo</Label>
