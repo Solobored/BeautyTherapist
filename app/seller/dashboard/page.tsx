@@ -19,7 +19,8 @@ import {
   ClipboardList,
   Star,
   Trash2,
-  Check
+  Check,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +38,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useSellerProducts, sellerApiHeaders } from '@/hooks/use-seller-products'
 import { brandNameToSlug } from '@/lib/seller-utils'
 import { formatClp } from '@/lib/utils'
+import { toast } from 'sonner'
 import { 
   LineChart, 
   Line, 
@@ -111,6 +113,15 @@ export default function SellerDashboardPage() {
   // Featured products state
   const [featuredProductIds, setFeaturedProductIds] = useState<string[]>([])
   const [isSavingFeatured, setIsSavingFeatured] = useState(false)
+
+  const [emailConfig, setEmailConfig] = useState<{
+    hasApiKey: boolean
+    usingDefaultFrom: boolean
+    effectiveFrom: string
+    hint: string | null
+  } | null>(null)
+  const [emailConfigLoading, setEmailConfigLoading] = useState(false)
+  const [emailTestBusy, setEmailTestBusy] = useState(false)
 
   const loadSellerOrders = async (currentSeller = seller) => {
     if (!currentSeller?.email) return
@@ -198,6 +209,31 @@ export default function SellerDashboardPage() {
       window.clearInterval(interval)
     }
   }, [seller?.email, updateSellerProfile, seller])
+
+  useEffect(() => {
+    if (!seller?.email) return
+    let cancelled = false
+    setEmailConfigLoading(true)
+    void (async () => {
+      try {
+        const res = await fetch('/api/seller/email-diagnostics', { headers: sellerApiHeaders(seller) })
+        const json = await res.json().catch(() => ({}))
+        if (!cancelled && res.ok && !json.error) {
+          setEmailConfig({
+            hasApiKey: Boolean(json.hasApiKey),
+            usingDefaultFrom: Boolean(json.usingDefaultFrom),
+            effectiveFrom: String(json.effectiveFrom ?? ''),
+            hint: json.hint ?? null,
+          })
+        }
+      } finally {
+        if (!cancelled) setEmailConfigLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [seller])
   
   if (isAuthLoading || !isAuthenticated || !seller) {
     return (
@@ -260,6 +296,31 @@ export default function SellerDashboardPage() {
   
   const handleLogout = async () => {
     await logout()
+  }
+
+  const handleEmailTest = async () => {
+    setEmailTestBusy(true)
+    try {
+      const res = await fetch('/api/seller/email-diagnostics', {
+        method: 'POST',
+        headers: sellerApiHeaders(seller),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const err = json.error ? String(json.error) : 'Error al enviar prueba'
+        const extra =
+          json.config?.usingDefaultFrom && !json.config?.hasApiKey
+            ? ' Revisa RESEND_API_KEY y RESEND_FROM_EMAIL en Vercel.'
+            : ''
+        toast.error(`${err}${extra}`)
+        return
+      }
+      toast.success(typeof json.message === 'string' ? json.message : 'Prueba enviada.')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error')
+    } finally {
+      setEmailTestBusy(false)
+    }
   }
 
   const handleAddReview = async () => {
@@ -466,6 +527,10 @@ export default function SellerDashboardPage() {
             <TabsTrigger value="videos">Mis Videos</TabsTrigger>
             <TabsTrigger value="reseñas">Reseñas</TabsTrigger>
             <TabsTrigger value="productos-destacados">Productos Destacados</TabsTrigger>
+            <TabsTrigger value="correos" className="gap-1">
+              <Mail className="h-3.5 w-3.5" />
+              Correos
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Resumen */}
@@ -1005,6 +1070,55 @@ export default function SellerDashboardPage() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="correos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Notificaciones por correo (Resend)
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Compras confirmadas y reenvíos usan la API de Resend. Si no ves envíos en resend.com, suele faltar
+                  RESEND_FROM_EMAIL con dominio verificado.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {emailConfigLoading && <p className="text-sm text-muted-foreground">Cargando estado…</p>}
+                {!emailConfigLoading && emailConfig && (
+                  <ul className="text-sm space-y-2">
+                    <li>
+                      <strong>RESEND_API_KEY:</strong>{' '}
+                      {emailConfig.hasApiKey ? (
+                        <span className="text-green-700">definida</span>
+                      ) : (
+                        <span className="text-red-700">falta en el entorno</span>
+                      )}
+                    </li>
+                    <li>
+                      <strong>Remitente efectivo:</strong> <code className="text-xs bg-muted px-1 rounded">{emailConfig.effectiveFrom}</code>
+                    </li>
+                    <li>
+                      <strong>RESEND_FROM_EMAIL:</strong>{' '}
+                      {emailConfig.usingDefaultFrom ? (
+                        <span className="text-amber-800">no configurada (modo prueba Resend)</span>
+                      ) : (
+                        <span className="text-green-700">personalizada</span>
+                      )}
+                    </li>
+                  </ul>
+                )}
+                {emailConfig?.hint && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    {emailConfig.hint}
+                  </div>
+                )}
+                <Button type="button" onClick={handleEmailTest} disabled={emailTestBusy || emailConfigLoading}>
+                  {emailTestBusy ? 'Enviando…' : 'Enviar correo de prueba a mi email'}
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

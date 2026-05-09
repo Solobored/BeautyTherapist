@@ -186,8 +186,16 @@ export default function SellerOrdersPage() {
         headers: sellerApiHeaders(seller),
       })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.error || 'No se pudieron reenviar los correos')
-      toast.success('Se reenviaron los correos al comprador y al vendedor.')
+      if (!res.ok) {
+        const msg = json.error || 'No se pudieron reenviar los correos'
+        const hint = Array.isArray(json.warnings) && json.warnings.length ? ` — ${json.warnings.join(' ')}` : ''
+        throw new Error(`${msg}${hint}`)
+      }
+      if (json.partial && Array.isArray(json.warnings) && json.warnings.length) {
+        toast.warning(`Envío parcial: ${json.warnings.join(' ')}`)
+      } else {
+        toast.success('Se reenviaron los correos al comprador y al vendedor.')
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error')
     } finally {

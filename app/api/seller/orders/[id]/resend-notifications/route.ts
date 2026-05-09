@@ -54,5 +54,34 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     return NextResponse.json({ error: 'No se pudieron reenviar los correos.' }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, resent: true })
+  const r = result.result
+  const warnings: string[] = []
+  if (r?.buyerAttempted && !r.buyerSent) {
+    warnings.push(r.buyerError ? `Comprador: ${r.buyerError}` : 'Comprador: no se pudo enviar el correo.')
+  }
+  if (r?.sellerErrors?.length) {
+    warnings.push(...r.sellerErrors.map((e) => `Vendedor: ${e}`))
+  }
+
+  const anySent =
+    (r?.buyerAttempted && r.buyerSent) || (r?.sellersSent ?? 0) > 0
+
+  if (!anySent && warnings.length > 0) {
+    return NextResponse.json(
+      {
+        error: 'Resend rechazó los envíos o faltó configuración. Revisa la pestaña Correos en el dashboard.',
+        warnings,
+        details: r,
+      },
+      { status: 502 }
+    )
+  }
+
+  return NextResponse.json({
+    ok: true,
+    resent: true,
+    partial: warnings.length > 0,
+    warnings: warnings.length ? warnings : undefined,
+    details: r,
+  })
 }

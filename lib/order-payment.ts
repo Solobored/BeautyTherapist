@@ -36,7 +36,7 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
     .map((item) => item.product_id)
     .filter((value): value is string => Boolean(value))
 
-  if (productIds.length === 0) return
+  if (productIds.length === 0) return { sent: 0, errors: [] as string[] }
 
   const { data: products, error } = await supabaseServer
     .from('products')
@@ -45,11 +45,11 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
 
   if (error) {
     console.error('seller notification products', error)
-    return
+    return { sent: 0, errors: ['No se pudieron cargar productos para notificar vendedores.'] }
   }
 
   const brandIds = Array.from(new Set((products ?? []).map((product) => product.brand_id).filter(Boolean)))
-  if (brandIds.length === 0) return
+  if (brandIds.length === 0) return { sent: 0, errors: [] as string[] }
 
   const { data: brands, error: brandError } = await supabaseServer
     .from('brands')
@@ -58,11 +58,11 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
 
   if (brandError) {
     console.error('seller notification brands', brandError)
-    return
+    return { sent: 0, errors: ['No se pudieron cargar marcas para notificar vendedores.'] }
   }
 
   const ownerIds = Array.from(new Set((brands ?? []).map((brand) => brand.owner_id).filter(Boolean)))
-  if (ownerIds.length === 0) return
+  if (ownerIds.length === 0) return { sent: 0, errors: [] as string[] }
 
   const { data: profiles, error: profileError } = await supabaseServer
     .from('profiles')
@@ -71,8 +71,21 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
 
   if (profileError) {
     console.error('seller notification profiles', profileError)
-    return
+    return { sent: 0, errors: ['No se pudieron cargar perfiles de vendedores.'] }
   }
+
+  const { data: sellerCreds, error: credError } = await supabaseServer
+    .from('seller_auth_credentials')
+    .select('seller_id, email')
+    .in('seller_id', ownerIds)
+
+  if (credError) {
+    console.error('seller notification seller_auth_credentials', credError)
+  }
+
+  const credentialEmailBySeller = new Map(
+    (sellerCreds ?? []).map((row) => [row.seller_id, String(row.email ?? '').trim().toLowerCase()])
+  )
 
   const productToBrand = new Map((products ?? []).map((product) => [product.id, product.brand_id]))
   const brandMap = new Map((brands ?? []).map((brand) => [brand.id, brand]))
@@ -84,8 +97,12 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
     const brandId = productToBrand.get(item.product_id)
     if (!brandId) continue
     const brand = brandMap.get(brandId)
-    const profile = brand?.owner_id ? profileMap.get(brand.owner_id) : null
-    const sellerEmail = String(profile?.email ?? '').trim().toLowerCase()
+    const ownerId = brand?.owner_id
+    const profile = ownerId ? profileMap.get(ownerId) : null
+    const fromCredentials = ownerId ? credentialEmailBySeller.get(ownerId) : undefined
+    const sellerEmail = (fromCredentials && fromCredentials.length > 0
+      ? fromCredentials
+      : String(profile?.email ?? '').trim().toLowerCase())
     if (!sellerEmail) continue
 
     const sellerName = String(brand?.brand_name ?? profile?.full_name ?? 'vendedor')
@@ -106,6 +123,7 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
 
   const alreadySent = new Set((order.seller_notification_emails_sent ?? []).map((email) => String(email).trim().toLowerCase()))
   const newlySent: string[] = []
+  const errors: string[] = []
 
   for (const bucket of buckets.values()) {
     if (!options?.force && alreadySent.has(bucket.sellerEmail)) continue
@@ -122,6 +140,10 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
 
     if (result.sent) {
       newlySent.push(bucket.sellerEmail)
+    } else if (result.errorMessage) {
+      errors.push(`${bucket.sellerEmail}: ${result.errorMessage}`)
+    } else {
+      errors.push(`${bucket.sellerEmail}: envío rechazado`)
     }
   }
 
@@ -134,6 +156,8 @@ async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force
       })
       .eq('id', order.id)
   }
+
+  return { sent: newlySent.length, errors }
 }
 
 async function fetchOrderForPostPayment(orderId: string) {
@@ -173,14 +197,19 @@ export async function ensureApprovedOrderNotificationsWithOptions(
   options?: { forceBuyer?: boolean; forceSellers?: boolean }
 ) {
   const order = await fetchOrderForPostPayment(orderId)
-  if (!order) return { ok: false as const, order: null }
+  if (!order) return { ok: false as const, order: null, result: undefined }
   if (String(order.payment_status).toLowerCase() !== 'completed') {
-    return { ok: false as const, order }
+    return { ok: false as const, order, result: undefined }
   }
 
   const items = Array.isArray(order.items) ? (order.items as OrderItem[]) : []
 
+  let buyerAttempted = false
+  let buyerSent = false
+  let buyerError: string | undefined
+
   if (options?.forceBuyer || !order.buyer_confirmation_email_sent_at) {
+    buyerAttempted = true
     const buyerResult = await sendOrderConfirmedToBuyer({
       to: order.buyer_email,
       buyerName: order.buyer_name,
@@ -192,6 +221,11 @@ export async function ensureApprovedOrderNotificationsWithOptions(
       })),
       total: Number(order.total ?? 0),
     })
+
+    buyerSent = buyerResult.sent
+    if (!buyerResult.sent) {
+      buyerError = buyerResult.errorMessage
+    }
 
     if (buyerResult.sent) {
       await supabaseServer
@@ -205,8 +239,19 @@ export async function ensureApprovedOrderNotificationsWithOptions(
     }
   }
 
-  await notifySellersForConfirmedOrder(order, { force: options?.forceSellers })
-  return { ok: true as const, order }
+  const sellerOutcome = await notifySellersForConfirmedOrder(order, { force: options?.forceSellers })
+
+  return {
+    ok: true as const,
+    order,
+    result: {
+      buyerAttempted,
+      buyerSent,
+      buyerError,
+      sellersSent: sellerOutcome.sent,
+      sellerErrors: sellerOutcome.errors,
+    },
+  }
 }
 
 export async function applyApprovedPaymentToOrder(orderId: string, payment: PaymentResponse) {
