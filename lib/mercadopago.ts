@@ -61,6 +61,10 @@ export type PaymentResponse = {
   };
 };
 
+type PaymentSearchResponse = {
+  results?: PaymentResponse[];
+};
+
 function authHeaders() {
   return {
     Authorization: `Bearer ${mpAccessToken}`,
@@ -126,6 +130,29 @@ export async function getPayment(paymentId: string): Promise<PaymentResponse> {
   }
 
   return res.json();
+}
+
+export async function searchLatestPaymentByExternalReference(
+  externalReference: string
+): Promise<PaymentResponse | null> {
+  const params = new URLSearchParams({
+    external_reference: externalReference,
+    sort: 'date_created',
+    criteria: 'desc',
+    limit: '1',
+  });
+
+  const res = await fetch(`${MP_API_BASE}/v1/payments/search?${params.toString()}`, {
+    headers: authHeaders(),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Mercado Pago payment search error: ${res.status} ${text}`);
+  }
+
+  const data = (await res.json()) as PaymentSearchResponse;
+  return data.results?.[0] ?? null;
 }
 
 /**

@@ -25,44 +25,50 @@ function OrderConfirmationContent() {
 
     const confirm = async () => {
       try {
-        const res = await fetch('/api/checkout/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: orderNumber,
-            paymentId: paymentId || undefined,
-          }),
-        })
-        const data = await res.json().catch(() => ({}))
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const res = await fetch('/api/checkout/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: orderNumber,
+              paymentId: paymentId || undefined,
+            }),
+          })
+          const data = await res.json().catch(() => ({}))
 
-        if (cancelled) return
+          if (cancelled) return
 
-        if (!res.ok) {
-          setStatusText(data.error || 'No pudimos confirmar el pago todavía.')
-          setMailText('Te avisaremos por correo cuando el pago quede confirmado.')
-          setShipText('Si el cargo ya fue realizado, espera unos minutos y vuelve a revisar tu pedido.')
-          return
+          if (!res.ok) {
+            setStatusText(data.error || 'No pudimos confirmar el pago todavía.')
+            setMailText('Te avisaremos por correo cuando el pago quede confirmado.')
+            setShipText('Si el cargo ya fue realizado, espera unos minutos y vuelve a revisar tu pedido.')
+            return
+          }
+
+          const status = String(data.status || '').toLowerCase()
+          if (status === 'approved') {
+            clearCart()
+            setStatusText(t('confirmation.message'))
+            setMailText('Te enviamos por correo el detalle de compra y el código del pedido.')
+            setShipText('El vendedor ya puede ver este pedido y prepararlo para envío.')
+            return
+          }
+
+          if (status !== 'pending' && status !== 'in_process') {
+            setStatusText('No pudimos confirmar el pago de este pedido.')
+            setMailText('Si el cobro se realizó, escríbenos indicando tu código de pedido.')
+            setShipText('Puedes volver al inicio o revisar nuevamente en unos minutos.')
+            return
+          }
+
+          if (attempt < 3) {
+            await new Promise((resolve) => window.setTimeout(resolve, 2500))
+          }
         }
 
-        const status = String(data.status || '').toLowerCase()
-        if (status === 'approved') {
-          clearCart()
-          setStatusText(t('confirmation.message'))
-          setMailText('Te enviamos por correo el detalle de compra y el código del pedido.')
-          setShipText('El vendedor ya puede ver este pedido y prepararlo para envío.')
-          return
-        }
-
-        if (status === 'pending' || status === 'in_process') {
-          setStatusText('Tu pago está en revisión. Te notificaremos apenas quede aprobado.')
-          setMailText('Aún no enviamos el correo final porque el pago sigue pendiente.')
-          setShipText('El pedido aparecerá al vendedor cuando Mercado Pago confirme la compra.')
-          return
-        }
-
-        setStatusText('No pudimos confirmar el pago de este pedido.')
-        setMailText('Si el cobro se realizó, escríbenos indicando tu código de pedido.')
-        setShipText('Puedes volver al inicio o revisar nuevamente en unos minutos.')
+        setStatusText('Tu pago está en revisión. Te notificaremos apenas quede aprobado.')
+        setMailText('Aún no enviamos el correo final porque el pago sigue pendiente.')
+        setShipText('El pedido aparecerá al vendedor cuando Mercado Pago confirme la compra.')
       } catch {
         if (!cancelled) {
           setStatusText('No pudimos validar el pago en este momento.')

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayment } from '@/lib/mercadopago'
+import { getPayment, searchLatestPaymentByExternalReference } from '@/lib/mercadopago'
 import { supabaseServer } from '@/lib/supabase'
 import { applyApprovedPaymentToOrder, applyRejectedPaymentToOrder } from '@/lib/order-payment'
 
@@ -42,14 +42,20 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    if (!paymentId && !(order as { mercadopago_payment_id?: string | null }).mercadopago_payment_id) {
+    const storedPaymentId = (order as { mercadopago_payment_id?: string | null }).mercadopago_payment_id
+    const resolvedPayment =
+      paymentId || storedPaymentId
+        ? await getPayment(paymentId || String(storedPaymentId))
+        : await searchLatestPaymentByExternalReference(orderId)
+
+    if (!resolvedPayment) {
       return NextResponse.json({
         ok: true,
         status: String(order.payment_status || 'pending').toLowerCase(),
       })
     }
 
-    const payment = await getPayment(paymentId || String((order as { mercadopago_payment_id?: string | null }).mercadopago_payment_id))
+    const payment = resolvedPayment
     const paymentOrderId = payment.external_reference || payment.metadata?.order_id
 
     if (paymentOrderId && paymentOrderId !== orderId) {
