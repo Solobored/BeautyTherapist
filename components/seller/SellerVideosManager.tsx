@@ -51,18 +51,23 @@ export function SellerVideosManager({
   const [uploadState, setUploadState] = useState<UploadState | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   async function loadVideos() {
     setLoading(true)
+    setLoadError(null)
     try {
       const res = await fetch('/api/seller/videos', { headers: sellerApiHeaders(seller) })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Error')
       setVideos(json.videos ?? [])
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al cargar videos')
-      setVideos([])
+      const message = error instanceof Error ? error.message : 'Error al cargar videos'
+      toast.error(message)
+      setLoadError(message)
     } finally {
+      setHasLoadedOnce(true)
       setLoading(false)
     }
   }
@@ -404,12 +409,21 @@ export function SellerVideosManager({
           </div>
         )}
 
-        {loading ? (
+        {loading || !hasLoadedOnce ? (
           <div className="flex min-h-32 items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20">
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Cargando videos subidos...</span>
             </div>
+          </div>
+        ) : loadError ? (
+          <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20 px-4 text-center">
+            <Video className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium">No pudimos cargar tus videos.</p>
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+            <Button type="button" variant="outline" className="mt-4" onClick={() => void loadVideos()}>
+              Reintentar
+            </Button>
           </div>
         ) : videos.length === 0 ? (
           <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20 px-4 text-center">

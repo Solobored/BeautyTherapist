@@ -8,6 +8,12 @@ type OrderMailItem = {
   price: number
 }
 
+type SellerOrderMailItem = {
+  name: string
+  quantity: number
+  price: number
+}
+
 function mailFrom() {
   return process.env.RESEND_FROM_EMAIL?.trim() || 'Beauty & Therapy <onboarding@resend.dev>'
 }
@@ -61,6 +67,53 @@ export async function sendOrderConfirmedToBuyer(input: {
     return { sent: true as const }
   } catch (e) {
     console.error('[email] Resend error (confirmed)', e)
+    return { sent: false as const }
+  }
+}
+
+export async function sendOrderConfirmedToSeller(input: {
+  to: string
+  sellerName: string
+  buyerName: string
+  buyerEmail: string
+  orderId: string
+  items: SellerOrderMailItem[]
+  total: number
+}) {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) {
+    console.warn('[email] RESEND_API_KEY no configurada; no se envía correo de nueva venta al vendedor.')
+    return { sent: false as const }
+  }
+
+  const itemsHtml = input.items
+    .map(
+      (item) =>
+        `<li>${escapeHtml(item.name)} × ${item.quantity} — <strong>${escapeHtml(formatClp(item.price * item.quantity))}</strong></li>`
+    )
+    .join('')
+
+  const html = `
+    <p>Hola ${escapeHtml(input.sellerName)},</p>
+    <p>Se confirmó una nueva compra de productos de tu tienda.</p>
+    <p><strong>Código de pedido:</strong> ${escapeHtml(input.orderId)}</p>
+    <p><strong>Comprador:</strong> ${escapeHtml(input.buyerName)} (${escapeHtml(input.buyerEmail)})</p>
+    <p><strong>Productos vendidos:</strong></p>
+    <ul>${itemsHtml}</ul>
+    <p><strong>Total atribuido a este pedido:</strong> ${escapeHtml(formatClp(input.total))}</p>
+    <p>Entra a tu panel para revisar los datos de envío y continuar con la preparación.</p>
+  `
+
+  try {
+    await resend().emails.send({
+      from: mailFrom(),
+      to: input.to,
+      subject: 'Nueva compra confirmada en tu tienda',
+      html,
+    })
+    return { sent: true as const }
+  } catch (e) {
+    console.error('[email] Resend error (seller confirmed)', e)
     return { sent: false as const }
   }
 }

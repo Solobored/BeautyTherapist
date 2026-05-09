@@ -46,10 +46,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: oErr.message }, { status: 500 })
     }
 
-    const visibleOrders = (orders ?? []).filter((order) => {
-      const payment = String(order.payment_status || '').toLowerCase()
-      return payment !== 'failed'
-    })
+    const visibleOrders = (orders ?? []).filter(
+      (order) => String(order.payment_status || '').toLowerCase() === 'completed'
+    )
 
     const filtered = visibleOrders.filter((order) => {
       const items = (order.items ?? []) as OrderItem[]
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
     })
 
     const analytics = computeSellerOrderAnalytics(
-      filtered.filter((order) => String(order.payment_status || '').toLowerCase() === 'completed') as OrderRowForAnalytics[],
+      filtered as OrderRowForAnalytics[],
       productIds,
       productsById
     )
