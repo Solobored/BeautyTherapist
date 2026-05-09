@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayment, searchLatestPaymentByExternalReference } from '@/lib/mercadopago'
 import { supabaseServer } from '@/lib/supabase'
-import { applyApprovedPaymentToOrder, applyRejectedPaymentToOrder } from '@/lib/order-payment'
+import {
+  applyApprovedPaymentToOrder,
+  applyRejectedPaymentToOrder,
+  ensureApprovedOrderNotifications,
+} from '@/lib/order-payment'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -35,6 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (String(order.payment_status).toLowerCase() === 'completed') {
+      await ensureApprovedOrderNotifications(orderId)
       return NextResponse.json({
         ok: true,
         status: 'approved',

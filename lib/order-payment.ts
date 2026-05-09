@@ -10,6 +10,10 @@ type OrderRow = {
   total: number
   items: unknown
   payment_status: string
+  order_status?: string
+  mercadopago_payment_id?: string | null
+  buyer_confirmation_email_sent_at?: string | null
+  seller_notification_emails_sent?: string[] | null
 }
 
 type OrderItem = {
@@ -26,7 +30,7 @@ type SellerNotificationBucket = {
   items: Array<{ name: string; quantity: number; price: number }>
 }
 
-async function notifySellersForConfirmedOrder(order: OrderRow) {
+async function notifySellersForConfirmedOrder(order: OrderRow, options?: { force?: boolean }) {
   const items = Array.isArray(order.items) ? (order.items as OrderItem[]) : []
   const productIds = items
     .map((item) => item.product_id)
@@ -100,8 +104,13 @@ async function notifySellersForConfirmedOrder(order: OrderRow) {
     buckets.set(sellerEmail, current)
   }
 
+  const alreadySent = new Set((order.seller_notification_emails_sent ?? []).map((email) => String(email).trim().toLowerCase()))
+  const newlySent: string[] = []
+
   for (const bucket of buckets.values()) {
-    await sendOrderConfirmedToSeller({
+    if (!options?.force && alreadySent.has(bucket.sellerEmail)) continue
+
+    const result = await sendOrderConfirmedToSeller({
       to: bucket.sellerEmail,
       sellerName: bucket.sellerName,
       buyerName: order.buyer_name,
@@ -110,7 +119,94 @@ async function notifySellersForConfirmedOrder(order: OrderRow) {
       items: bucket.items,
       total: bucket.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     })
+
+    if (result.sent) {
+      newlySent.push(bucket.sellerEmail)
+    }
   }
+
+  if (newlySent.length > 0) {
+    await supabaseServer
+      .from('orders')
+      .update({
+        seller_notification_emails_sent: Array.from(new Set([...alreadySent, ...newlySent])),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', order.id)
+  }
+}
+
+async function fetchOrderForPostPayment(orderId: string) {
+  const { data: order, error } = await supabaseServer
+    .from('orders')
+    .select(
+      `
+      id,
+      buyer_name,
+      buyer_email,
+      total,
+      items,
+      payment_status,
+      order_status,
+      mercadopago_payment_id,
+      buyer_confirmation_email_sent_at,
+      seller_notification_emails_sent
+    `
+    )
+    .eq('id', orderId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('fetch order post payment', error)
+    return null
+  }
+
+  return (order ?? null) as OrderRow | null
+}
+
+export async function ensureApprovedOrderNotifications(orderId: string) {
+  return ensureApprovedOrderNotificationsWithOptions(orderId)
+}
+
+export async function ensureApprovedOrderNotificationsWithOptions(
+  orderId: string,
+  options?: { forceBuyer?: boolean; forceSellers?: boolean }
+) {
+  const order = await fetchOrderForPostPayment(orderId)
+  if (!order) return { ok: false as const, order: null }
+  if (String(order.payment_status).toLowerCase() !== 'completed') {
+    return { ok: false as const, order }
+  }
+
+  const items = Array.isArray(order.items) ? (order.items as OrderItem[]) : []
+
+  if (options?.forceBuyer || !order.buyer_confirmation_email_sent_at) {
+    const buyerResult = await sendOrderConfirmedToBuyer({
+      to: order.buyer_email,
+      buyerName: order.buyer_name,
+      orderId: order.id,
+      items: items.map((item) => ({
+        name: item.product_name ?? item.name ?? 'Producto',
+        quantity: Number(item.quantity ?? 1),
+        price: Number(item.price ?? 0),
+      })),
+      total: Number(order.total ?? 0),
+    })
+
+    if (buyerResult.sent) {
+      await supabaseServer
+        .from('orders')
+        .update({
+          buyer_confirmation_email_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+      order.buyer_confirmation_email_sent_at = new Date().toISOString()
+    }
+  }
+
+  await notifySellersForConfirmedOrder(order, { force: options?.forceSellers })
+  return { ok: true as const, order }
 }
 
 export async function applyApprovedPaymentToOrder(orderId: string, payment: PaymentResponse) {
@@ -136,21 +232,9 @@ export async function applyApprovedPaymentToOrder(orderId: string, payment: Paym
     if (updated.items) {
       await decrementStockForOrderLines(updated.items as OrderLineJson[])
     }
-
-    const items = Array.isArray(updated.items) ? (updated.items as OrderItem[]) : []
-    await sendOrderConfirmedToBuyer({
-      to: updated.buyer_email,
-      buyerName: updated.buyer_name,
-      orderId: updated.id,
-      items: items.map((item) => ({
-        name: item.product_name ?? item.name ?? 'Producto',
-        quantity: Number(item.quantity ?? 1),
-        price: Number(item.price ?? 0),
-      })),
-      total: Number(updated.total ?? 0),
-    })
-    await notifySellersForConfirmedOrder(updated)
   }
+
+  await ensureApprovedOrderNotifications(orderId)
 
   return { ok: true as const, changed: Boolean(updated), order: updated }
 }

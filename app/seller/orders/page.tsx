@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, LayoutDashboard, LogOut, Package, Send } from 'lucide-react'
+import { ArrowLeft, LayoutDashboard, LogOut, Mail, Package, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,6 +61,7 @@ export default function SellerOrdersPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
   const [shipBusyId, setShipBusyId] = useState<string | null>(null)
+  const [resendBusyId, setResendBusyId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SellerOrder | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
 
@@ -176,6 +177,24 @@ export default function SellerOrdersPage() {
     }
   }
 
+  const resendNotifications = async (order: SellerOrder) => {
+    if (!seller) return
+    setResendBusyId(order.id)
+    try {
+      const res = await fetch(`/api/seller/orders/${order.id}/resend-notifications`, {
+        method: 'POST',
+        headers: sellerApiHeaders(seller),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'No se pudieron reenviar los correos')
+      toast.success('Se reenviaron los correos al comprador y al vendedor.')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error')
+    } finally {
+      setResendBusyId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border bg-card">
@@ -273,6 +292,19 @@ export default function SellerOrdersPage() {
                             {shipBusyId === order.id ? 'Marcando…' : 'Producto enviado'}
                           </Button>
                         )}
+                      {order.orderStatus !== 'cancelled' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => resendNotifications(order)}
+                          disabled={resendBusyId === order.id || order.paymentStatus !== 'completed'}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          {resendBusyId === order.id ? 'Reenviando…' : 'Reenviar correos'}
+                        </Button>
+                      )}
                       {order.orderStatus !== 'cancelled' && (
                         <Button
                           type="button"

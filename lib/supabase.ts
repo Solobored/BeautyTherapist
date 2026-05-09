@@ -158,6 +158,8 @@ export type Database = {
           mercadopago_preference_id?: string | null;
           mercadopago_payment_id?: string | null;
           mercadopago_refund_id?: string | null;
+          buyer_confirmation_email_sent_at?: string | null;
+          seller_notification_emails_sent?: string[] | null;
           created_at: string;
           updated_at: string;
         };
