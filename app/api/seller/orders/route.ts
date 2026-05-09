@@ -46,17 +46,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: oErr.message }, { status: 500 })
     }
 
-    const paidOrders = (orders ?? []).filter(
-      (order) => String(order.payment_status || '').toLowerCase() === 'completed'
-    )
+    const visibleOrders = (orders ?? []).filter((order) => {
+      const payment = String(order.payment_status || '').toLowerCase()
+      return payment !== 'failed'
+    })
 
-    const filtered = paidOrders.filter((order) => {
+    const filtered = visibleOrders.filter((order) => {
       const items = (order.items ?? []) as OrderItem[]
       return items.some((i) => i.product_id && productIds.has(i.product_id))
     })
 
     const analytics = computeSellerOrderAnalytics(
-      filtered as OrderRowForAnalytics[],
+      filtered.filter((order) => String(order.payment_status || '').toLowerCase() === 'completed') as OrderRowForAnalytics[],
       productIds,
       productsById
     )

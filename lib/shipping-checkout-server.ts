@@ -333,7 +333,9 @@ export async function resolveChileCheckoutShippingQuote(input: {
     note =
       only.carrier === 'blue_express'
         ? `1 envio calculado con Blue Express · ${only.parcelLabel ?? ''} · ${only.eta ?? ''}`.trim()
-        : `1 envio con ${only.label}${only.eta ? ` · ${only.eta}` : ''}`
+        : only.carrier === 'chile_express'
+          ? `1 envio con Chile Express${only.eta ? ` · ${only.eta}` : ''}`
+          : `1 envio personalizado${only.eta ? ` · ${only.eta}` : ''}`
   } else {
     note = `Tu compra se divide en ${shipmentCount} envios y se suman sus tarifas para que llegue por cada metodo correspondiente.`
   }

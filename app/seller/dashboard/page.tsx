@@ -111,6 +111,41 @@ export default function SellerDashboardPage() {
   // Featured products state
   const [featuredProductIds, setFeaturedProductIds] = useState<string[]>([])
   const [isSavingFeatured, setIsSavingFeatured] = useState(false)
+
+  const loadSellerOrders = async (currentSeller = seller) => {
+    if (!currentSeller?.email) return
+    setOrdersLoading(true)
+    try {
+      const res = await fetch('/api/seller/orders', { headers: sellerApiHeaders(currentSeller) })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'orders')
+      const raw = (json.orders ?? []) as any[]
+      setSellerOrders(
+        raw.map((o) => ({
+          id: o.id,
+          buyerName: o.buyerName,
+          buyerEmail: o.buyerEmail,
+          buyerPhone: o.buyerPhone,
+          items: o.items ?? [],
+          total: o.total,
+          orderStatus: o.orderStatus,
+          createdAt: o.createdAt,
+          shippingAddress: o.shippingAddress ?? null,
+          subtotal: o.subtotal,
+          shippingCost: o.shippingCost,
+          discount: o.discount,
+          paymentStatus: o.paymentStatus,
+        }))
+      )
+      const a = json.analytics as SellerAnalytics | undefined
+      setOrderAnalytics(a ?? null)
+    } catch {
+      setSellerOrders([])
+      setOrderAnalytics(null)
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
   
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -154,48 +189,13 @@ export default function SellerDashboardPage() {
       })()
     }
 
-    ;(async () => {
-      setOrdersLoading(true)
-      try {
-        const res = await fetch('/api/seller/orders', { headers: sellerApiHeaders(seller) })
-        const json = await res.json()
-        if (!res.ok) throw new Error(json.error || 'orders')
-        const raw = (json.orders ?? []) as any[]
-        if (!cancelled) {
-          setSellerOrders(
-            raw.map((o) => ({
-              id: o.id,
-              buyerName: o.buyerName,
-              buyerEmail: o.buyerEmail,
-              buyerPhone: o.buyerPhone,
-              items: o.items ?? [],
-              total: o.total,
-              orderStatus: o.orderStatus,
-              createdAt: o.createdAt,
-              shippingAddress: o.shippingAddress ?? null,
-              subtotal: o.subtotal,
-              shippingCost: o.shippingCost,
-              discount: o.discount,
-              paymentStatus: o.paymentStatus,
-            }))
-          )
-          const a = json.analytics as SellerAnalytics | undefined
-          setOrderAnalytics(a ?? null)
-        }
-      } catch {
-        if (!cancelled) {
-          setSellerOrders([])
-          setOrderAnalytics(null)
-        }
-      } finally {
-        if (!cancelled) setOrdersLoading(false)
-      }
-    })()
+    void loadSellerOrders(seller)
+    const interval = window.setInterval(() => {
+      if (!cancelled) void loadSellerOrders(seller)
+    }, 30000)
     return () => {
       cancelled = true
-    }
-    return () => {
-      cancelled = true
+      window.clearInterval(interval)
     }
   }, [seller?.email, updateSellerProfile, seller])
   
@@ -710,7 +710,7 @@ export default function SellerDashboardPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      All products are well stocked
+                      Todos tus productos tienen stock suficiente.
                     </p>
                   )}
                 </CardContent>

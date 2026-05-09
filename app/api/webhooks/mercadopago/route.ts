@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayment, verifyWebhookSignature } from '@/lib/mercadopago'
-import { supabaseServer } from '@/lib/supabase'
-import { decrementStockForOrderLines, type OrderLineJson } from '@/lib/order-stock'
+import { applyApprovedPaymentToOrder, applyRejectedPaymentToOrder } from '@/lib/order-payment'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -51,38 +50,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (payment.status === 'approved') {
-      const { data: updatedRows, error: upErr } = await supabaseServer
-        .from('orders')
-        .update({
-          payment_status: 'completed',
-          order_status: 'processing',
-          mercadopago_payment_id: String(payment.id),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .eq('payment_status', 'pending')
-        .select('items')
-
-      if (upErr) console.error('orders update webhook', upErr)
-
-      const claim = updatedRows?.[0]
-      if (claim?.items) {
-        await decrementStockForOrderLines(claim.items as OrderLineJson[])
-      }
-
+      await applyApprovedPaymentToOrder(orderId, payment)
       return NextResponse.json({ ok: true })
     }
 
     if (payment.status === 'rejected' || payment.status === 'cancelled') {
-      await supabaseServer
-        .from('orders')
-        .update({
-          payment_status: 'failed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .eq('payment_status', 'pending')
-
+      await applyRejectedPaymentToOrder(orderId, String(payment.id))
       return NextResponse.json({ ok: true })
     }
   } catch (e) {

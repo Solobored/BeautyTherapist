@@ -45,7 +45,7 @@ function normCountry(s: string) {
 
 function CheckoutContent() {
   const { t } = useLanguage()
-  const { items, subtotal } = useCart()
+  const { items, subtotal, clearCart } = useCart()
   const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
   const searchParams = useSearchParams()
   const submitLock = useRef(false)
@@ -165,6 +165,13 @@ function CheckoutContent() {
       // Silently ignore; this is a best-effort cancellation
     })
   }, [searchParams])
+
+  useEffect(() => {
+    const status = searchParams.get('status')
+    if (status?.toLowerCase() === 'approved') {
+      clearCart()
+    }
+  }, [searchParams, clearCart])
 
   const fetchChileShippingQuote = useCallback(async () => {
     if (formData.shippingKind !== 'national' || !isChile) return
@@ -879,8 +886,8 @@ function CheckoutContent() {
                   <div className="p-4 rounded-xl border border-accent/40 bg-accent/5">
                     <p className="font-semibold mb-1">Mercado Pago</p>
                     <p className="text-sm text-muted-foreground">
-                      You will be redirected to Mercado Pago to complete your payment securely
-                      with cards, debit, or local wallets. We never store your card details.
+                      Serás redirigido a Mercado Pago para completar tu pago de forma segura
+                      con tarjetas, débito o billeteras locales. Nunca almacenamos los datos de tu tarjeta.
                     </p>
                   </div>
                 </section>

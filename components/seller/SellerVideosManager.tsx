@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plus, Trash2, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -405,9 +405,20 @@ export function SellerVideosManager({
         )}
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando videos...</p>
+          <div className="flex min-h-32 items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Cargando videos subidos...</span>
+            </div>
+          </div>
         ) : videos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Todavia no subes videos.</p>
+          <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/20 px-4 text-center">
+            <Video className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium">Todavía no subes videos.</p>
+            <p className="text-sm text-muted-foreground">
+              Cuando publiques tu primer video, aparecerá aquí junto a sus ediciones y estadísticas.
+            </p>
+          </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {videos.map((video) => (

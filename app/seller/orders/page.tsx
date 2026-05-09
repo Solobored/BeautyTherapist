@@ -447,15 +447,19 @@ export default function SellerOrdersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro de borrar este pedido?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El pedido será eliminado permanentemente de tu dashboard.
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                <p>
+                  Esta acción no se puede deshacer. El pedido será eliminado permanentemente de tu dashboard.
+                </p>
               {deleteTarget && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">ID: {deleteTarget.id.slice(0, 8)}…</p>
                   <p className="text-sm">Cliente: {deleteTarget.buyerName}</p>
-                  <p className="text-sm">Total: ${deleteTarget.total}</p>
+                  <p className="text-sm">Total: {formatClp(deleteTarget.total)}</p>
                 </div>
               )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

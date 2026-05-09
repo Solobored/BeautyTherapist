@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle2, Package, Mail } from 'lucide-react'
@@ -8,11 +8,78 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
+import { useCart } from '@/contexts/cart-context'
 
 function OrderConfirmationContent() {
   const { t } = useLanguage()
   const searchParams = useSearchParams()
+  const { clearCart } = useCart()
   const orderNumber = searchParams.get('order') || 'BT-XXXXXX'
+  const paymentId = searchParams.get('payment_id') || searchParams.get('collection_id') || ''
+  const [statusText, setStatusText] = useState('Confirmando tu pago...')
+  const [mailText, setMailText] = useState('Estamos enviando el comprobante y el código de seguimiento a tu correo.')
+  const [shipText, setShipText] = useState('El vendedor verá este pedido en su panel apenas quede confirmado.')
+
+  useEffect(() => {
+    let cancelled = false
+
+    const confirm = async () => {
+      try {
+        const res = await fetch('/api/checkout/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: orderNumber,
+            paymentId: paymentId || undefined,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          setStatusText(data.error || 'No pudimos confirmar el pago todavía.')
+          setMailText('Te avisaremos por correo cuando el pago quede confirmado.')
+          setShipText('Si el cargo ya fue realizado, espera unos minutos y vuelve a revisar tu pedido.')
+          return
+        }
+
+        const status = String(data.status || '').toLowerCase()
+        if (status === 'approved') {
+          clearCart()
+          setStatusText(t('confirmation.message'))
+          setMailText('Te enviamos por correo el detalle de compra y el código del pedido.')
+          setShipText('El vendedor ya puede ver este pedido y prepararlo para envío.')
+          return
+        }
+
+        if (status === 'pending' || status === 'in_process') {
+          setStatusText('Tu pago está en revisión. Te notificaremos apenas quede aprobado.')
+          setMailText('Aún no enviamos el correo final porque el pago sigue pendiente.')
+          setShipText('El pedido aparecerá al vendedor cuando Mercado Pago confirme la compra.')
+          return
+        }
+
+        setStatusText('No pudimos confirmar el pago de este pedido.')
+        setMailText('Si el cobro se realizó, escríbenos indicando tu código de pedido.')
+        setShipText('Puedes volver al inicio o revisar nuevamente en unos minutos.')
+      } catch {
+        if (!cancelled) {
+          setStatusText('No pudimos validar el pago en este momento.')
+          setMailText('Si ya pagaste, el correo puede tardar unos minutos en llegar.')
+          setShipText('Guarda tu código de pedido para seguimiento.')
+        }
+      }
+    }
+
+    if (orderNumber && orderNumber !== 'BT-XXXXXX') {
+      void confirm()
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [orderNumber, paymentId, clearCart, t])
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -34,7 +101,7 @@ function OrderConfirmationContent() {
             
             {/* Message */}
             <p className="text-muted-foreground mb-8">
-              {t('confirmation.message')}
+              {statusText}
             </p>
             
             {/* Order Number */}
@@ -51,8 +118,8 @@ function OrderConfirmationContent() {
                   <Mail className="h-5 w-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">Email Sent</p>
-                  <p className="text-xs text-muted-foreground">Check your inbox</p>
+                  <p className="font-medium text-sm">Correo de compra</p>
+                  <p className="text-xs text-muted-foreground">{mailText}</p>
                 </div>
               </div>
               <div className="bg-card rounded-xl p-4 border border-border/50 flex items-center gap-3">
@@ -60,8 +127,8 @@ function OrderConfirmationContent() {
                   <Package className="h-5 w-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">Processing</p>
-                  <p className="text-xs text-muted-foreground">Ships within 24h</p>
+                  <p className="font-medium text-sm">Estado del pedido</p>
+                  <p className="text-xs text-muted-foreground">{shipText}</p>
                 </div>
               </div>
             </div>
@@ -87,7 +154,7 @@ export default function OrderConfirmationPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
+        <div className="animate-pulse">Cargando...</div>
       </div>
     }>
       <OrderConfirmationContent />
