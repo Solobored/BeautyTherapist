@@ -9,9 +9,11 @@ import type { VideoItem } from '@/lib/video-types'
 interface VideoFeedProps {
   initialVideos: VideoItem[]
   onLoadMore: () => Promise<VideoItem[]>
+  hasMore?: boolean
+  isInitialLoading?: boolean
 }
 
-export function VideoFeed({ initialVideos, onLoadMore }: VideoFeedProps) {
+export function VideoFeed({ initialVideos, onLoadMore, hasMore = false, isInitialLoading = false }: VideoFeedProps) {
   const [videos, setVideos] = useState<VideoItem[]>(initialVideos)
   const [muted, setMuted] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -103,7 +105,7 @@ export function VideoFeed({ initialVideos, onLoadMore }: VideoFeedProps) {
     }
   }
 
-  const canLoadMore = useMemo(() => videos.length >= initialVideos.length, [videos.length, initialVideos.length])
+  const canLoadMore = useMemo(() => hasMore, [hasMore])
 
   async function toggleLike(videoId: string) {
     if (likeLoadingMap[videoId]) return
@@ -159,6 +161,22 @@ export function VideoFeed({ initialVideos, onLoadMore }: VideoFeedProps) {
     } finally {
       setLikeLoadingMap((current) => ({ ...current, [videoId]: false }))
     }
+  }
+
+  if (isInitialLoading && videos.length === 0) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
+        <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-8 shadow-sm">
+          <div className="mb-4 h-3 w-28 animate-pulse rounded-full bg-muted" />
+          <div className="mb-3 h-6 w-3/4 animate-pulse rounded-full bg-muted" />
+          <div className="mb-8 h-4 w-full animate-pulse rounded-full bg-muted" />
+          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">Cargando videos...</p>
+        </div>
+      </div>
+    )
   }
 
   if (videos.length === 0) {

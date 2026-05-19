@@ -184,10 +184,10 @@ export default function BrandPage({ params }: { params: Promise<{ brand: string 
                   <div className="overflow-hidden">
                     <div
                       className="flex transition-transform duration-500 ease-in-out"
-                      style={{ transform: `translateX(-${currentReviewIndex * 100}%)` }}
+                      style={{ transform: `translateX(-${currentReviewIndex * (100 / customReviews.length)}%)`, width: `${customReviews.length * 100}%` }}
                     >
                       {customReviews.map((review) => (
-                        <div key={review.id} className="w-full flex-shrink-0 px-4">
+                        <div key={review.id} className="flex-shrink-0 px-4" style={{ width: `${100 / customReviews.length}%` }}>
                           <Card className="bg-secondary/50">
                             <CardContent className="p-6">
                               <div className="flex items-center gap-2 mb-3">

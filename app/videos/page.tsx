@@ -3,7 +3,7 @@ import { Footer } from '@/components/footer'
 import { VideosPageClient } from '@/components/videos/VideosPageClient'
 
 export const metadata = {
-  title: 'Videos de Belleza | BeautyTherapist',
+  title: 'Videos de Belleza',
   description: 'Descubre productos de belleza a traves de videos de nuestros vendedores',
 }
 

@@ -55,6 +55,8 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={cardTitle}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 33vw, 100vw"
           />
           
           {/* Wishlist Button */}

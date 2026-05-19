@@ -1,31 +1,43 @@
 import { supabaseServer } from '@/lib/supabase'
 import type { VideoItem } from '@/lib/video-types'
 
-export async function fetchPublicVideos(limit = 10): Promise<VideoItem[]> {
-  const { data, error } = await supabaseServer
+type FetchPublicVideosOptions = {
+  limit?: number
+  sortBy?: 'newest' | 'most-viewed'
+}
+
+export async function fetchPublicVideos(options: FetchPublicVideosOptions = {}): Promise<VideoItem[]> {
+  const { limit = 10, sortBy = 'newest' } = options
+  let query = supabaseServer
     .from('seller_videos')
     .select(
       `
-      id,
-      brand_id,
-      title,
-      description,
-      cloudinary_url,
-      thumbnail_url,
-      featured_product_ids,
-      views_count,
-      likes_count,
-      duration_seconds,
-      brands (
         id,
-        brand_name,
-        logo_url
-      )
-    `
+        brand_id,
+        title,
+        description,
+        cloudinary_url,
+        thumbnail_url,
+        featured_product_ids,
+        views_count,
+        likes_count,
+        duration_seconds,
+        brands (
+          id,
+          brand_name,
+          logo_url
+        )
+      `
     )
     .eq('active', true)
-    .order('created_at', { ascending: false })
     .limit(limit)
+
+  query =
+    sortBy === 'most-viewed'
+      ? query.order('views_count', { ascending: false }).order('created_at', { ascending: false })
+      : query.order('created_at', { ascending: false })
+
+  const { data, error } = await query
 
   if (error) return []
 

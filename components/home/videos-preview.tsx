@@ -1,12 +1,14 @@
 import Link from 'next/link'
+import { unstable_noStore as noStore } from 'next/cache'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { VideoCard } from '@/components/videos/VideoCard'
-import type { VideoItem } from '@/lib/video-types'
 import { fetchPublicVideos } from '@/lib/videos'
 
 export async function VideosPreview() {
-  const videos = (await fetchPublicVideos().catch(() => [])).slice(0, 6)
+  noStore()
+  const videos = await fetchPublicVideos({ limit: 1, sortBy: 'most-viewed' }).catch(() => [])
+  const featuredVideo = videos[0]
 
   return (
     <section className="py-16 md:py-24">
@@ -23,7 +25,7 @@ export async function VideosPreview() {
           </div>
           <Button asChild variant="outline">
             <Link href="/videos">
-              Ver todos los videos
+              Ver mas videos
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -40,12 +42,21 @@ export async function VideosPreview() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-            {videos.map((video) => (
-              <VideoCard key={video.id} video={video} />
-            ))}
+          <div className="mx-auto max-w-sm">
+            {featuredVideo ? <VideoCard video={featuredVideo} /> : null}
           </div>
         )}
+
+        {featuredVideo ? (
+          <div className="mt-8 text-center">
+            <Button asChild variant="outline">
+              <Link href="/videos">
+                Ver mas videos
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
     </section>
   )

@@ -1,13 +1,12 @@
-'use client'
-
 import Image from 'next/image'
+import { unstable_noStore as noStore } from 'next/cache'
 import { Star } from 'lucide-react'
-import { useLanguage } from '@/contexts/language-context'
-import { testimonials } from '@/lib/data'
+import { fetchHomeTestimonials } from '@/lib/home-testimonials'
 
-export function Testimonials() {
-  const { t } = useLanguage()
-  
+export async function Testimonials() {
+  noStore()
+  const testimonials = await fetchHomeTestimonials()
+
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -17,7 +16,7 @@ export function Testimonials() {
             Reviews
           </span>
           <h2 className="font-serif text-3xl md:text-4xl font-semibold text-foreground">
-            {t('testimonials.title')}
+            Lo que dicen nuestras clientas
           </h2>
         </div>
         
@@ -53,7 +52,12 @@ export function Testimonials() {
                     className="object-cover"
                   />
                 </div>
-                <span className="font-medium text-foreground">{testimonial.customerName}</span>
+                <div>
+                  <span className="block font-medium text-foreground">{testimonial.customerName}</span>
+                  {testimonial.brandName ? (
+                    <span className="block text-xs text-muted-foreground">{testimonial.brandName}</span>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))}

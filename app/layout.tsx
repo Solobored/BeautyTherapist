@@ -5,6 +5,7 @@ import { LanguageProvider } from '@/contexts/language-context'
 import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
+import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
 import './globals.css'
 
 const playfair = Playfair_Display({ 
@@ -26,10 +27,42 @@ const josefin = Josefin_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Beauty & Therapy | Marketplace de belleza premium',
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: 'Beauty & Therapy | Marketplace de belleza premium',
+    template: '%s | Beauty & Therapy',
+  },
   description:
     'Skincare y maquillaje seleccionados por expertos. Marcas premium en un solo lugar.',
   keywords: ['belleza', 'skincare', 'maquillaje', 'cosmética', 'marketplace', 'Chile'],
+  alternates: {
+    canonical: '/',
+  },
+  manifest: '/manifest.webmanifest',
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'es_CL',
+    url: getSiteUrl(),
+    siteName: 'Beauty & Therapy',
+    title: 'Beauty & Therapy | Marketplace de belleza premium',
+    description: 'Skincare y maquillaje seleccionados por expertos. Marcas premium en un solo lugar.',
+    images: [
+      {
+        url: toAbsoluteUrl('/apple-icon.png'),
+        alt: 'Beauty & Therapy',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Beauty & Therapy | Marketplace de belleza premium',
+    description: 'Skincare y maquillaje seleccionados por expertos. Marcas premium en un solo lugar.',
+    images: [toAbsoluteUrl('/apple-icon.png')],
+  },
 }
 
 export const viewport: Viewport = {
