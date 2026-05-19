@@ -184,18 +184,39 @@ export type Database = {
       coupons: {
         Row: {
           id: string;
+          brand_id: string;
           code: string;
-          discount_type: 'percentage' | 'fixed';
+          title: string | null;
+          description: string | null;
+          discount_type: 'percentage' | 'fixed' | 'free_shipping';
           discount_value: number;
           min_order: number | null;
           max_uses: number | null;
           used_count: number;
+          per_user_limit: number;
           expires_at: string | null;
           is_active: boolean;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['coupons']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['coupons']['Insert']>;
+      };
+      coupon_redemptions: {
+        Row: {
+          id: string;
+          coupon_id: string;
+          order_id: string | null;
+          user_id: string | null;
+          buyer_email: string;
+          status: 'reserved' | 'used' | 'released';
+          reserved_at: string | null;
+          used_at: string | null;
+          released_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['coupon_redemptions']['Row'], 'id'>;
+        Update: Partial<Database['public']['Tables']['coupon_redemptions']['Row']>;
       };
       wishlist: {
         Row: {

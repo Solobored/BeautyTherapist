@@ -2,6 +2,7 @@ import { supabaseServer } from '@/lib/supabase'
 import { decrementStockForOrderLines, type OrderLineJson } from '@/lib/order-stock'
 import { sendOrderConfirmedToBuyer, sendOrderConfirmedToSeller } from '@/lib/email'
 import type { PaymentResponse } from '@/lib/mercadopago'
+import { finalizeCouponRedemptionForOrder, releaseCouponRedemptionForOrder } from '@/lib/coupons'
 
 type OrderRow = {
   id: string
@@ -277,6 +278,7 @@ export async function applyApprovedPaymentToOrder(orderId: string, payment: Paym
     if (updated.items) {
       await decrementStockForOrderLines(updated.items as OrderLineJson[])
     }
+    await finalizeCouponRedemptionForOrder(orderId)
   }
 
   await ensureApprovedOrderNotifications(orderId)
@@ -299,6 +301,8 @@ export async function applyRejectedPaymentToOrder(orderId: string, paymentId: st
     console.error('orders reject payment', error)
     return { ok: false as const }
   }
+
+  await releaseCouponRedemptionForOrder(orderId)
 
   return { ok: true as const }
 }

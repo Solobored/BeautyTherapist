@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
-import { ChevronRight, Ticket, Check, X, ChevronDown } from 'lucide-react'
+import { ChevronRight, Ticket, Check, X } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
-import { useAuth, type Coupon } from '@/contexts/auth-context'
+import { useAuth } from '@/contexts/auth-context'
 import Link from 'next/link'
 import { formatClp } from '@/lib/utils'
 import type { MapPinValue } from '@/components/checkout/AddressMapPicker'
@@ -43,10 +43,19 @@ function normCountry(s: string) {
   return s.trim().toLowerCase()
 }
 
+type CheckoutCoupon = {
+  id: string
+  code: string
+  title: string
+  type: 'percentage' | 'fixed' | 'free_shipping'
+  value: number
+  brandName: string | null
+}
+
 function CheckoutContent() {
   const { t } = useLanguage()
   const { items, subtotal, clearCart } = useCart()
-  const { user, isAuthenticated, userType, getAvailableCoupons } = useAuth()
+  const { user, isAuthenticated, userType } = useAuth()
   const searchParams = useSearchParams()
   const submitLock = useRef(false)
   const handledReturnRef = useRef<string | null>(null)
@@ -68,9 +77,9 @@ function CheckoutContent() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [couponCode, setCouponCode] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<CheckoutCoupon | null>(null)
   const [couponError, setCouponError] = useState('')
-  const [showSavedCoupons, setShowSavedCoupons] = useState(false)
+  const [couponBusy, setCouponBusy] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [chileQuoteClp, setChileQuoteClp] = useState<number | null>(null)
@@ -125,8 +134,6 @@ function CheckoutContent() {
       }
     }
   }, [isAuthenticated, userType, user])
-  
-  const availableCoupons = isAuthenticated && userType === 'buyer' ? getAvailableCoupons() : []
   
   const isChile = ['chile', 'cl', 'república de chile', 'republic of chile'].includes(normCountry(formData.country))
 
@@ -246,64 +253,69 @@ function CheckoutContent() {
   let discount = 0
   if (appliedCoupon) {
     if (appliedCoupon.type === 'percentage') {
-      discount = (subtotal * appliedCoupon.discount) / 100
+      discount = Math.min(subtotal, Math.round((subtotal * appliedCoupon.value) / 100))
+    } else if (appliedCoupon.type === 'free_shipping') {
+      discount = shippingCost
     } else {
-      discount = appliedCoupon.discount
+      discount = Math.min(subtotal, Math.round(appliedCoupon.value))
     }
   }
   
   const total = subtotal + shippingCost - discount
   
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     setCouponError('')
     
     if (!couponCode.trim()) {
       setCouponError('Ingresa un codigo')
       return
     }
-    
-    // Check user's saved coupons first if logged in
-    if (isAuthenticated && userType === 'buyer') {
-      const userCoupon = availableCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase())
-      if (userCoupon) {
-        setAppliedCoupon(userCoupon)
-        return
+
+    if (!formData.email.trim()) {
+      setCouponError('Ingresa tu correo antes de aplicar un cupon')
+      return
+    }
+
+    setCouponBusy(true)
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode,
+          subtotal,
+          shippingCost,
+          buyerEmail: formData.email,
+          userId: user?.type === 'buyer' ? user.id : null,
+          items: items.map((item) => ({ productId: item.id })),
+        }),
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(json.error || 'Cupón inválido o expirado')
       }
-    }
-    
-    // Check for common demo coupons
-    if (couponCode.toUpperCase() === 'WELCOME10') {
+
+      if (!json.ok || !json.coupon) {
+        throw new Error('Cupón inválido o expirado')
+      }
+
       setAppliedCoupon({
-        id: 'guest-coupon',
-        code: 'WELCOME10',
-        discount: 10,
-        type: 'percentage',
-        expiryDate: '2025-12-31',
-        used: false
+        id: json.coupon.id,
+        code: json.coupon.code,
+        title: json.coupon.title,
+        type: json.coupon.type,
+        value: Number(json.coupon.value ?? 0),
+        brandName: json.coupon.brandName ?? null,
       })
-      return
+      setCouponError('')
+      setCouponCode(String(json.coupon.code ?? couponCode).toUpperCase())
+    } catch (error) {
+      setAppliedCoupon(null)
+      setCouponError(error instanceof Error ? error.message : 'Cupón inválido o expirado')
+    } finally {
+      setCouponBusy(false)
     }
-    
-    if (couponCode.toUpperCase() === 'SKIN20') {
-      setAppliedCoupon({
-        id: 'guest-coupon-2',
-        code: 'SKIN20',
-        discount: 20,
-        type: 'percentage',
-        expiryDate: '2025-12-31',
-        applicableCategories: ['skincare'],
-        used: false
-      })
-      return
-    }
-    
-    setCouponError('Cupon invalido o expirado')
-  }
-  
-  const handleSelectSavedCoupon = (coupon: Coupon) => {
-    setAppliedCoupon(coupon)
-    setCouponCode(coupon.code)
-    setShowSavedCoupons(false)
   }
   
   const handleRemoveCoupon = () => {
@@ -401,6 +413,7 @@ function CheckoutContent() {
         chileDeliveryChannel:
           formData.shippingKind === 'national' && isChile ? formData.chileDeliveryChannel : undefined,
         couponCode: appliedCoupon?.code || couponCode || undefined,
+        buyerUserId: user?.type === 'buyer' ? user.id : undefined,
         subtotal,
         shippingCost,
         discount,
@@ -945,7 +958,7 @@ function CheckoutContent() {
                           <Check className="h-4 w-4 text-green-600" />
                           <span className="font-mono font-medium text-green-700">{appliedCoupon.code}</span>
                           <span className="text-sm text-green-600">
-                            (-{appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : formatClp(appliedCoupon.discount)})
+                            (-{appliedCoupon.type === 'percentage' ? `${appliedCoupon.value}%` : appliedCoupon.type === 'free_shipping' ? 'envio gratis' : formatClp(appliedCoupon.value)})
                           </span>
                         </div>
                         <button 
@@ -957,58 +970,24 @@ function CheckoutContent() {
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Codigo de cupon"
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                            className="font-mono"
-                          />
-                          <Button type="button" variant="outline" onClick={handleApplyCoupon}>
-                            Aplicar
-                          </Button>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Codigo de cupon"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                              className="font-mono"
+                            />
+                            <Button type="button" variant="outline" onClick={() => void handleApplyCoupon()} disabled={couponBusy}>
+                              {couponBusy ? 'Validando...' : 'Aplicar'}
+                            </Button>
                         </div>
                         {couponError && (
                           <p className="text-sm text-destructive">{couponError}</p>
                         )}
-                        
-                        {/* Show saved coupons dropdown for logged-in buyers */}
-                        {availableCoupons.length > 0 && (
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setShowSavedCoupons(!showSavedCoupons)}
-                              className="flex items-center gap-1 text-sm text-primary hover:underline"
-                            >
-                              Usar mis cupones guardados
-                              <ChevronDown className={`h-4 w-4 transition-transform ${showSavedCoupons ? 'rotate-180' : ''}`} />
-                            </button>
-                            
-                            {showSavedCoupons && (
-                              <div className="absolute z-10 mt-2 w-full bg-card border border-border rounded-lg shadow-lg">
-                                {availableCoupons.map((coupon) => (
-                                  <button
-                                    key={coupon.id}
-                                    type="button"
-                                    onClick={() => handleSelectSavedCoupon(coupon)}
-                                    className="w-full px-4 py-3 text-left hover:bg-secondary transition-colors first:rounded-t-lg last:rounded-b-lg"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span className="font-mono font-medium">{coupon.code}</span>
-                                      <span className="text-sm text-accent">
-                                        {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `${formatClp(coupon.discount)} OFF`}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Expira: {new Date(coupon.expiryDate).toLocaleDateString()}
-                                    </p>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Los cupones de vendedor se validan con tu correo y no pueden reutilizarse por el mismo cliente.
+                        </p>
                       </div>
                     )}
                   </div>

@@ -4,6 +4,7 @@ import { createPreference } from '@/lib/mercadopago'
 import { type ShippingKind } from '@/lib/shipping'
 import { resolveServerShippingClp } from '@/lib/shipping-checkout-server'
 import type { ChileDeliveryChannel } from '@/lib/chile-shipping'
+import { reserveCouponRedemptionForOrder, validateCouponForCheckout } from '@/lib/coupons'
 import {
   assertMercadoPagoBackUrls,
   buildMercadoPagoCheckoutUrls,
@@ -41,6 +42,7 @@ export type CheckoutRequestBody = {
   /** domicilio | punto (Blue Express / retiro) */
   chileDeliveryChannel?: ChileDeliveryChannel
   couponCode?: string
+  buyerUserId?: string | null
   subtotal: number
   shippingCost: number
   discount: number
@@ -154,31 +156,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (body.couponCode) {
-      const { data: coupon, error: couponError } = await supabaseServer
-        .from('coupons')
-        .select('*')
-        .eq('code', body.couponCode)
-        .eq('is_active', true)
-        .single()
+    let validatedCoupon:
+      | Awaited<ReturnType<typeof validateCouponForCheckout>>
+      | null = null
 
-      if (couponError || !coupon) {
-        return NextResponse.json({ error: 'Invalid or expired coupon code' }, { status: 400 })
+    if (body.couponCode) {
+      validatedCoupon = await validateCouponForCheckout({
+        code: body.couponCode,
+        subtotal: body.subtotal,
+        shippingCost: serverShipping,
+        buyerEmail: body.buyerEmail,
+        userId: body.buyerUserId ?? null,
+        productIds: body.items.map((item) => item.productId),
+      })
+
+      if (!validatedCoupon.ok) {
+        return NextResponse.json({ error: validatedCoupon.error }, { status: validatedCoupon.status ?? 400 })
       }
 
-      if (coupon.min_order && body.subtotal < coupon.min_order) {
+      if (Math.abs(Math.round(body.discount) - validatedCoupon.discountAmount) > 2) {
         return NextResponse.json(
-          { error: `Minimum order amount is $${coupon.min_order} for this coupon` },
+          { error: 'El descuento del cupón no coincide. Vuelve a aplicarlo antes de pagar.' },
           { status: 400 }
         )
-      }
-
-      if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
-        return NextResponse.json({ error: 'This coupon has reached its usage limit' }, { status: 400 })
-      }
-
-      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-        return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 })
       }
     }
 
@@ -200,6 +200,7 @@ export async function POST(request: NextRequest) {
         buyer_email: body.buyerEmail,
         buyer_name: body.buyerName,
         buyer_phone: body.buyerPhone,
+        user_id: body.buyerUserId?.trim() || null,
         shipping_address: cleanAddress,
         items: body.items.map((item) => ({
           product_id: item.productId,
@@ -222,6 +223,28 @@ export async function POST(request: NextRequest) {
 
     if (orderError || !order) {
       return NextResponse.json({ error: 'Unable to create order' }, { status: 500 })
+    }
+
+    if (validatedCoupon?.ok) {
+      const reserveResult = await reserveCouponRedemptionForOrder({
+        couponId: validatedCoupon.coupon.id,
+        orderId: order.id,
+        buyerEmail: body.buyerEmail,
+        userId: body.buyerUserId ?? null,
+      })
+
+      if (!reserveResult.ok) {
+        await supabaseServer
+          .from('orders')
+          .update({
+            payment_status: 'cancelled',
+            order_status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', order.id)
+
+        return NextResponse.json({ error: reserveResult.error }, { status: 409 })
+      }
     }
 
     const gross = body.items.reduce((s, i) => s + Math.round(i.price) * i.quantity, 0)

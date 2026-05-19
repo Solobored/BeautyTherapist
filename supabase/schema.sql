@@ -141,15 +141,34 @@ CREATE TABLE order_items (
 -- Coupons
 CREATE TABLE coupons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  brand_id UUID REFERENCES brands(id) ON DELETE CASCADE,
   code TEXT NOT NULL UNIQUE,
-  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+  title TEXT,
+  description TEXT,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed', 'free_shipping')),
   discount_value DECIMAL(10, 2) NOT NULL,
   min_order DECIMAL(10, 2),
   max_uses INT,
   used_count INT DEFAULT 0,
+  per_user_limit INT NOT NULL DEFAULT 1,
   expires_at TIMESTAMPTZ,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE coupon_redemptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  order_id UUID REFERENCES orders(id) ON DELETE
+  SET NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE
+  SET NULL,
+    buyer_email TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'reserved' CHECK (status IN ('reserved', 'used', 'released')),
+    reserved_at TIMESTAMPTZ DEFAULT NOW(),
+    used_at TIMESTAMPTZ,
+    released_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 -- Wishlist
 CREATE TABLE wishlist (
@@ -214,6 +233,9 @@ CREATE INDEX idx_wishlist_user_id ON wishlist(user_id);
 CREATE INDEX idx_wishlist_product_id ON wishlist(product_id);
 CREATE INDEX idx_blog_posts_slug ON blog_posts(slug);
 CREATE INDEX idx_coupons_code ON coupons(code);
+CREATE INDEX idx_coupons_brand_id ON coupons(brand_id);
+CREATE INDEX idx_coupon_redemptions_coupon_id ON coupon_redemptions(coupon_id);
+CREATE INDEX idx_coupon_redemptions_status ON coupon_redemptions(status);
 CREATE INDEX idx_product_reviews_product_id ON product_reviews(product_id);
 CREATE INDEX idx_product_reviews_user_id ON product_reviews(user_id);
 CREATE INDEX idx_product_reviews_status ON product_reviews(status);
@@ -229,6 +251,7 @@ ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupon_redemptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 -- Profiles RLS
@@ -325,6 +348,8 @@ SELECT USING (
       OR expires_at > NOW()
     )
   );
+CREATE POLICY "Only service role can manage coupon redemptions" ON coupon_redemptions FOR
+SELECT USING (false);
 -- Product Reviews RLS
 ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read approved reviews" ON product_reviews FOR

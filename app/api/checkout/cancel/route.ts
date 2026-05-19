@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
+import { releaseCouponRedemptionForOrder } from '@/lib/coupons'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,10 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('checkout/cancel', error)
       return NextResponse.json({ error: 'No se pudo cancelar el pedido' }, { status: 500 })
+    }
+
+    if (data?.id) {
+      await releaseCouponRedemptionForOrder(orderId)
     }
 
     return NextResponse.json({
