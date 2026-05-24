@@ -5,7 +5,9 @@ import { LanguageProvider } from '@/contexts/language-context'
 import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
+import Script from 'next/script'
 import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
+import { buildOrganizationSchema, buildWebsiteSchema } from '@/lib/seo'
 import './globals.css'
 
 const playfair = Playfair_Display({ 
@@ -37,6 +39,27 @@ export const metadata: Metadata = {
   keywords: ['belleza', 'skincare', 'maquillaje', 'cosmética', 'marketplace', 'Chile'],
   alternates: {
     canonical: '/',
+  },
+  icons: {
+    icon: [
+      {
+        url: '/favicon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        url: '/icon.svg',
+        type: 'image/svg+xml',
+      },
+    ],
+    apple: [
+      {
+        url: '/apple-icon.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+    ],
+    shortcut: ['/apple-icon.png'],
   },
   manifest: '/manifest.webmanifest',
   robots: {
@@ -76,9 +99,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const organizationSchema = buildOrganizationSchema()
+  const websiteSchema = buildWebsiteSchema()
+
   return (
     <html lang="es" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true} className={`${playfair.variable} ${dmSans.variable} ${josefin.variable} font-sans antialiased bg-background text-foreground`}>
+        <Script
+          id="organization-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <Script
+          id="website-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         <LanguageProvider>
           <AuthProvider>
             <CartProvider>

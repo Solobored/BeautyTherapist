@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ProductDetailClient } from '@/components/product-detail-client'
+import { getProductReviewsForSchema } from '@/lib/reviews'
+import { buildMerchantReturnPolicy, buildOfferShippingDetails } from '@/lib/seo'
 import { getActiveProductById, getAllActiveProducts, getRelatedActiveProducts } from '@/lib/storefront-products'
 import { toAbsoluteUrl } from '@/lib/site-url'
 
@@ -74,6 +76,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }
 
   const relatedProducts = await getRelatedActiveProducts(product)
+  const reviews = await getProductReviewsForSchema(product.id)
   const name = product.nameEs?.trim() || product.name
   const description = product.descriptionEs?.trim() || product.description || name
   const imageUrls = product.images.map((image) => toAbsoluteUrl(image))
@@ -97,6 +100,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       availability:
         product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
+      shippingDetails: buildOfferShippingDetails(),
+      hasMerchantReturnPolicy: buildMerchantReturnPolicy(),
     },
     aggregateRating:
       product.reviewCount > 0
@@ -105,6 +110,25 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             ratingValue: product.rating,
             reviewCount: product.reviewCount,
           }
+        : undefined,
+    review:
+      reviews.length > 0
+        ? reviews.map((review) => ({
+            '@type': 'Review',
+            author: {
+              '@type': 'Person',
+              name: review.authorName,
+            },
+            reviewRating: {
+              '@type': 'Rating',
+              ratingValue: review.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+            headline: review.title,
+            reviewBody: review.content,
+            datePublished: review.datePublished,
+          }))
         : undefined,
   }
 

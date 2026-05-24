@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
@@ -6,8 +7,59 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { fetchPublicBlogPostBySlug, fetchPublicBlogPosts } from '@/lib/blog-posts'
+import { toAbsoluteUrl } from '@/lib/site-url'
 
-export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+type BlogArticlePageProps = {
+  params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
+  const { slug } = await params
+  const post = await fetchPublicBlogPostBySlug(slug).catch(() => null)
+
+  if (!post) {
+    return {
+      title: 'Articulo no encontrado',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
+
+  const canonical = toAbsoluteUrl(`/blog/${post.slug}`)
+  const description = post.content.trim().slice(0, 160)
+  const image = post.images[0]?.url || post.coverImage || toAbsoluteUrl('/placeholder.jpg')
+
+  return {
+    title: post.title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: post.title,
+      description,
+      url: canonical,
+      type: 'article',
+      publishedTime: post.publishedAt ?? undefined,
+      images: [
+        {
+          url: image,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+      images: [image],
+    },
+  }
+}
+
+export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params
   const post = await fetchPublicBlogPostBySlug(slug).catch(() => null)
 

@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import type { StoreProduct } from '@/lib/product-types'
+import { nationalFlatClp } from '@/lib/shipping'
 import { formatClp } from '@/lib/utils'
 
 interface ProductDetailClientProps {
@@ -29,6 +30,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const displayName = product.nameEs?.trim() || product.name || ''
   const displayDescription = product.descriptionEs?.trim() || product.description || ''
   const displayHowTo = product.howToUseEs?.trim() || product.howToUse || ''
+  const shippingPrice = formatClp(nationalFlatClp())
 
   const mainImage = product.images[selectedImage] || product.images[0] || '/placeholder.svg'
 
@@ -139,6 +141,11 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
               <p className={`text-sm font-medium mb-6 ${stockStatus.color}`}>{stockStatus.label}</p>
 
               <p className="text-muted-foreground leading-relaxed mb-6">{displayDescription}</p>
+
+              <div className="mb-6 rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm text-muted-foreground">
+                <p>Envio estandar en Chile desde {shippingPrice}.</p>
+                <p>Devoluciones y cambios dentro de 30 dias segun la politica de la tienda.</p>
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="flex items-center border border-border rounded-lg">

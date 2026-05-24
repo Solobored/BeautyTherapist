@@ -6,6 +6,20 @@ import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { fetchPublicBlogPosts } from '@/lib/blog-posts'
 
+export const metadata = {
+  title: 'Blog de belleza',
+  description: 'Tips, tutoriales, ingredientes y articulos creados por nuestras marcas.',
+  alternates: {
+    canonical: '/blog',
+  },
+  openGraph: {
+    title: 'Blog de belleza',
+    description: 'Tips, tutoriales, ingredientes y articulos creados por nuestras marcas.',
+    type: 'website',
+    url: '/blog',
+  },
+}
+
 const categoryLabels: Record<string, string> = {
   skincare: 'Rutina de Skincare',
   ingredients: 'Guia de Ingredientes',

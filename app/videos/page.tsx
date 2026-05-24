@@ -5,6 +5,15 @@ import { VideosPageClient } from '@/components/videos/VideosPageClient'
 export const metadata = {
   title: 'Videos de Belleza',
   description: 'Descubre productos de belleza a traves de videos de nuestros vendedores',
+  alternates: {
+    canonical: '/videos',
+  },
+  openGraph: {
+    title: 'Videos de Belleza',
+    description: 'Descubre productos de belleza a traves de videos de nuestros vendedores',
+    type: 'website',
+    url: '/videos',
+  },
 }
 
 export default function VideosPage() {
