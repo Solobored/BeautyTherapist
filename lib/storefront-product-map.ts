@@ -70,7 +70,7 @@ type ProductRow = {
   price: number | string
   compare_at_price?: number | string | null
   stock?: number | string | null
-  category: 'skincare' | 'makeup'
+  category: string
   status: 'active' | 'draft' | 'inactive'
   shipping_mode?: 'blue_express' | 'chile_express' | 'custom_group' | null
   updated_at?: string | null

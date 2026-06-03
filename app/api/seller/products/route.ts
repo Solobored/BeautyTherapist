@@ -94,7 +94,7 @@ type CreateBody = {
   description: string
   ingredients: string
   howToUse: string
-  category: 'skincare' | 'makeup'
+  category: string
   price: number
   comparePrice?: number | null
   stock: number
@@ -120,6 +120,9 @@ export async function POST(request: NextRequest) {
     }
     if (!body.images || body.images.length < 1) {
       return NextResponse.json({ error: 'Al menos una imagen (WebP) es requerida' }, { status: 400 })
+    }
+    if (!body.category?.trim() || body.category.length > 80) {
+      return NextResponse.json({ error: 'Categoría inválida' }, { status: 400 })
     }
 
     const name = body.name.trim()
@@ -160,7 +163,7 @@ export async function POST(request: NextRequest) {
         price: body.price,
         compare_at_price: body.comparePrice ?? null,
         stock: Math.max(0, Math.floor(body.stock)),
-        category: body.category,
+        category: body.category.trim(),
         status,
         net_content_ml: netContentMl,
         grams_per_ml: gramsPerMl,
@@ -187,7 +190,7 @@ export async function POST(request: NextRequest) {
           price: body.price,
           compare_at_price: body.comparePrice ?? null,
           stock: Math.max(0, Math.floor(body.stock)),
-          category: body.category,
+          category: body.category.trim(),
           status,
           net_content_ml: netContentMl,
           grams_per_ml: gramsPerMl,

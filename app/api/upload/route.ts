@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -17,16 +18,31 @@ const MAX_VIDEO_SIZE = 250 * 1024 * 1024; // 250MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
+function uploadFolder(resourceType: 'image' | 'video', requestedFolder: FormDataEntryValue | null) {
+  const fallback = resourceType === 'video' ? 'beauty-therapy/seller-videos' : 'beauty-therapy/uploads';
+  const requested = String(requestedFolder ?? '').trim();
+  const allowed = new Set([
+    'beauty-therapy/uploads',
+    'beauty-therapy/seller-products',
+    'beauty-therapy/seller-blog',
+    'beauty-therapy/seller-videos',
+  ]);
+
+  return requested && allowed.has(requested) ? requested : fallback;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    const session = await getSellerSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const webpOnly = formData.get('webpOnly') === 'true';
     const resourceType = formData.get('resourceType') === 'video' ? 'video' : 'image';
-    const folder = String(
-      formData.get('folder') ??
-        (resourceType === 'video' ? 'beauty-therapy/seller-videos' : 'beauty-therapy/uploads')
-    ).trim();
+    const folder = uploadFolder(resourceType, formData.get('folder'));
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });

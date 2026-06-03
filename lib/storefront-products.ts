@@ -40,7 +40,7 @@ async function attachReviewStats(products: StorefrontProductRecord[]) {
 }
 
 async function runProductQuery<T>(
-  queryBuilder: (selectFields: string) => Promise<{ data: T; error: unknown }>
+  queryBuilder: (selectFields: string) => PromiseLike<{ data: T; error: unknown }>
 ) {
   let result = await queryBuilder(storefrontSelectFields)
 

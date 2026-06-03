@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
+import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,11 @@ export async function GET(request: NextRequest) {
     const brandId = searchParams.get('brandId')?.trim()
     const search = searchParams.get('search')?.trim()
     const sellerOnly = searchParams.get('sellerOnly') === 'true'
+    const session = sellerOnly ? await getSellerSessionFromRequest(request) : null
+
+    if (sellerOnly && !session) {
+      return NextResponse.json({ error: 'Sesión de vendedor no válida.' }, { status: 401 })
+    }
 
     let query = supabaseServer
       .from('products')
@@ -27,7 +33,9 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(20)
 
-    if (brandId) {
+    if (sellerOnly && session) {
+      query = query.eq('brand_id', session.brandId)
+    } else if (brandId) {
       query = query.eq('brand_id', brandId)
     }
 
@@ -36,7 +44,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`name_es.ilike.%${search}%,name_en.ilike.%${search}%`)
+      const safeSearch = search.replace(/[%_,]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)
+      if (safeSearch) {
+        query = query.or(`name_es.ilike.%${safeSearch}%,name_en.ilike.%${safeSearch}%`)
+      }
     }
 
     const { data, error } = await query

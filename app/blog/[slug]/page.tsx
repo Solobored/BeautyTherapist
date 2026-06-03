@@ -34,6 +34,14 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   return {
     title: post.title,
     description,
+    keywords: [
+      post.title,
+      'tips de belleza',
+      'cuidado facial',
+      'skincare',
+      'maquillaje',
+      post.category,
+    ],
     alternates: {
       canonical,
     },
@@ -72,11 +80,38 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
   ).slice(0, 2)
 
   const gallery = post.images.length > 0 ? post.images : post.coverImage ? [{ id: 'cover', url: post.coverImage, publicId: 'cover', position: 0 }] : []
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.content.trim().slice(0, 200),
+    image: gallery.map((image) => image.url),
+    datePublished: post.publishedAt ?? post.createdAt,
+    dateModified: post.createdAt,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Beauty & Therapy',
+      logo: {
+        '@type': 'ImageObject',
+        url: toAbsoluteUrl('/apple-icon.png'),
+      },
+    },
+    mainEntityOfPage: toAbsoluteUrl(`/blog/${post.slug}`),
+    inLanguage: 'es-CL',
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 bg-background">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        />
         <div className="relative h-64 bg-muted md:h-96">
           <Image src={gallery[0]?.url ?? '/placeholder.jpg'} alt={post.title} fill className="object-cover" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = Math.min(Math.max(Number(searchParams.get('limit') ?? '10'), 1), 20)
-    const videos = await fetchPublicVideos(limit)
+    const videos = await fetchPublicVideos({ limit })
 
     return NextResponse.json({
       videos,

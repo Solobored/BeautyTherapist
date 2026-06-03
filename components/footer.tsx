@@ -37,6 +37,21 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/productos-profesionales-belleza" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Productos profesionales de belleza
+                </Link>
+              </li>
+              <li>
+                <Link href="/skincare-profesional" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Skincare profesional
+                </Link>
+              </li>
+              <li>
+                <Link href="/maquillaje-profesional" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Maquillaje profesional
+                </Link>
+              </li>
+              <li>
                 <Link href="/brands/angebae" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('nav.brands')}
                 </Link>
@@ -61,17 +76,17 @@ export function Footer() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  {t('footer.faq')}
+                <Link href="/politicas/compra-venta" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Políticas de compra y venta
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  {t('footer.contact')}
+                <Link href="/politicas/devoluciones" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Cambios y devoluciones
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/politicas/privacidad" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.privacy')}
                 </Link>
               </li>

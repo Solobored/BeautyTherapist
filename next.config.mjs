@@ -43,6 +43,40 @@ const nextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/productos',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/tienda',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/products',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/product/:path*',
+        destination: '/shop/:path*',
+        permanent: true,
+      },
+      {
+        source: '/belleza',
+        destination: '/productos-profesionales-belleza',
+        permanent: true,
+      },
+      {
+        source: '/productos-de-belleza',
+        destination: '/productos-profesionales-belleza',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },

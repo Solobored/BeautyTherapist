@@ -35,7 +35,7 @@ export function mapDbProductToProduct(row: {
     nameEs: row.name_es,
     brand: brand?.brand_name ?? 'Marca',
     brandSlug: brand?.brand_slug ?? 'brand',
-    category: row.category as 'skincare' | 'makeup',
+    category: row.category,
     price: Number(row.price),
     comparePrice: row.compare_at_price != null ? Number(row.compare_at_price) : undefined,
     description: row.description_en ?? '',

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { fetchPublicBlogPosts } from '@/lib/blog-posts'
 import { fetchPublicBrands } from '@/lib/brands'
+import { policyPages } from '@/lib/policies'
+import { seoLandingPages } from '@/lib/seo-landing-pages'
 import { getAllActiveProducts } from '@/lib/storefront-products'
 import { getSiteUrl } from '@/lib/site-url'
 
@@ -31,6 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/videos`,
       lastModified: new Date(),
     },
+    ...seoLandingPages.map((page) => ({
+      url: `${baseUrl}/${page.slug}`,
+      lastModified: new Date(),
+    })),
+    ...policyPages.map((page) => ({
+      url: `${baseUrl}/politicas/${page.slug}`,
+      lastModified: new Date(page.updatedAt),
+    })),
     ...posts.map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt),

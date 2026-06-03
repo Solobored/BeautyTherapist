@@ -113,7 +113,7 @@ type PatchBody = {
   description?: string
   ingredients?: string
   howToUse?: string
-  category?: 'skincare' | 'makeup'
+  category?: string
   price?: number
   comparePrice?: number | null
   stock?: number
@@ -157,7 +157,13 @@ export async function PATCH(
     }
     if (body.ingredients !== undefined) patch.ingredients = body.ingredients.trim()
     if (body.howToUse !== undefined) patch.how_to_use = body.howToUse.trim()
-    if (body.category !== undefined) patch.category = body.category
+    if (body.category !== undefined) {
+      const category = body.category.trim()
+      if (!category || category.length > 80) {
+        return NextResponse.json({ error: 'Categoría inválida' }, { status: 400 })
+      }
+      patch.category = category
+    }
     if (body.price !== undefined) patch.price = body.price
     if (body.comparePrice !== undefined) patch.compare_at_price = body.comparePrice
     if (body.stock !== undefined) patch.stock = Math.max(0, Math.floor(body.stock))

@@ -5,16 +5,27 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { fetchPublicBlogPosts } from '@/lib/blog-posts'
+import { toAbsoluteUrl } from '@/lib/site-url'
 
 export const metadata = {
-  title: 'Blog de belleza',
-  description: 'Tips, tutoriales, ingredientes y articulos creados por nuestras marcas.',
+  title: 'Blog de belleza: tips de skincare, cuidado facial y maquillaje',
+  description:
+    'Lee tips de belleza, guías de skincare, cuidado facial, ingredientes y tutoriales de maquillaje creados por marcas especialistas.',
+  keywords: [
+    'tips de belleza',
+    'cuidado facial',
+    'skincare',
+    'rutina de belleza',
+    'maquillaje',
+    'productos profesionales de belleza',
+  ],
   alternates: {
     canonical: '/blog',
   },
   openGraph: {
-    title: 'Blog de belleza',
-    description: 'Tips, tutoriales, ingredientes y articulos creados por nuestras marcas.',
+    title: 'Blog de belleza: tips de skincare, cuidado facial y maquillaje',
+    description:
+      'Lee tips de belleza, guías de skincare, cuidado facial, ingredientes y tutoriales de maquillaje creados por marcas especialistas.',
     type: 'website',
     url: '/blog',
   },
@@ -29,11 +40,34 @@ const categoryLabels: Record<string, string> = {
 
 export default async function BlogPage() {
   const posts = await fetchPublicBlogPosts().catch(() => [])
+  const blogSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'Blog de belleza Beauty & Therapy',
+    description:
+      'Tips de belleza, guías de skincare, cuidado facial, ingredientes y tutoriales de maquillaje.',
+    url: toAbsoluteUrl('/blog'),
+    inLanguage: 'es-CL',
+    blogPost: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      headline: post.title,
+      url: toAbsoluteUrl(`/blog/${post.slug}`),
+      datePublished: post.publishedAt ?? post.createdAt,
+      author: {
+        '@type': 'Person',
+        name: post.author,
+      },
+    })),
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 bg-background">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+        />
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="mb-12 text-center">
             <span className="mb-4 inline-block font-accent text-xs uppercase tracking-[0.3em] text-accent">
@@ -43,7 +77,7 @@ export default async function BlogPage() {
               Blog de belleza
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              Tips, tutoriales, ingredientes y articulos creados por nuestras marcas.
+              Tips de belleza, tutoriales, ingredientes, cuidado facial y articulos creados por nuestras marcas.
             </p>
           </div>
 

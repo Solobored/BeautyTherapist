@@ -26,6 +26,10 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
+  const categories = useMemo(
+    () => Array.from(new Set(products.map((product) => product.category).filter(Boolean))),
+    [products]
+  )
   
   const filteredProducts = useMemo(() => {
     let result = [...products]
@@ -163,7 +167,7 @@ export default function ShopPage() {
                 <div>
                   <h3 className="font-semibold text-sm mb-3">{t('shop.category')}</h3>
                   <div className="space-y-2">
-                    {['skincare', 'makeup'].map((category) => (
+                    {categories.map((category) => (
                       <label key={category} className="flex items-center gap-2 cursor-pointer">
                         <Checkbox
                           checked={selectedCategory.includes(category)}
@@ -175,7 +179,9 @@ export default function ShopPage() {
                             )
                           }}
                         />
-                        <span className="text-sm capitalize">{category === 'skincare' ? t('featured.skincare') : t('featured.makeup')}</span>
+                        <span className="text-sm capitalize">
+                          {category === 'skincare' ? t('featured.skincare') : category === 'makeup' ? t('featured.makeup') : category.replace(/-/g, ' ')}
+                        </span>
                       </label>
                     ))}
                   </div>

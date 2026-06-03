@@ -6,7 +6,7 @@ export interface StoreProduct {
   nameEs: string
   brand: string
   brandSlug: string
-  category: 'skincare' | 'makeup'
+  category: string
   price: number
   comparePrice?: number
   description: string

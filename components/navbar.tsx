@@ -26,6 +26,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: t('nav.home') },
     { href: '/shop', label: t('nav.shop') },
+    { href: '/productos-profesionales-belleza', label: 'Belleza Pro' },
     { href: '/videos', label: 'Videos' },
     { href: '/brands/angebae', label: t('nav.brands') },
     { href: '/blog', label: t('nav.blog') },

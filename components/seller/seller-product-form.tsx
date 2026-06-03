@@ -21,6 +21,12 @@ import { toast } from 'sonner'
 type UploadedImage = { url: string; publicId: string; position: number }
 type ShippingMode = 'blue_express' | 'chile_express' | 'custom_group'
 type ShippingGroup = { id: string; name: string; carrier: string }
+type SellerCategory = { id: string; name: string; slug: string }
+
+const defaultCategories = [
+  { name: 'Skincare', slug: 'skincare' },
+  { name: 'Makeup', slug: 'makeup' },
+]
 
 type Props = {
   seller: Seller
@@ -35,7 +41,7 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
   const [description, setDescription] = useState('')
   const [ingredients, setIngredients] = useState('')
   const [howToUse, setHowToUse] = useState('')
-  const [category, setCategory] = useState<'skincare' | 'makeup' | ''>('')
+  const [category, setCategory] = useState('')
   const [price, setPrice] = useState('')
   const [comparePrice, setComparePrice] = useState('')
   const [stock, setStock] = useState('')
@@ -46,6 +52,7 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
   const [shippingMode, setShippingMode] = useState<ShippingMode>('blue_express')
   const [shippingGroupId, setShippingGroupId] = useState('')
   const [shippingGroups, setShippingGroups] = useState<ShippingGroup[]>([])
+  const [sellerCategories, setSellerCategories] = useState<SellerCategory[]>([])
   const [images, setImages] = useState<UploadedImage[]>([])
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
@@ -55,20 +62,26 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/seller/shipping-groups', {
-          headers: sellerApiHeaders(seller),
-        })
-        const json = await res.json()
-        if (!res.ok) throw new Error(json.error || 'Error')
+        const [shippingRes, categoriesRes] = await Promise.all([
+          fetch('/api/seller/shipping-groups', { headers: sellerApiHeaders(seller) }),
+          fetch('/api/seller/categories', { headers: sellerApiHeaders(seller) }),
+        ])
+        const json = await shippingRes.json()
+        const categoriesJson = await categoriesRes.json()
+        if (!shippingRes.ok) throw new Error(json.error || 'Error')
         if (!cancelled) {
           setShippingGroups((json.groups ?? []).map((group: Record<string, unknown>) => ({
             id: String(group.id),
             name: String(group.name),
             carrier: String(group.carrier),
           })))
+          setSellerCategories(categoriesRes.ok ? categoriesJson.categories ?? [] : [])
         }
       } catch {
-        if (!cancelled) setShippingGroups([])
+        if (!cancelled) {
+          setShippingGroups([])
+          setSellerCategories([])
+        }
       }
     })()
     return () => {
@@ -262,16 +275,27 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
                 <Label htmlFor="category">{t('products.category')}</Label>
                 <Select
                   value={category}
-                  onValueChange={(v) => setCategory(v as 'skincare' | 'makeup')}
+                  onValueChange={setCategory}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecciona" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="skincare">Skincare</SelectItem>
-                    <SelectItem value="makeup">Makeup</SelectItem>
+                    {defaultCategories.map((item) => (
+                      <SelectItem key={item.slug} value={item.slug}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                    {sellerCategories.map((item) => (
+                      <SelectItem key={item.id} value={item.slug}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Puedes crear más categorías desde Dashboard → Categorías.
+                </p>
               </div>
               <div>
                 <Label htmlFor="description">Descripción</Label>

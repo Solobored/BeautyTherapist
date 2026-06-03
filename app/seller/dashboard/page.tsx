@@ -33,6 +33,7 @@ import { SellerAccountCredentialsCard } from '@/components/seller/SellerAccountC
 import { ShippingGroupsManager } from '@/components/seller/ShippingGroupsManager'
 import { SellerVideosManager } from '@/components/seller/SellerVideosManager'
 import { SellerCouponsManager } from '@/components/seller/SellerCouponsManager'
+import { SellerCategoriesManager } from '@/components/seller/SellerCategoriesManager'
 import { ShippingLocationsMap } from '@/components/seller/ShippingLocationsMap'
 import { useLanguage } from '@/contexts/language-context'
 import { useAuth } from '@/contexts/auth-context'
@@ -465,6 +466,7 @@ export default function SellerDashboardPage() {
             <TabsTrigger value="resumen">Resumen</TabsTrigger>
             <TabsTrigger value="mi-marca">Mi Marca</TabsTrigger>
             <TabsTrigger value="envios">Metodos de Envio</TabsTrigger>
+            <TabsTrigger value="categorias">Categorías</TabsTrigger>
             <TabsTrigger value="videos">Mis Videos</TabsTrigger>
             <TabsTrigger value="reseñas">Reseñas</TabsTrigger>
             <TabsTrigger value="productos-destacados">Productos Destacados</TabsTrigger>
@@ -804,6 +806,10 @@ export default function SellerDashboardPage() {
                 weightOverrideG: product.weightOverrideG,
               }))}
             />
+          </TabsContent>
+
+          <TabsContent value="categorias" className="space-y-6">
+            <SellerCategoriesManager seller={seller} products={products} />
           </TabsContent>
 
           <TabsContent value="videos" className="space-y-6">
