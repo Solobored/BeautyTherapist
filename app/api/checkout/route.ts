@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { createPreference } from '@/lib/mercadopago'
+import { getValidSellerAccessToken } from '@/lib/mercadopago-oauth'
 import { type ShippingKind } from '@/lib/shipping'
 import { resolveServerShippingClp } from '@/lib/shipping-checkout-server'
 import type { ChileDeliveryChannel } from '@/lib/chile-shipping'
@@ -247,6 +248,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const { data: productBrands } = await supabaseServer
+      .from('products')
+      .select('id, brand_id')
+      .in('id', body.items.map((item) => item.productId))
+
+    const brandIds = Array.from(new Set((productBrands ?? []).map((product) => product.brand_id).filter(Boolean)))
+    if (brandIds.length > 1) {
+      return NextResponse.json(
+        { error: 'Por ahora no es posible pagar en un solo pedido productos de más de una tienda.' },
+        { status: 400 }
+      )
+    }
+
+    const sellerBrandId = brandIds[0] ?? null
+
     const gross = body.items.reduce((s, i) => s + Math.round(i.price) * i.quantity, 0)
     const discountCapped = Math.min(discount, Math.max(0, gross))
     const netFactor = gross > 0 ? (gross - discountCapped) / gross : 1
@@ -289,6 +305,25 @@ export async function POST(request: NextRequest) {
       const notifyIsHttps = urls.notification.startsWith('https://')
       const useAutoReturn = mercadoPagoAllowsAutoReturn(urls.success, mpMode)
 
+      let sellerAccessToken: string | undefined
+      let marketplaceFee: number | undefined
+
+      if (sellerBrandId) {
+        const token = await getValidSellerAccessToken(sellerBrandId)
+        if (!token) {
+          return NextResponse.json(
+            {
+              error:
+                'Esta tienda todavía no conectó su cuenta de Mercado Pago. El vendedor debe conectarla desde su panel antes de poder vender.',
+            },
+            { status: 409 }
+          )
+        }
+        sellerAccessToken = token
+        const rate = Number(process.env.MARKETPLACE_COMMISSION_RATE ?? '0.005')
+        marketplaceFee = Math.max(0, Math.round(body.total * rate))
+      }
+
       const preference = await createPreference({
         items: mpItems,
         payer: {
@@ -308,11 +343,18 @@ export async function POST(request: NextRequest) {
           buyer_email: body.buyerEmail,
           coupon_code: body.couponCode || '',
         },
+        sellerAccessToken,
+        marketplaceFee,
       })
 
       const { error: prefMetaErr } = await supabaseServer
         .from('orders')
-        .update({ mercadopago_preference_id: preference.id, updated_at: new Date().toISOString() })
+        .update({
+          mercadopago_preference_id: preference.id,
+          mercadopago_marketplace_fee: marketplaceFee ?? null,
+          mercadopago_seller_brand_id: sellerBrandId,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', order.id)
       if (prefMetaErr) console.warn('mercadopago_preference_id update failed', prefMetaErr)
 

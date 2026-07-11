@@ -33,6 +33,8 @@ type PreferencePayload = {
   auto_return?: 'approved' | 'all';
   external_reference?: string;
   metadata?: Record<string, any>;
+  sellerAccessToken?: string;
+  marketplaceFee?: number;
 };
 
 export type PreferenceResponse = {
@@ -65,9 +67,10 @@ type PaymentSearchResponse = {
   results?: PaymentResponse[];
 };
 
-function authHeaders() {
+function authHeadersFor(sellerAccessToken?: string) {
+  const token = sellerAccessToken || mpAccessToken;
   return {
-    Authorization: `Bearer ${mpAccessToken}`,
+    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
     ...(mpIntegratorId ? { 'X-Integrator-Id': mpIntegratorId } : {}),
   };
@@ -83,13 +86,16 @@ function preferenceBodyFromPayload(payload: PreferencePayload): Record<string, u
   if (payload.metadata && Object.keys(payload.metadata).length > 0) body.metadata = payload.metadata;
   if (payload.notification_url?.trim()) body.notification_url = payload.notification_url.trim();
   if (payload.auto_return) body.auto_return = payload.auto_return;
+  if (payload.sellerAccessToken && payload.marketplaceFee != null && payload.marketplaceFee > 0) {
+    body.marketplace_fee = payload.marketplaceFee;
+  }
   return body;
 }
 
 export async function createPreference(payload: PreferencePayload): Promise<PreferenceResponse> {
   const res = await fetch(`${MP_API_BASE}/checkout/preferences`, {
     method: 'POST',
-    headers: authHeaders(),
+    headers: authHeadersFor(payload.sellerAccessToken),
     body: JSON.stringify(preferenceBodyFromPayload(payload)),
   });
 
@@ -103,11 +109,11 @@ export async function createPreference(payload: PreferencePayload): Promise<Pref
 
 export type RefundResponse = { id: number; payment_id: number; amount: number; status?: string };
 
-export async function createRefund(paymentId: string, amount?: number): Promise<RefundResponse> {
+export async function createRefund(paymentId: string, amount?: number, sellerAccessToken?: string): Promise<RefundResponse> {
   const jsonBody = amount != null && amount > 0 ? JSON.stringify({ amount }) : JSON.stringify({});
   const res = await fetch(`${MP_API_BASE}/v1/payments/${encodeURIComponent(paymentId)}/refunds`, {
     method: 'POST',
-    headers: authHeaders(),
+    headers: authHeadersFor(sellerAccessToken),
     body: jsonBody,
   });
 
@@ -119,9 +125,9 @@ export async function createRefund(paymentId: string, amount?: number): Promise<
   return res.json();
 }
 
-export async function getPayment(paymentId: string): Promise<PaymentResponse> {
+export async function getPayment(paymentId: string, accessToken?: string): Promise<PaymentResponse> {
   const res = await fetch(`${MP_API_BASE}/v1/payments/${paymentId}`, {
-    headers: authHeaders(),
+    headers: authHeadersFor(accessToken),
   });
 
   if (!res.ok) {
@@ -143,7 +149,7 @@ export async function searchLatestPaymentByExternalReference(
   });
 
   const res = await fetch(`${MP_API_BASE}/v1/payments/search?${params.toString()}`, {
-    headers: authHeaders(),
+    headers: authHeadersFor(),
   });
 
   if (!res.ok) {

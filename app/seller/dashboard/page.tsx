@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { SellerProfileEditor } from '@/components/seller-profile-editor'
 import { SellerAccountCredentialsCard } from '@/components/seller/SellerAccountCredentialsCard'
+import { SellerMercadoPagoConnectCard } from '@/components/seller/SellerMercadoPagoConnectCard'
 import { ShippingGroupsManager } from '@/components/seller/ShippingGroupsManager'
 import { SellerVideosManager } from '@/components/seller/SellerVideosManager'
 import { SellerCouponsManager } from '@/components/seller/SellerCouponsManager'
@@ -790,6 +791,10 @@ export default function SellerDashboardPage() {
 
             <div className="max-w-2xl">
               <SellerAccountCredentialsCard />
+            </div>
+
+            <div className="max-w-2xl">
+              <SellerMercadoPagoConnectCard />
             </div>
           </TabsContent>
 

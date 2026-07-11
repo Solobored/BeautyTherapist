@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayment, verifyWebhookSignature } from '@/lib/mercadopago'
+import { getValidSellerAccessToken } from '@/lib/mercadopago-oauth'
+import { supabaseServer } from '@/lib/supabase'
 import { applyApprovedPaymentToOrder, applyRejectedPaymentToOrder } from '@/lib/order-payment'
 
 export const runtime = 'nodejs'
@@ -8,6 +10,7 @@ export const dynamic = 'force-dynamic'
 type MpWebhookBody = {
   type?: string
   action?: string
+  user_id?: string | number
   data?: { id?: string }
 }
 
@@ -43,7 +46,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payment = await getPayment(String(paymentId))
+    let accessTokenForFetch: string | undefined
+    if (body.user_id) {
+      const { data: sellerRow } = await supabaseServer
+        .from('mercadopago_seller_accounts')
+        .select('brand_id')
+        .eq('mp_user_id', String(body.user_id))
+        .is('disconnected_at', null)
+        .maybeSingle()
+
+      if (sellerRow?.brand_id) {
+        accessTokenForFetch = (await getValidSellerAccessToken(sellerRow.brand_id)) ?? undefined
+      }
+    }
+
+    const payment = await getPayment(String(paymentId), accessTokenForFetch)
     const orderId = payment.external_reference || payment.metadata?.order_id
     if (!orderId) {
       return NextResponse.json({ received: true })

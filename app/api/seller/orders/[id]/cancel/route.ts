@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { createRefund } from '@/lib/mercadopago'
+import { getValidSellerAccessToken } from '@/lib/mercadopago-oauth'
 import { incrementStockForOrderLines, type OrderLineJson } from '@/lib/order-stock'
 import { sendOrderCancelledToBuyer } from '@/lib/email'
 
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
 
   if (order.payment_status === 'completed' && mpPaymentId) {
     try {
-      const ref = await createRefund(String(mpPaymentId))
+      const sellerToken = await getValidSellerAccessToken(session.brandId)
+      const ref = await createRefund(String(mpPaymentId), undefined, sellerToken ?? undefined)
       refunded = true
       await supabaseServer
         .from('orders')

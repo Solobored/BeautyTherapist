@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
-import { ChevronRight, Ticket, Check, X } from 'lucide-react'
+import { ChevronRight, Ticket, Check, X, Copy } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
@@ -54,11 +54,12 @@ type CheckoutCoupon = {
 
 function CheckoutContent() {
   const { t } = useLanguage()
-  const { items, subtotal, clearCart } = useCart()
+  const { items, subtotal, clearCart, addItem } = useCart()
   const { user, isAuthenticated, userType } = useAuth()
   const searchParams = useSearchParams()
   const submitLock = useRef(false)
   const handledReturnRef = useRef<string | null>(null)
+  const sharedSessionLoadedRef = useRef(false)
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -106,6 +107,8 @@ function CheckoutContent() {
   const [mapPin, setMapPin] = useState<MapPinValue | null>(null)
   const [availableCommunes, setAvailableCommunes] = useState<string[]>([])
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [shareMessage, setShareMessage] = useState<string | null>(null)
+  const [shareBusy, setShareBusy] = useState(false)
   
   // Pre-fill form with user data if logged in as buyer
   useEffect(() => {
@@ -134,6 +137,74 @@ function CheckoutContent() {
       }
     }
   }, [isAuthenticated, userType, user])
+
+  useEffect(() => {
+    if (sharedSessionLoadedRef.current) return
+
+    const sharedSessionParam = searchParams.get('checkoutSession')
+    if (!sharedSessionParam) return
+
+    sharedSessionLoadedRef.current = true
+
+    try {
+      const decoded = JSON.parse(decodeURIComponent(sharedSessionParam)) as {
+        fullName?: string
+        email?: string
+        phone?: string
+        address?: string
+        city?: string
+        state?: string
+        zip?: string
+        country?: string
+        shippingKind?: 'national' | 'international'
+        chileRegionCode?: string
+        chileDeliveryChannel?: 'domicilio' | 'punto'
+        mapPin?: { lat: number; lng: number } | null
+        couponCode?: string | null
+        items?: Array<{ id: string; name: string; nameEs?: string; brand?: string; price: number; image: string; quantity: number }>
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        fullName: decoded.fullName ?? prev.fullName,
+        email: decoded.email ?? prev.email,
+        phone: decoded.phone ?? prev.phone,
+        address: decoded.address ?? prev.address,
+        city: decoded.city ?? prev.city,
+        state: decoded.state ?? prev.state,
+        zip: decoded.zip ?? prev.zip,
+        country: decoded.country ?? prev.country,
+        shippingKind: decoded.shippingKind ?? prev.shippingKind,
+        chileRegionCode: decoded.chileRegionCode ?? prev.chileRegionCode,
+        chileDeliveryChannel: decoded.chileDeliveryChannel ?? prev.chileDeliveryChannel,
+      }))
+
+      if (decoded.mapPin) {
+        setMapPin(decoded.mapPin)
+      }
+
+      if (decoded.couponCode) {
+        setCouponCode(decoded.couponCode)
+      }
+
+      if (decoded.items?.length) {
+        clearCart()
+        decoded.items.forEach((item) => {
+          addItem({
+            id: item.id,
+            name: item.name,
+            nameEs: item.nameEs ?? item.name,
+            brand: item.brand ?? '',
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity,
+          })
+        })
+      }
+    } catch {
+      // Ignore malformed shared sessions and keep the regular checkout flow.
+    }
+  }, [searchParams, addItem, clearCart])
   
   const isChile = ['chile', 'cl', 'república de chile', 'republic of chile'].includes(normCountry(formData.country))
 
@@ -262,6 +333,53 @@ function CheckoutContent() {
   }
   
   const total = subtotal + shippingCost - discount
+
+  const handleShareCheckoutLink = async () => {
+    setShareBusy(true)
+    setShareMessage(null)
+
+    try {
+      const sessionPayload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zip,
+        country: formData.country,
+        shippingKind: formData.shippingKind,
+        chileRegionCode: formData.chileRegionCode,
+        chileDeliveryChannel: formData.chileDeliveryChannel,
+        mapPin: mapPin ? { lat: mapPin.lat, lng: mapPin.lng } : null,
+        couponCode: appliedCoupon?.code || couponCode || null,
+        items: items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          nameEs: item.nameEs,
+          brand: item.brand,
+          price: item.price,
+          image: item.image,
+          quantity: item.quantity,
+        })),
+      }
+
+      const shareUrl = new URL(window.location.href)
+      shareUrl.searchParams.set('checkoutSession', encodeURIComponent(JSON.stringify(sessionPayload)))
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl.toString())
+      } else {
+        window.prompt('Copia este enlace para compartirlo con el comprador', shareUrl.toString())
+      }
+
+      setShareMessage('Enlace listo para compartir con el comprador.')
+    } catch {
+      setShareMessage('No se pudo copiar automáticamente; copia el enlace manualmente desde la barra del navegador.')
+    } finally {
+      setShareBusy(false)
+    }
+  }
   
   const handleApplyCoupon = async () => {
     setCouponError('')
@@ -1014,6 +1132,29 @@ function CheckoutContent() {
                     </div>
                   </div>
                   
+                  <div className="mt-6 space-y-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => void handleShareCheckoutLink()}
+                      disabled={shareBusy}
+                    >
+                      {shareBusy ? 'Preparando enlace...' : 'Compartir link de compra'}
+                      <Copy className="ml-2 h-4 w-4" />
+                    </Button>
+
+                    <p className="text-xs text-muted-foreground text-center">
+                      Comparte un enlace con los productos y datos ya cargados para que el comprador revise y complete la compra.
+                    </p>
+
+                    {shareMessage && (
+                      <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                        {shareMessage}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Submit Button */}
                   <Button 
                     type="submit" 
