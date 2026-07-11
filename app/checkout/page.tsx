@@ -141,29 +141,29 @@ function CheckoutContent() {
   useEffect(() => {
     if (sharedSessionLoadedRef.current) return
 
+    const sessionToken = searchParams.get('session')
     const sharedSessionParam = searchParams.get('checkoutSession')
-    if (!sharedSessionParam) return
+    
+    if (!sessionToken && !sharedSessionParam) return
 
     sharedSessionLoadedRef.current = true
 
-    try {
-      const decoded = JSON.parse(decodeURIComponent(sharedSessionParam)) as {
-        fullName?: string
-        email?: string
-        phone?: string
-        address?: string
-        city?: string
-        state?: string
-        zip?: string
-        country?: string
-        shippingKind?: 'national' | 'international'
-        chileRegionCode?: string
-        chileDeliveryChannel?: 'domicilio' | 'punto'
-        mapPin?: { lat: number; lng: number } | null
-        couponCode?: string | null
-        items?: Array<{ id: string; name: string; nameEs?: string; brand?: string; price: number; image: string; quantity: number }>
-      }
-
+    const loadSessionData = (decoded: {
+      fullName?: string
+      email?: string
+      phone?: string
+      address?: string
+      city?: string
+      state?: string
+      zip?: string
+      country?: string
+      shippingKind?: 'national' | 'international'
+      chileRegionCode?: string
+      chileDeliveryChannel?: 'domicilio' | 'punto'
+      mapPin?: { lat: number; lng: number } | null
+      couponCode?: string | null
+      items?: Array<{ id: string; name: string; nameEs?: string; brand?: string; price: number; image: string; quantity: number }>
+    }) => {
       setFormData((prev) => ({
         ...prev,
         fullName: decoded.fullName ?? prev.fullName,
@@ -201,8 +201,36 @@ function CheckoutContent() {
           })
         })
       }
-    } catch {
-      // Ignore malformed shared sessions and keep the regular checkout flow.
+    }
+
+    // If using new token-based system, fetch from API
+    if (sessionToken) {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/checkout/load-session?token=${encodeURIComponent(sessionToken)}`)
+          if (!res.ok) {
+            console.error('Failed to load session:', res.status)
+            setStatusMessage('No pudimos cargar la sesión de compra compartida.')
+            return
+          }
+          const decoded = await res.json()
+          loadSessionData(decoded)
+        } catch (e) {
+          console.error('Error loading token session:', e)
+          setStatusMessage('Error al cargar la sesión compartida.')
+        }
+      })()
+      return
+    }
+
+    // Fallback: old URL-embedded session (backward compatibility)
+    if (sharedSessionParam) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(sharedSessionParam))
+        loadSessionData(decoded)
+      } catch {
+        // Ignore malformed shared sessions and keep the regular checkout flow.
+      }
     }
   }, [searchParams, addItem, clearCart])
   
@@ -364,18 +392,32 @@ function CheckoutContent() {
         })),
       }
 
-      const shareUrl = new URL(window.location.href)
-      shareUrl.searchParams.set('checkoutSession', encodeURIComponent(JSON.stringify(sessionPayload)))
+      const res = await fetch('/api/checkout/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionPayload),
+      })
 
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl.toString())
-      } else {
-        window.prompt('Copia este enlace para compartirlo con el comprador', shareUrl.toString())
+      if (!res.ok) {
+        throw new Error('share_failed')
       }
 
-      setShareMessage('Enlace listo para compartir con el comprador.')
-    } catch {
-      setShareMessage('No se pudo copiar automáticamente; copia el enlace manualmente desde la barra del navegador.')
+      const { shareUrl } = await res.json() as { shareUrl: string }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.copyText) {
+        await navigator.clipboard.writeText(shareUrl)
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+      } else {
+        window.prompt('Copia este enlace para compartirlo con el comprador', shareUrl)
+        setShareBusy(false)
+        return
+      }
+
+      setShareMessage('✓ Enlace copiado al portapapeles y listo para compartir con el comprador.')
+    } catch (e) {
+      console.error('Share error:', e)
+      setShareMessage('No se pudo generar el enlace. Intenta de nuevo.')
     } finally {
       setShareBusy(false)
     }
