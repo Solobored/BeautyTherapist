@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { normalizeEmail } from '@/lib/seller-identity'
+import { normalizeBuyerOrderStatus } from '@/lib/order-visibility'
 
 export type UserType = 'buyer' | 'seller'
 
@@ -366,6 +367,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.type === 'buyer') {
       setUser({ ...user, ...data })
     }
+  }
+
+  const syncBuyerOrdersFromDb = (orders: Array<{ id: string; created_at?: string; order_status?: string; payment_status?: string; items?: Array<{ product_name?: string; product_id?: string; price?: number; quantity?: number; product_image?: string }> }>) => {
+    if (user?.type !== 'buyer') return
+
+    const mappedOrders: BuyerOrder[] = orders.map((order) => ({
+      id: order.id,
+      date: order.created_at ?? new Date().toISOString(),
+      status: normalizeBuyerOrderStatus(order.order_status, order.payment_status) as BuyerOrder['status'],
+      items: (order.items ?? []).map((item) => ({
+        productId: item.product_id ?? '',
+        name: item.product_name ?? 'Producto',
+        quantity: Number(item.quantity ?? 1),
+        price: Number(item.price ?? 0),
+        image: item.product_image ?? '',
+      })),
+      total: 0,
+      shippingAddress: {
+        id: 'default',
+        label: 'Envío',
+        fullName: user.fullName,
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: '',
+        phone: user.phone ?? '',
+        isDefault: true,
+      },
+    }))
+
+    setUser({ ...user, orders: mappedOrders })
   }
 
   const updateSellerProfile = (data: Partial<Seller>) => {

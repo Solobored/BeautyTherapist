@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useLanguage } from '@/contexts/language-context'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth, type BuyerOrder } from '@/contexts/auth-context'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 
@@ -17,22 +17,44 @@ export default function BuyerDashboardPage() {
   const { language } = useLanguage()
   const { user, isAuthenticated, userType } = useAuth()
   const router = useRouter()
+  const [orders, setOrders] = useState<BuyerOrder[]>(user?.type === 'buyer' ? user.orders : [])
   
   useEffect(() => {
     if (!isAuthenticated || userType !== 'buyer') {
       router.push('/auth/login?returnUrl=/account/dashboard')
     }
   }, [isAuthenticated, userType, router])
+
+  useEffect(() => {
+    if (!user || user.type !== 'buyer') return
+
+    let cancelled = false
+    const loadOrders = async () => {
+      try {
+        const res = await fetch(`/api/account/orders?email=${encodeURIComponent(user.email)}&userId=${encodeURIComponent(user.id)}`)
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(json.error || 'No se pudieron cargar los pedidos')
+        if (!cancelled) setOrders(json.orders ?? [])
+      } catch {
+        if (!cancelled) setOrders(user.orders)
+      }
+    }
+
+    void loadOrders()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
   
   if (!user || user.type !== 'buyer') {
     return null
   }
   
-  const recentOrders = user.orders.slice(0, 3)
+  const recentOrders = orders.slice(0, 3)
   const activeCoupons = user.coupons.filter(c => !c.used && new Date(c.expiryDate) > new Date())
   
   const quickLinks = [
-    { href: '/account/orders', icon: Package, label: language === 'es' ? 'Mis Pedidos' : 'My Orders', count: user.orders.length },
+    { href: '/account/orders', icon: Package, label: language === 'es' ? 'Mis Pedidos' : 'My Orders', count: orders.length },
     { href: '/account/wishlist', icon: Heart, label: language === 'es' ? 'Lista de Deseos' : 'Wishlist', count: user.wishlist.length },
     { href: '/account/coupons', icon: Ticket, label: language === 'es' ? 'Mis Cupones' : 'My Coupons', count: activeCoupons.length },
     { href: '/account/addresses', icon: MapPin, label: language === 'es' ? 'Direcciones' : 'Addresses', count: user.addresses.length },
@@ -100,7 +122,7 @@ export default function BuyerDashboardPage() {
                   <Package className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">{user.orders.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{orders.length}</p>
                   <p className="text-xs text-muted-foreground">{language === 'es' ? 'Pedidos' : 'Orders'}</p>
                 </div>
               </div>
@@ -143,7 +165,7 @@ export default function BuyerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
-                    ${user.orders.reduce((acc, o) => acc + o.total, 0)}
+                    ${orders.reduce((acc, o) => acc + o.total, 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">{language === 'es' ? 'Total Gastado' : 'Total Spent'}</p>
                 </div>

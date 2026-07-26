@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Package, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Package, ChevronRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,17 +13,44 @@ import { useAuth } from '@/contexts/auth-context'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { formatClp } from '@/lib/utils'
+import type { BuyerOrder } from '@/contexts/auth-context'
 
 export default function OrdersPage() {
   const { language } = useLanguage()
   const { user, isAuthenticated, userType } = useAuth()
   const router = useRouter()
+  const [orders, setOrders] = useState<BuyerOrder[]>(user?.type === 'buyer' ? user.orders : [])
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
     if (!isAuthenticated || userType !== 'buyer') {
       router.push('/auth/login?returnUrl=/account/orders')
     }
   }, [isAuthenticated, userType, router])
+
+  useEffect(() => {
+    if (!user || user.type !== 'buyer') return
+
+    let cancelled = false
+    const loadOrders = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/account/orders?email=${encodeURIComponent(user.email)}&userId=${encodeURIComponent(user.id)}`)
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(json.error || 'No se pudieron cargar los pedidos')
+        if (!cancelled) setOrders(json.orders ?? [])
+      } catch {
+        if (!cancelled) setOrders(user.type === 'buyer' ? user.orders : [])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadOrders()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
   
   if (!user || user.type !== 'buyer') {
     return null
@@ -64,12 +91,19 @@ export default function OrdersPage() {
           </h1>
           <p className="text-muted-foreground mt-1">
             {language === 'es' 
-              ? `${user.orders.length} pedidos en total`
-              : `${user.orders.length} orders total`}
+              ? `${orders.length} pedidos en total`
+              : `${orders.length} orders total`}
           </p>
         </div>
         
-        {user.orders.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <Loader2 className="w-10 h-10 mx-auto text-muted-foreground animate-spin mb-4" />
+              <p className="text-muted-foreground">Cargando tus pedidos…</p>
+            </CardContent>
+          </Card>
+        ) : orders.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
@@ -90,7 +124,7 @@ export default function OrdersPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {user.orders.map((order) => (
+            {orders.map((order: BuyerOrder) => (
               <Card key={order.id} className="overflow-hidden">
                 <CardHeader className="bg-secondary/50 py-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -111,7 +145,7 @@ export default function OrdersPage() {
                 </CardHeader>
                 <CardContent className="py-4">
                   <div className="space-y-4">
-                    {order.items.map((item, idx) => (
+                    {order.items.map((item: BuyerOrder['items'][number], idx: number) => (
                       <div key={idx} className="flex items-center gap-4">
                         <Image
                           src={item.image}

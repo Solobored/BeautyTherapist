@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { computeSellerOrderAnalytics, type OrderRowForAnalytics } from '@/lib/seller-order-analytics'
+import { shouldShowOrderInSellerDashboard } from '@/lib/order-visibility'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -46,8 +47,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: oErr.message }, { status: 500 })
     }
 
-    const visibleOrders = (orders ?? []).filter(
-      (order) => String(order.payment_status || '').toLowerCase() === 'completed'
+    const visibleOrders = (orders ?? []).filter((order) =>
+      shouldShowOrderInSellerDashboard({
+        order_status: order.order_status,
+        payment_status: order.payment_status,
+      })
     )
 
     const filtered = visibleOrders.filter((order) => {
