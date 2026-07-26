@@ -7,7 +7,7 @@ export function shouldShowOrderInSellerDashboard(order: OrderVisibilityRow): boo
   const paymentStatus = String(order.payment_status || '').toLowerCase()
   const orderStatus = String(order.order_status || '').toLowerCase()
 
-  if (paymentStatus === 'completed') return true
+  if (paymentStatus === 'completed' || paymentStatus === 'pending' || paymentStatus === 'in_process') return true
 
   return ['pending', 'processing', 'shipped', 'delivered'].includes(orderStatus)
 }
@@ -16,7 +16,7 @@ export function normalizeBuyerOrderStatus(orderStatus?: string | null, paymentSt
   const normalizedOrder = String(orderStatus || '').toLowerCase()
   const normalizedPayment = String(paymentStatus || '').toLowerCase()
 
-  if (normalizedPayment === 'completed') {
+  if (normalizedPayment === 'completed' || normalizedPayment === 'pending' || normalizedPayment === 'in_process') {
     return normalizedOrder === 'processing' ? 'pending' : normalizedOrder
   }
 

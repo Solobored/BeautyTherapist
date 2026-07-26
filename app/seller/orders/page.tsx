@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, LayoutDashboard, LogOut, Mail, Package, Send } from 'lucide-react'
+import { ArrowLeft, LayoutDashboard, LogOut, Mail, MessageCircleMore, Package, Send, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -282,7 +282,11 @@ export default function SellerOrdersPage() {
                       <Badge className={statusClass[order.orderStatus] ?? 'bg-secondary'}>
                         {order.orderStatus}
                       </Badge>
-                      <Badge variant="outline">{order.paymentStatus}</Badge>
+                      <Badge variant="outline">
+                        {String(order.paymentStatus || '').toLowerCase() === 'pending' || String(order.paymentStatus || '').toLowerCase() === 'in_process'
+                          ? 'Confirmado para despacho'
+                          : order.paymentStatus}
+                      </Badge>
                     </div>
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                       {order.orderStatus !== 'cancelled' &&
@@ -306,7 +310,7 @@ export default function SellerOrdersPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => resendNotifications(order)}
-                          disabled={resendBusyId === order.id || order.paymentStatus !== 'completed'}
+                          disabled={resendBusyId === order.id || !['completed', 'pending', 'in_process'].includes(String(order.paymentStatus || '').toLowerCase())}
                           className="flex-1 sm:flex-none"
                         >
                           <Mail className="h-4 w-4 mr-2" />
@@ -349,6 +353,36 @@ export default function SellerOrdersPage() {
                       {order.buyerPhone && (
                         <p className="text-sm text-muted-foreground">{order.buyerPhone}</p>
                       )}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {order.buyerEmail && (
+                          <Button asChild variant="outline" size="sm">
+                            <a href={`mailto:${order.buyerEmail}`}>
+                              <Mail className="h-4 w-4 mr-2" />
+                              Correo
+                            </a>
+                          </Button>
+                        )}
+                        {order.buyerPhone && (
+                          <>
+                            <Button asChild variant="outline" size="sm">
+                              <a
+                                href={`https://wa.me/${order.buyerPhone.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <MessageCircleMore className="h-4 w-4 mr-2" />
+                                WhatsApp
+                              </a>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                              <a href={`sms:${order.buyerPhone.replace(/[^0-9]/g, '')}`}>
+                                <Smartphone className="h-4 w-4 mr-2" />
+                                SMS
+                              </a>
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <h3 className="font-semibold mb-2">Envío</h3>

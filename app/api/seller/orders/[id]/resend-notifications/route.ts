@@ -38,9 +38,10 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Este pedido no incluye productos de tu marca' }, { status: 403 })
   }
 
-  if (String(order.payment_status || '').toLowerCase() !== 'completed') {
+  const normalizedPaymentStatus = String(order.payment_status || '').toLowerCase()
+  if (!['completed', 'pending', 'in_process'].includes(normalizedPaymentStatus)) {
     return NextResponse.json(
-      { error: 'Solo se pueden reenviar correos en pedidos pagados.' },
+      { error: 'Solo se pueden reenviar correos en pedidos pagados o en proceso.' },
       { status: 400 }
     )
   }

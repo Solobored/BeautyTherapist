@@ -193,13 +193,18 @@ export async function ensureApprovedOrderNotifications(orderId: string) {
   return ensureApprovedOrderNotificationsWithOptions(orderId)
 }
 
+function isBusinessConfirmedPaymentStatus(paymentStatus?: string | null): boolean {
+  const normalized = String(paymentStatus || '').toLowerCase()
+  return normalized === 'completed' || normalized === 'pending' || normalized === 'in_process'
+}
+
 export async function ensureApprovedOrderNotificationsWithOptions(
   orderId: string,
   options?: { forceBuyer?: boolean; forceSellers?: boolean }
 ) {
   const order = await fetchOrderForPostPayment(orderId)
   if (!order) return { ok: false as const, order: null, result: undefined }
-  if (String(order.payment_status).toLowerCase() !== 'completed') {
+  if (!isBusinessConfirmedPaymentStatus(order.payment_status)) {
     return { ok: false as const, order, result: undefined }
   }
 
@@ -256,16 +261,17 @@ export async function ensureApprovedOrderNotificationsWithOptions(
 }
 
 export async function applyApprovedPaymentToOrder(orderId: string, payment: PaymentResponse) {
+  const effectivePaymentStatus = payment.status === 'approved' ? 'completed' : 'pending'
   const { data: updatedRows, error: upErr } = await supabaseServer
     .from('orders')
     .update({
-      payment_status: 'completed',
+      payment_status: effectivePaymentStatus,
       order_status: 'processing',
       mercadopago_payment_id: String(payment.id),
       updated_at: new Date().toISOString(),
     })
     .eq('id', orderId)
-    .eq('payment_status', 'pending')
+    .in('payment_status', ['pending', 'completed'])
     .select('id, buyer_name, buyer_email, total, items, payment_status')
 
   if (upErr) {

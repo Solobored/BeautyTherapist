@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    if (payment.status === 'approved') {
+    if (payment.status === 'approved' || payment.status === 'pending' || payment.status === 'in_process') {
       await applyApprovedPaymentToOrder(orderId, payment)
       return NextResponse.json({ ok: true })
     }

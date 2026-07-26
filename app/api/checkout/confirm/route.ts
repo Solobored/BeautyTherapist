@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pedido no encontrado.' }, { status: 404 })
     }
 
-    if (String(order.payment_status).toLowerCase() === 'completed') {
+    const normalizedPaymentStatus = String(order.payment_status || '').toLowerCase()
+    if (normalizedPaymentStatus === 'completed' || normalizedPaymentStatus === 'pending' || normalizedPaymentStatus === 'in_process') {
       await ensureApprovedOrderNotifications(orderId)
       return NextResponse.json({
         ok: true,
-        status: 'approved',
+        status: normalizedPaymentStatus === 'completed' ? 'approved' : 'pending',
         alreadyConfirmed: true,
       })
     }
