@@ -320,9 +320,29 @@ function RegisterContent() {
                     onCheckedChange={(checked) => setBuyerData({ ...buyerData, acceptTerms: checked as boolean })}
                   />
                   <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                    {language === 'es'
-                      ? 'Acepto los Terminos y Condiciones y la Politica de Privacidad'
-                      : 'I accept the Terms & Conditions and Privacy Policy'}
+                    {language === 'es' ? (
+                      <>
+                        Acepto las{' '}
+                        <Link href="/politicas/compra-venta" target="_blank" className="underline hover:text-foreground">
+                          Políticas de compra y venta
+                        </Link>{' '}
+                        y la{' '}
+                        <Link href="/politicas/privacidad" target="_blank" className="underline hover:text-foreground">
+                          Política de Privacidad
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        I accept the{' '}
+                        <Link href="/politicas/compra-venta" target="_blank" className="underline hover:text-foreground">
+                          Purchase Terms
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/politicas/privacidad" target="_blank" className="underline hover:text-foreground">
+                          Privacy Policy
+                        </Link>
+                      </>
+                    )}
                   </Label>
                 </div>
                 
@@ -515,9 +535,29 @@ function RegisterContent() {
                     onCheckedChange={(checked) => setSellerData({ ...sellerData, acceptTerms: checked as boolean })}
                   />
                   <Label htmlFor="sellerTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                    {language === 'es'
-                      ? 'Acepto los Terminos de Vendedor y la Politica de Comisiones'
-                      : 'I accept the Seller Terms and Commission Policy'}
+                    {language === 'es' ? (
+                      <>
+                        Acepto las{' '}
+                        <Link href="/politicas/compra-venta" target="_blank" className="underline hover:text-foreground">
+                          Políticas de compra y venta
+                        </Link>{' '}
+                        y la{' '}
+                        <Link href="/politicas/privacidad" target="_blank" className="underline hover:text-foreground">
+                          Política de Privacidad
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        I accept the{' '}
+                        <Link href="/politicas/compra-venta" target="_blank" className="underline hover:text-foreground">
+                          Purchase Terms
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/politicas/privacidad" target="_blank" className="underline hover:text-foreground">
+                          Privacy Policy
+                        </Link>
+                      </>
+                    )}
                   </Label>
                 </div>
                 

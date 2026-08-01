@@ -66,6 +66,10 @@ export interface Buyer {
   coupons: Coupon[]
   orders: BuyerOrder[]
   beautyPreferences: BeautyPreferences
+  terms_accepted_at?: string
+  terms_version?: string
+  privacy_accepted_at?: string
+  privacy_version?: string
 }
 
 export interface Seller {
@@ -233,6 +237,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
     }
     
+    const consentTimestamp = new Date().toISOString()
+    const consentVersion = '2026-07-31'
+
     const newBuyer: Buyer = {
       id: generateId('buyer'),
       type: 'buyer',
@@ -257,7 +264,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       beautyPreferences: {
         skinType: '',
         concerns: []
-      }
+      },
+      terms_accepted_at: consentTimestamp,
+      terms_version: consentVersion,
+      privacy_accepted_at: consentTimestamp,
+      privacy_version: consentVersion,
     }
     
     setUser(newBuyer)

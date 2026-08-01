@@ -90,6 +90,21 @@ export function Footer() {
                   {t('footer.privacy')}
                 </Link>
               </li>
+              <li>
+                <Link href="/politicas/cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Política de Cookies
+                </Link>
+              </li>
+              <li>
+                <Link href="/politicas/derechos-arco" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Ejercicio de derechos ARCO+
+                </Link>
+              </li>
+              <li>
+                <Link href="/politicas/proteccion-datos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Protección de Datos Personales
+                </Link>
+              </li>
             </ul>
           </div>
           
@@ -98,15 +113,25 @@ export function Footer() {
             <h3 className="font-sans text-sm font-semibold uppercase tracking-wider text-foreground mb-4">
               {t('footer.newsletter')}
             </h3>
-            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <Input 
-                type="email" 
-                placeholder={t('footer.emailPlaceholder')}
-                className="bg-background"
-              />
-              <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-accent-foreground shrink-0">
-                <Send className="h-4 w-4" />
-              </Button>
+            <form className="space-y-2" onSubmit={(e) => e.preventDefault()}>
+              <div className="flex gap-2">
+                <Input 
+                  type="email" 
+                  placeholder={t('footer.emailPlaceholder')}
+                  className="bg-background"
+                  required
+                />
+                <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-accent-foreground shrink-0">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground leading-snug">
+                Al suscribirte aceptas recibir comunicaciones de marketing y nuestra{' '}
+                <Link href="/politicas/privacidad" className="underline hover:text-foreground">
+                  Política de Privacidad
+                </Link>
+                . Puedes darte de baja cuando quieras.
+              </p>
             </form>
           </div>
         </div>

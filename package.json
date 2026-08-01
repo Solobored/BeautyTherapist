@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "predev": "npm run prisma:generate",
     "build": "next build --webpack",
+    "prebuild": "npm run prisma:generate",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --coverage",
@@ -12,7 +14,14 @@
     "type-check": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:seed": "supabase db seed",
-    "postinstall": "echo 'Using npm overrides for dependency resolution'"
+    "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
+    "db:sync": "dotenv -e .env.local -- prisma migrate deploy",
+    "db:deploy": "dotenv -e .env.local -- prisma migrate deploy",
+    "db:pull": "dotenv -e .env.local -- prisma db pull",
+    "db:studio": "dotenv -e .env.local -- prisma studio",
+    "prisma:generate": "dotenv -e .env.local -- prisma generate",
+    "prisma:status": "dotenv -e .env.local -- prisma migrate status",
+    "postinstall": "prisma generate"
   },
   "overrides": {
     "@react-email/render": {
@@ -30,6 +39,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
+    "@prisma/client": "^6.15.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
     "@radix-ui/react-aspect-ratio": "1.1.8",
@@ -99,6 +109,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "patch-package": "^8.0.0",
     "postcss": "^8.5",
+    "prisma": "^6.19.3",
+    "dotenv-cli": "^10.0.0",
     "supabase": "^2.83.0",
     "tailwindcss": "^4.2.0",
     "ts-node": "^10.9.2",

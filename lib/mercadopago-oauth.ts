@@ -91,7 +91,9 @@ export async function saveSellerAccount(brandId: string, token: OAuthTokenRespon
 export async function getValidSellerAccessToken(brandId: string): Promise<string | null> {
   const { data: row } = await supabaseServer
     .from('mercadopago_seller_accounts')
-    .select('*')
+    .select(
+      'brand_id, mp_user_id, access_token_encrypted, refresh_token_encrypted, public_key, live_mode, scope, token_type, expires_at, connected_at, updated_at, disconnected_at'
+    )
     .eq('brand_id', brandId)
     .is('disconnected_at', null)
     .maybeSingle()

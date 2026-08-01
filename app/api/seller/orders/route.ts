@@ -39,7 +39,9 @@ export async function GET(request: NextRequest) {
 
     const { data: orders, error: oErr } = await supabaseServer
       .from('orders')
-      .select('*')
+      .select(
+        'id, buyer_name, buyer_email, buyer_phone, shipping_address, items, subtotal, shipping_cost, discount, total, order_status, payment_status, created_at'
+      )
       .order('created_at', { ascending: false })
 
     if (oErr) {

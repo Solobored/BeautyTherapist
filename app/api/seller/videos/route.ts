@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseServer
       .from('seller_videos')
-      .select('*')
+      .select(
+        'id, seller_id, brand_id, title, description, cloudinary_url, cloudinary_public_id, thumbnail_url, featured_product_ids, duration_seconds, views_count, likes_count, active, created_at, updated_at'
+      )
       .eq('seller_id', session.sellerId)
       .order('created_at', { ascending: false })
 
@@ -80,7 +82,9 @@ export async function POST(request: NextRequest) {
             : null,
         active: body.active ?? true,
       })
-      .select('*')
+      .select(
+        'id, seller_id, brand_id, title, description, cloudinary_url, cloudinary_public_id, thumbnail_url, featured_product_ids, duration_seconds, views_count, likes_count, active, created_at, updated_at'
+      )
       .single()
 
     if (error) {

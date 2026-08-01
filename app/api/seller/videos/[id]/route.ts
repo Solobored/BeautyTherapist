@@ -15,7 +15,9 @@ cloudinary.config({
 async function ownVideo(id: string, sellerId: string) {
   const { data } = await supabaseServer
     .from('seller_videos')
-    .select('*')
+    .select(
+      'id, seller_id, brand_id, title, description, cloudinary_url, cloudinary_public_id, thumbnail_url, featured_product_ids, duration_seconds, views_count, likes_count, active, created_at, updated_at'
+    )
     .eq('id', id)
     .eq('seller_id', sellerId)
     .maybeSingle()

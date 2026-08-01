@@ -17,7 +17,13 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   const { data: brandProducts } = await supabaseServer.from('products').select('id').eq('brand_id', session.brandId)
   const productIds = new Set((brandProducts ?? []).map((p) => p.id))
 
-  const { data: order, error: oErr } = await supabaseServer.from('orders').select('*').eq('id', orderId).maybeSingle()
+  const { data: order, error: oErr } = await supabaseServer
+    .from('orders')
+    .select(
+      'id, order_status, payment_status, buyer_email, buyer_name, items, subtotal, shipping_cost, discount, total, created_at'
+    )
+    .eq('id', orderId)
+    .maybeSingle()
   if (oErr || !order) {
     return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
   }

@@ -6,6 +6,7 @@ import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
 import Script from 'next/script'
+import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
 import { buildOrganizationSchema, buildWebsiteSchema } from '@/lib/seo'
 import './globals.css'
@@ -133,6 +134,7 @@ export default function RootLayout({
         </LanguageProvider>
         <Analytics />
         <Toaster richColors position="top-center" />
+        <CookieConsentBanner />
       </body>
     </html>
   )
