@@ -1,38 +1,27 @@
 create index if not exists idx_products_brand_id on public.products (brand_id);
 create index if not exists idx_products_category on public.products (category);
 create index if not exists idx_products_status on public.products (status);
-
 create index if not exists idx_product_images_product_id on public.product_images (product_id);
-
 create index if not exists idx_order_items_order_id on public.order_items (order_id);
 create index if not exists idx_order_items_product_id on public.order_items (product_id);
-
 create index if not exists idx_orders_user_id on public.orders (user_id);
 create index if not exists idx_orders_payment_status on public.orders (payment_status);
 create index if not exists idx_orders_order_status on public.orders (order_status);
 create index if not exists idx_orders_created_at on public.orders (created_at desc);
-
 create index if not exists idx_reviews_product_id on public.reviews (product_id);
 create index if not exists idx_reviews_brand_id on public.reviews (brand_id);
-
 create index if not exists idx_seller_videos_seller_id on public.seller_videos (seller_id);
 create index if not exists idx_seller_videos_brand_id on public.seller_videos (brand_id);
 create index if not exists idx_seller_videos_active on public.seller_videos (active);
-
 create index if not exists idx_coupons_brand_id on public.coupons (brand_id);
 create index if not exists idx_coupons_code on public.coupons (code);
-
 create index if not exists idx_coupon_redemptions_coupon_id on public.coupon_redemptions (coupon_id);
 create index if not exists idx_coupon_redemptions_order_id on public.coupon_redemptions (order_id);
 create index if not exists idx_coupon_redemptions_user_id on public.coupon_redemptions (user_id);
-
 create index if not exists idx_wishlist_user_id on public.wishlist (user_id);
 create index if not exists idx_wishlist_product_id on public.wishlist (product_id);
-
 create index if not exists idx_addresses_user_id on public.addresses (user_id);
-
 create index if not exists idx_blog_posts_slug on public.blog_posts (slug);
 create index if not exists idx_blog_post_images_blog_post_id on public.blog_post_images (blog_post_id);
-
 create index if not exists idx_seller_auth_sessions_seller_id on public.seller_auth_sessions (seller_id);
 create index if not exists idx_seller_auth_sessions_token_hash on public.seller_auth_sessions (token_hash);
