@@ -37,12 +37,29 @@ export async function GET(request: NextRequest) {
       (brandProducts ?? []).map((p) => [p.id, { category: String(p.category ?? 'other') }])
     )
 
+    if (productIds.size === 0) {
+      return NextResponse.json({
+        orders: [],
+        analytics: {
+          totalRevenue: 0,
+          totalSales: 0,
+          revenueThisMonth: 0,
+          salesThisMonth: 0,
+          totalRevenueLastMonth: 0,
+          totalSalesLastMonth: 0,
+          revenueByMonth: [],
+          salesByCategory: [],
+        },
+      })
+    }
+
     const { data: orders, error: oErr } = await supabaseServer
       .from('orders')
       .select(
         'id, buyer_name, buyer_email, buyer_phone, shipping_address, items, subtotal, shipping_cost, discount, total, order_status, payment_status, created_at'
       )
       .order('created_at', { ascending: false })
+      .limit(250)
 
     if (oErr) {
       console.error(oErr)

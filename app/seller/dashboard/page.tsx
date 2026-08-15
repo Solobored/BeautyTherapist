@@ -160,6 +160,7 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     if (!seller?.email) return
     let cancelled = false
+    const refreshIntervalMs = 3 * 60 * 1000
 
     // Cargar perfil del vendedor solo una vez para evitar loop de renders
     if (!profileFetched.current) {
@@ -193,13 +194,27 @@ export default function SellerDashboardPage() {
       })()
     }
 
-    void loadSellerOrders(seller)
-    const interval = window.setInterval(() => {
-      if (!cancelled) void loadSellerOrders(seller)
-    }, 30000)
+    const refreshOrders = () => {
+      if (!cancelled && document.visibilityState === 'visible') {
+        void loadSellerOrders(seller)
+      }
+    }
+
+    void refreshOrders()
+
+    const interval = window.setInterval(refreshOrders, refreshIntervalMs)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void loadSellerOrders(seller)
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
     return () => {
       cancelled = true
       window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [seller?.email, updateSellerProfile, seller])
 
