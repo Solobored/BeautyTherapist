@@ -71,7 +71,19 @@ export function BrandsShowcase() {
         {/* Brand Cards */}
         <div className="max-w-4xl mx-auto">
           {loading ? (
-            <div className="text-center text-muted-foreground">Cargando marcas...</div>
+            <div className="space-y-6">
+              {[...Array(2)].map((_, index) => (
+                <div key={index} className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm">
+                  <div className="h-48 w-full animate-pulse bg-muted md:h-64" />
+                  <div className="space-y-3 p-6 md:p-8">
+                    <div className="h-4 w-28 animate-pulse rounded-full bg-muted" />
+                    <div className="h-8 w-44 animate-pulse rounded-full bg-muted" />
+                    <div className="h-4 w-full animate-pulse rounded-full bg-muted" />
+                    <div className="h-4 w-5/6 animate-pulse rounded-full bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             brands.map((brand) => (
               <div 

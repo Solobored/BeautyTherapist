@@ -67,12 +67,22 @@ const nextConfig = {
       },
       {
         source: '/belleza',
-        destination: '/productos-profesionales-belleza',
+        destination: '/shop',
         permanent: true,
       },
       {
         source: '/productos-de-belleza',
-        destination: '/productos-profesionales-belleza',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/productos-profesionales-belleza',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/analisis-de-piel',
+        destination: '/',
         permanent: true,
       },
     ]

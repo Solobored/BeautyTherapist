@@ -28,4 +28,5 @@ export interface StoreProduct {
   weightOverrideG?: number | null
   shippingMode?: 'blue_express' | 'chile_express' | 'custom_group'
   shippingGroupId?: string | null
+  skinNotes?: string
 }

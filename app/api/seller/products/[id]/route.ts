@@ -3,6 +3,7 @@ import { supabaseServer } from '@/lib/supabase'
 import { getSellerSessionFromRequest } from '@/lib/seller-session-server'
 import { mapDbProductToProduct } from '@/lib/seller-product-map'
 import { isMissingShippingSchemaError } from '@/lib/products-compat'
+import { replaceProductSkinTags, validateSkinTagIds } from '@/lib/skin-tag-assignments'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -53,7 +54,9 @@ export async function GET(
         grams_per_ml,
         weight_override_g,
         shipping_mode,
+        skin_notes,
         product_shipping_groups (shipping_group_id),
+        product_skin_tags (skin_tag_id),
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
@@ -75,6 +78,8 @@ export async function GET(
         net_content_ml,
         grams_per_ml,
         weight_override_g,
+        skin_notes,
+        product_skin_tags (skin_tag_id),
         brands (brand_name, brand_slug),
         product_images (url, position, is_primary)
       `
@@ -100,7 +105,10 @@ export async function GET(
     }
 
     return NextResponse.json({
-      product: mapDbProductToProduct(data as Parameters<typeof mapDbProductToProduct>[0]),
+      product: {
+        ...mapDbProductToProduct(data as Parameters<typeof mapDbProductToProduct>[0]),
+        skinTagIds: (data.product_skin_tags ?? []).map((tag: { skin_tag_id: string }) => tag.skin_tag_id),
+      },
     })
   } catch (e) {
     console.error(e)
@@ -124,6 +132,8 @@ type PatchBody = {
   weightOverrideG?: number | null
   shippingMode?: 'blue_express' | 'chile_express' | 'custom_group'
   shippingGroupId?: string | null
+  skin_tag_ids?: string[]
+  skin_notes?: string
 }
 
 export async function PATCH(
@@ -143,6 +153,13 @@ export async function PATCH(
     }
 
     const body = (await request.json()) as PatchBody
+    if (body.skin_notes !== undefined && (typeof body.skin_notes !== 'string' || body.skin_notes.length > 1000)) {
+      return NextResponse.json({ error: 'Las notas de piel no pueden superar 1000 caracteres' }, { status: 400 })
+    }
+    const skinTagIds = body.skin_tag_ids === undefined ? undefined : await validateSkinTagIds(body.skin_tag_ids)
+    if (body.skin_tag_ids !== undefined && !skinTagIds) {
+      return NextResponse.json({ error: 'Etiquetas de piel inválidas' }, { status: 400 })
+    }
     const patch: Record<string, unknown> = {}
 
     if (body.name !== undefined) {
@@ -194,6 +211,7 @@ export async function PATCH(
           ? body.shippingMode
           : 'blue_express'
     }
+        if (body.skin_notes !== undefined) patch.skin_notes = body.skin_notes.trim() || null
 
     if (Object.keys(patch).length > 0) {
       patch.updated_at = new Date().toISOString()
@@ -244,6 +262,15 @@ export async function PATCH(
             return NextResponse.json({ error: groupErr.message }, { status: 500 })
           }
         }
+      }
+    }
+
+    if (skinTagIds) {
+      try {
+        await replaceProductSkinTags(id, skinTagIds)
+      } catch (error) {
+        console.error('seller product skin tags PATCH', error)
+        return NextResponse.json({ error: 'No se pudieron guardar las etiquetas de piel' }, { status: 500 })
       }
     }
 

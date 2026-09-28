@@ -21,3 +21,12 @@ ADD COLUMN IF NOT EXISTS mercadopago_marketplace_fee INTEGER,
 COMMENT ON COLUMN orders.mercadopago_marketplace_fee IS 'Comisión de la plataforma retenida en CLP para esta orden (0.5% del total)';
 COMMENT ON COLUMN orders.mercadopago_seller_brand_id IS 'Brand/vendedor cuya cuenta de Mercado Pago recibió el pago';
 ALTER TABLE mercadopago_seller_accounts ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.mercadopago_seller_accounts TO anon;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.mercadopago_seller_accounts TO authenticated;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.mercadopago_seller_accounts TO service_role;

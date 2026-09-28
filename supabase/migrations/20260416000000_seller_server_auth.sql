@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS seller_auth_credentials (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE TABLE IF NOT EXISTS seller_auth_sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -17,16 +16,27 @@ CREATE TABLE IF NOT EXISTS seller_auth_sessions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_seller_auth_credentials_email
-  ON seller_auth_credentials(email);
-
-CREATE INDEX IF NOT EXISTS idx_seller_auth_sessions_seller_id
-  ON seller_auth_sessions(seller_id);
-
-CREATE INDEX IF NOT EXISTS idx_seller_auth_sessions_active
-  ON seller_auth_sessions(seller_id, expires_at)
-  WHERE revoked_at IS NULL;
-
+CREATE INDEX IF NOT EXISTS idx_seller_auth_credentials_email ON seller_auth_credentials(email);
+CREATE INDEX IF NOT EXISTS idx_seller_auth_sessions_seller_id ON seller_auth_sessions(seller_id);
+CREATE INDEX IF NOT EXISTS idx_seller_auth_sessions_active ON seller_auth_sessions(seller_id, expires_at)
+WHERE revoked_at IS NULL;
 ALTER TABLE seller_auth_credentials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seller_auth_sessions ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.seller_auth_credentials TO anon;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_auth_credentials TO authenticated;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_auth_credentials TO service_role;
+GRANT SELECT ON public.seller_auth_sessions TO anon;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_auth_sessions TO authenticated;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_auth_sessions TO service_role;

@@ -129,11 +129,100 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+:root {
+  --breakpoint-mobile: 767px;
+  --breakpoint-tablet: 1023px;
+  --breakpoint-desktop: 1024px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .brand-wordmark {
+    line-height: 1;
+  }
+
+  .mobile-only {
+    display: none;
+  }
+
+  .tablet-only {
+    display: none;
+  }
+
+  .desktop-only {
+    display: block;
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+  Responsive layout strategy:
+  - Base styles: shared across all devices.
+  - Mobile overrides: only for max-width: 767px.
+  - Tablet overrides: only for 768px to 1023px.
+  - Desktop overrides: only for min-width: 1024px.
+  Keep each viewport in its own block to avoid changing the others.
+*/
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  .home-blog-preview-card:not(:first-child) {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .tablet-only,
+  .desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-only {
+    display: block;
+  }
+
+  .mobile-only,
+  .desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: block;
+  }
+
+  .mobile-only,
+  .tablet-only {
+    display: none;
   }
 }

@@ -27,9 +27,9 @@ export function CookieConsentBanner() {
     <div
       role="dialog"
       aria-label="Consentimiento de cookies"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur px-4 py-4 shadow-lg"
+      className="fixed bottom-[4.5rem] left-1/2 z-30 w-[min(calc(100%-1rem),56rem)] -translate-x-1/2 rounded-2xl border border-border bg-background/95 px-4 py-3 shadow-xl backdrop-blur md:bottom-4"
     >
-      <div className="container mx-auto flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-muted-foreground max-w-2xl">
           Usamos cookies esenciales para el funcionamiento de la tienda (sesión, carrito, pagos) y
           cookies de analítica agregada para entender el uso del sitio. Puedes revisar el detalle en

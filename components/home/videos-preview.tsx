@@ -11,19 +11,19 @@ export async function VideosPreview() {
   const featuredVideo = videos[0]
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-8 md:py-16 lg:py-24">
       <div className="container mx-auto px-4">
-        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="mb-5 flex flex-row items-end justify-between gap-3 md:mb-10 md:gap-4">
           <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-accent">Videos</span>
-            <h2 className="mt-3 font-serif text-3xl font-semibold text-foreground md:text-4xl">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-accent md:text-xs md:tracking-[0.3em]">Videos</span>
+            <h2 className="mt-1 font-serif text-2xl font-semibold text-foreground md:mt-3 md:text-4xl">
               Videos de belleza
             </h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
+            <p className="mt-1 hidden max-w-2xl text-sm text-muted-foreground sm:block md:mt-3 md:text-base">
               Descubre productos en formato corto, vertical y pensado para mobile.
             </p>
           </div>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm" className="shrink-0 md:h-9 md:px-4">
             <Link href="/videos">
               Ver mas videos
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -32,9 +32,9 @@ export async function VideosPreview() {
         </div>
 
         {videos.length === 0 ? (
-          <div className="rounded-3xl border border-border/60 bg-card p-10 text-center">
-            <h3 className="font-serif text-2xl font-semibold text-foreground">Aun no hay videos</h3>
-            <p className="mt-3 text-muted-foreground">
+          <div className="rounded-xl border border-border/60 bg-card p-5 text-left md:rounded-3xl md:p-10 md:text-center">
+            <h3 className="font-serif text-xl font-semibold text-foreground md:text-2xl">Aun no hay videos</h3>
+            <p className="mt-2 text-sm text-muted-foreground md:mt-3 md:text-base">
               Pronto veras demostraciones, rutinas y presentaciones de productos aqui.
             </p>
             <Button asChild variant="outline" className="mt-6">

@@ -7,15 +7,10 @@ CREATE TABLE IF NOT EXISTS seller_categories (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (brand_id, slug)
 );
-
-CREATE INDEX IF NOT EXISTS idx_seller_categories_brand_id
-  ON seller_categories(brand_id);
-
+CREATE INDEX IF NOT EXISTS idx_seller_categories_brand_id ON seller_categories(brand_id);
 ALTER TABLE seller_categories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Sellers can read their own categories"
-  ON seller_categories FOR SELECT
-  USING (
+CREATE POLICY "Sellers can read their own categories" ON seller_categories FOR
+SELECT USING (
     EXISTS (
       SELECT 1
       FROM brands
@@ -23,10 +18,8 @@ CREATE POLICY "Sellers can read their own categories"
         AND brands.owner_id = auth.uid()
     )
   );
-
-CREATE POLICY "Sellers can create their own categories"
-  ON seller_categories FOR INSERT
-  WITH CHECK (
+CREATE POLICY "Sellers can create their own categories" ON seller_categories FOR
+INSERT WITH CHECK (
     EXISTS (
       SELECT 1
       FROM brands
@@ -34,33 +27,36 @@ CREATE POLICY "Sellers can create their own categories"
         AND brands.owner_id = auth.uid()
     )
   );
-
-CREATE POLICY "Sellers can update their own categories"
-  ON seller_categories FOR UPDATE
-  USING (
+CREATE POLICY "Sellers can update their own categories" ON seller_categories FOR
+UPDATE USING (
     EXISTS (
       SELECT 1
       FROM brands
       WHERE brands.id = seller_categories.brand_id
         AND brands.owner_id = auth.uid()
     )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM brands
+      WHERE brands.id = seller_categories.brand_id
+        AND brands.owner_id = auth.uid()
+    )
+  );
+CREATE POLICY "Sellers can delete their own categories" ON seller_categories FOR DELETE USING (
+  EXISTS (
+    SELECT 1
+    FROM brands
+    WHERE brands.id = seller_categories.brand_id
+      AND brands.owner_id = auth.uid()
   )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM brands
-      WHERE brands.id = seller_categories.brand_id
-        AND brands.owner_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Sellers can delete their own categories"
-  ON seller_categories FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM brands
-      WHERE brands.id = seller_categories.brand_id
-        AND brands.owner_id = auth.uid()
-    )
-  );
+);
+GRANT SELECT ON public.seller_categories TO anon;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_categories TO authenticated;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.seller_categories TO service_role;

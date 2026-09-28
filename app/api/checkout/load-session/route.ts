@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseServer
       .from('shared_checkout_sessions')
-      .select('session_data, expires_at')
+      .select('session_data, expires_at, accessed_count')
       .eq('token', token)
       .single()
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     await supabaseServer
       .from('shared_checkout_sessions')
       .update({
-        accessed_count: data.accessed_count + 1 || 1,
+        accessed_count: Number(data.accessed_count ?? 0) + 1,
         last_accessed_at: new Date().toISOString(),
       })
       .eq('token', token)

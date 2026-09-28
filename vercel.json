@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/purge-old-cancelled-orders",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/purge-skin-analyses",
+      "schedule": "0 7 * * *"
     }
   ]
 }

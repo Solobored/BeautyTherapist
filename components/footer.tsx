@@ -37,11 +37,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/productos-profesionales-belleza" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Productos profesionales de belleza
-                </Link>
-              </li>
-              <li>
                 <Link href="/skincare-profesional" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Skincare profesional
                 </Link>

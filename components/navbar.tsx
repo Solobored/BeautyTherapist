@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
-import { Search, ShoppingBag, User, Menu, X, Heart, ChevronDown, LogOut, Package, Ticket, MapPin, Settings, LayoutDashboard, Store } from 'lucide-react'
+import { Search, ShoppingBag, User, Heart, ChevronDown, LogOut, Package, Ticket, MapPin, Settings, LayoutDashboard, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
-import { CartDrawer } from '@/components/cart-drawer'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,17 +19,15 @@ export function Navbar() {
   const { t } = useLanguage()
   const { itemCount, setIsOpen } = useCart()
   const { user, isAuthenticated, userType, logout } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   const navLinks = [
     { href: '/', label: t('nav.home') },
     { href: '/shop', label: t('nav.shop') },
-    { href: '/productos-profesionales-belleza', label: 'Belleza Pro' },
     { href: '/videos', label: 'Videos' },
     { href: '/brands/angebae', label: t('nav.brands') },
     { href: '/blog', label: t('nav.blog') },
   ]
-  
+
   const getBuyerName = () => {
     if (user?.type === 'buyer') {
       return user.fullName.split(' ')[0]
@@ -48,18 +44,18 @@ export function Navbar() {
   
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-serif text-xl md:text-2xl font-semibold tracking-tight text-foreground">
+            <Link href="/" className="flex shrink-0 items-center gap-2 md:mr-4 lg:mr-0">
+              <span className="brand-wordmark inline-block whitespace-nowrap font-serif text-xl font-semibold leading-none tracking-tight text-foreground md:text-2xl">
                 Beauty & Therapy
               </span>
             </Link>
             
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-4 lg:gap-8">
               {navLinks.map((link) => (
                 <Link 
                   key={link.href}
@@ -96,7 +92,7 @@ export function Navbar() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative text-muted-foreground hover:text-foreground"
+                  className="relative hidden text-muted-foreground hover:text-foreground md:inline-flex"
                   onClick={() => setIsOpen(true)}
                 >
                   <ShoppingBag className="h-5 w-5" />
@@ -219,123 +215,11 @@ export function Navbar() {
                 </div>
               )}
               
-              {/* Mobile Menu Button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="md:hidden text-muted-foreground hover:text-foreground"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
             </div>
           </div>
         </div>
-        
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background">
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              
-              {!isAuthenticated ? (
-                <>
-                  <Link 
-                    href="/auth/login"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.login')}
-                  </Link>
-                  <Link 
-                    href="/auth/register"
-                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.register')}
-                  </Link>
-                </>
-              ) : userType === 'buyer' ? (
-                <>
-                  <div className="border-t border-border pt-4 mt-2">
-                    <span className="text-sm font-semibold text-foreground">Hi, {getBuyerName()}</span>
-                  </div>
-                  <Link 
-                    href="/account/dashboard"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.myAccount')}
-                  </Link>
-                  <Link 
-                    href="/account/orders"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.myOrders')}
-                  </Link>
-                  <Link 
-                    href="/account/wishlist"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.wishlist')}
-                  </Link>
-                  <button
-                    onClick={() => {
-                      void logout()
-                      setMobileMenuOpen(false)
-                    }}
-                    className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors py-2 text-left"
-                  >
-                    {t('nav.logout')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="border-t border-border pt-4 mt-2">
-                    <span className="text-sm font-semibold text-foreground">{getSellerBrandName()}</span>
-                  </div>
-                  <Link 
-                    href="/seller/dashboard"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link 
-                    href="/seller/products"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Products
-                  </Link>
-                  <button
-                    onClick={() => {
-                      void logout()
-                      setMobileMenuOpen(false)
-                    }}
-                    className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors py-2 text-left"
-                  >
-                    {t('nav.logout')}
-                  </button>
-                </>
-              )}
-            </nav>
-          </div>
-        )}
       </header>
-      
-      <CartDrawer />
+
     </>
   )
 }

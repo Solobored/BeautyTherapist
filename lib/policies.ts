@@ -15,7 +15,7 @@ export const policyPages: PolicyPage[] = [
     title: 'Política de privacidad',
     description:
       'Conoce cómo Beauty & Therapy trata datos personales, pedidos, medios de contacto y seguridad de la información, conforme a la Ley 21.719.',
-    updatedAt: '2026-07-31',
+    updatedAt: '2026-09-27',
     sections: [
       {
         title: 'Responsable del tratamiento',
@@ -31,7 +31,7 @@ export const policyPages: PolicyPage[] = [
           'Fecha de nacimiento (opcional): tratada solo con tu consentimiento, exclusivamente para enviarte un cupón de cumpleaños. Puedes omitir este dato sin afectar tu compra.',
           'Historial de pedidos y mensajes de soporte: tratados con base en la ejecución del contrato y nuestro interés legítimo en prevenir fraude y mejorar el servicio.',
           'No solicitamos ni almacenamos datos de tarjetas de pago. Los pagos son procesados directamente por Mercado Pago bajo sus propias políticas de seguridad y privacidad.',
-          'No tratamos categorías especiales de datos (salud, biometría, origen étnico, afiliación sindical, datos de menores de edad) salvo que tú los entregues voluntariamente en un mensaje de soporte; en ese caso los eliminamos si no son necesarios para resolver tu solicitud.',
+          'No tratamos categorías especiales de datos (salud, biometría, origen étnico, afiliación sindical, datos de menores de edad), salvo el perfil de piel que entregas voluntariamente en el análisis Maien con tu consentimiento expreso. No ingreses datos de menores ni información que permita identificarte en ese análisis.',
         ],
       },
       {
@@ -51,13 +51,14 @@ export const policyPages: PolicyPage[] = [
           'Datos de pedidos, boletas y comprobantes: se conservan por el plazo legal exigido en materia tributaria y comercial en Chile (generalmente hasta 6 años), aun si eliminas tu cuenta.',
           'Datos de marketing (newsletter): hasta que retires tu consentimiento.',
           'Solicitudes de soporte: hasta 2 años desde su resolución, para efectos de trazabilidad y garantía.',
+          'Análisis de piel de visitantes sin cuenta, incluidas las observaciones de IA y los archivos de informe: hasta 30 días desde la última actualización; luego se eliminan automáticamente. Puedes eliminarlos antes desde la página de resultados. Si asocias un análisis a una cuenta, se conserva mientras mantengas la cuenta y puedes eliminarlo desde el mismo control.',
         ],
       },
       {
         title: 'Con quién compartimos tus datos',
         body: [
           'Con la marca vendedora correspondiente, solo la información necesaria para preparar y despachar tu pedido.',
-          'Con proveedores tecnológicos que actúan como encargados de tratamiento bajo contrato: hosting y base de datos (Supabase), infraestructura y analítica (Vercel), procesamiento de pagos (Mercado Pago), envío de correos transaccionales y almacenamiento de imágenes/video.',
+          'Con proveedores tecnológicos que actúan como encargados de tratamiento bajo contrato: hosting y base de datos (Supabase), infraestructura y analítica (Vercel), procesamiento de pagos (Mercado Pago), almacenamiento de archivos (Cloudinary) y, si usas Maien, Google Gemini para generar observaciones a partir de tu foto o descripción.',
           'No vendemos ni arrendamos tus datos personales a terceros para fines publicitarios ajenos a Beauty & Therapy.',
         ],
       },

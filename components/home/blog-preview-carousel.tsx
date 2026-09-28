@@ -28,14 +28,15 @@ export function BlogPreviewCarousel({ posts }: { posts: BlogPostRecord[] }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {visiblePosts.map((post) => (
-          <Link key={post.id} href={`/blog/${post.slug}`} className="group">
+          <Link key={post.id} href={`/blog/${post.slug}`} className="home-blog-preview-card group">
             <article className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+              <div className="relative aspect-video overflow-hidden bg-muted md:aspect-4/3">
                 <Image
                   src={post.images[0]?.url || post.coverImage || '/placeholder.jpg'}
                   alt={post.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 767px) 88vw, (max-width: 1023px) 33vw, 30vw"
                 />
               </div>
               <div className="p-5">

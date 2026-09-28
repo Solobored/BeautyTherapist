@@ -190,15 +190,17 @@ function CheckoutContent() {
       if (decoded.items?.length) {
         clearCart()
         decoded.items.forEach((item) => {
-          addItem({
-            id: item.id,
-            name: item.name,
-            nameEs: item.nameEs ?? item.name,
-            brand: item.brand ?? '',
-            price: item.price,
-            image: item.image,
-            quantity: item.quantity,
-          })
+          const quantity = Number(item.quantity ?? 1)
+          for (let index = 0; index < quantity; index += 1) {
+            addItem({
+              id: item.id,
+              name: item.name,
+              nameEs: item.nameEs ?? item.name,
+              brand: item.brand ?? '',
+              price: item.price,
+              image: item.image,
+            })
+          }
         })
       }
     }
@@ -404,9 +406,7 @@ function CheckoutContent() {
 
       const { shareUrl } = await res.json() as { shareUrl: string }
 
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.copyText) {
-        await navigator.clipboard.writeText(shareUrl)
-      } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl)
       } else {
         window.prompt('Copia este enlace para compartirlo con el comprador', shareUrl)

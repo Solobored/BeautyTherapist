@@ -11,12 +11,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ImageUploadZone } from '@/components/checkout/ImageUploadZone'
 import { useLanguage } from '@/contexts/language-context'
 import type { Seller } from '@/contexts/auth-context'
 import { sellerApiHeaders } from '@/hooks/use-seller-products'
 import { formatClp } from '@/lib/utils'
 import { toast } from 'sonner'
+import type { SkinTag } from '@/types/skin-analysis'
 
 type UploadedImage = { url: string; publicId: string; position: number }
 type ShippingMode = 'blue_express' | 'chile_express' | 'custom_group'
@@ -35,7 +37,7 @@ type Props = {
 }
 
 export function SellerProductForm({ seller, mode, productId }: Props) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const router = useRouter()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -53,6 +55,9 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
   const [shippingGroupId, setShippingGroupId] = useState('')
   const [shippingGroups, setShippingGroups] = useState<ShippingGroup[]>([])
   const [sellerCategories, setSellerCategories] = useState<SellerCategory[]>([])
+  const [skinTags, setSkinTags] = useState<SkinTag[]>([])
+  const [skinTagIds, setSkinTagIds] = useState<string[]>([])
+  const [skinNotes, setSkinNotes] = useState('')
   const [images, setImages] = useState<UploadedImage[]>([])
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
@@ -62,12 +67,14 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
     let cancelled = false
     ;(async () => {
       try {
-        const [shippingRes, categoriesRes] = await Promise.all([
+        const [shippingRes, categoriesRes, skinTagsRes] = await Promise.all([
           fetch('/api/seller/shipping-groups', { headers: sellerApiHeaders(seller) }),
           fetch('/api/seller/categories', { headers: sellerApiHeaders(seller) }),
+          fetch('/api/seller/skin-tags', { headers: sellerApiHeaders(seller) }),
         ])
         const json = await shippingRes.json()
         const categoriesJson = await categoriesRes.json()
+        const skinTagsJson = await skinTagsRes.json()
         if (!shippingRes.ok) throw new Error(json.error || 'Error')
         if (!cancelled) {
           setShippingGroups((json.groups ?? []).map((group: Record<string, unknown>) => ({
@@ -76,11 +83,13 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
             carrier: String(group.carrier),
           })))
           setSellerCategories(categoriesRes.ok ? categoriesJson.categories ?? [] : [])
+          setSkinTags(skinTagsRes.ok ? skinTagsJson.tags ?? [] : [])
         }
       } catch {
         if (!cancelled) {
           setShippingGroups([])
           setSellerCategories([])
+          setSkinTags([])
         }
       }
     })()
@@ -116,6 +125,8 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
         setWeightOverrideG(p.weightOverrideG != null ? String(p.weightOverrideG) : '')
         setShippingMode((p.shippingMode as ShippingMode | undefined) ?? 'blue_express')
         setShippingGroupId(p.shippingGroupId ?? '')
+        setSkinNotes(p.skinNotes ?? '')
+        setSkinTagIds(p.skinTagIds ?? [])
         setActive(p.status === 'active')
         setImages(
           (p.images ?? []).map((url: string, i: number) => ({
@@ -201,6 +212,8 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
         weightOverrideG: overrideG,
         shippingMode,
         shippingGroupId: shippingMode === 'custom_group' ? shippingGroupId || null : null,
+        skin_tag_ids: skinTagIds,
+        skin_notes: skinNotes.trim(),
       }
 
       if (mode === 'create') {
@@ -352,6 +365,63 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
                 }
               />
             )}
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 border border-border/50">
+            <h2 className="font-semibold mb-2">
+              {language === 'en' ? 'Which skin types is this product for?' : '¿Para qué tipo de piel sirve este producto?'}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              {language === 'en'
+                ? 'Choose all tags that accurately describe the product.'
+                : 'Selecciona todas las etiquetas que describan el producto.'}
+            </p>
+            <div className="space-y-5">
+              {(['skin_type', 'concern', 'goal'] as const).map((tagCategory) => {
+                const categoryLabels = {
+                  skin_type: language === 'en' ? 'Skin type' : 'Tipo de piel',
+                  concern: language === 'en' ? 'Concerns' : 'Preocupaciones',
+                  goal: language === 'en' ? 'Goals' : 'Objetivos',
+                }
+                const categoryTags = skinTags.filter((tag) => tag.category === tagCategory)
+                if (categoryTags.length === 0) return null
+                return (
+                  <fieldset key={tagCategory}>
+                    <legend className="mb-2 text-sm font-medium">{categoryLabels[tagCategory]}</legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {categoryTags.map((tag) => (
+                        <label key={tag.id} className="flex min-h-10 items-center gap-3 rounded-md border border-border/60 px-3 py-2 text-sm">
+                          <Checkbox
+                            checked={skinTagIds.includes(tag.id)}
+                            onCheckedChange={(checked) =>
+                              setSkinTagIds((current) =>
+                                checked
+                                  ? [...new Set([...current, tag.id])]
+                                  : current.filter((id) => id !== tag.id),
+                              )
+                            }
+                          />
+                          <span>{language === 'en' ? tag.label_en : tag.label_es}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )
+              })}
+            </div>
+            <div className="mt-5">
+              <Label htmlFor="skinNotes">
+                {language === 'en' ? 'Notes for the virtual skin specialist (optional)' : 'Notas para la cosmetóloga virtual (opcional)'}
+              </Label>
+              <Textarea
+                id="skinNotes"
+                value={skinNotes}
+                onChange={(event) => setSkinNotes(event.target.value)}
+                maxLength={1000}
+                rows={3}
+                className="mt-1"
+              />
+            </div>
           </div>
         </div>
 

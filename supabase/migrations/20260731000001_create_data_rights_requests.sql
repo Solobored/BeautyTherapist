@@ -15,10 +15,24 @@ create table if not exists public.data_rights_requests (
   ),
   details text,
   status text not null default 'pendiente' check (
-    status in ('pendiente', 'en_proceso', 'resuelta', 'rechazada')
+    status in (
+      'pendiente',
+      'en_proceso',
+      'resuelta',
+      'rechazada'
+    )
   ),
   resolved_at timestamptz
 );
 comment on table public.data_rights_requests is 'Solicitudes de ejercicio de derechos ARCO+ (Ley 21.719)';
 alter table public.data_rights_requests enable row level security;
 create policy "no_public_access" on public.data_rights_requests for all using (false);
+grant select on public.data_rights_requests to anon;
+grant select,
+  insert,
+  update,
+  delete on public.data_rights_requests to authenticated;
+grant select,
+  insert,
+  update,
+  delete on public.data_rights_requests to service_role;

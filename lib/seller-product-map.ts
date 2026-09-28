@@ -17,6 +17,7 @@ export function mapDbProductToProduct(row: {
   grams_per_ml?: number | null
   weight_override_g?: number | null
   shipping_mode?: string | null
+  skin_notes?: string | null
   product_shipping_groups?: { shipping_group_id: string }[] | null
   brands: { brand_name: string; brand_slug: string } | { brand_name: string; brand_slug: string }[] | null
   product_images?: { url: string; position: number | null; is_primary: boolean | null }[] | null
@@ -56,6 +57,7 @@ export function mapDbProductToProduct(row: {
         ? row.shipping_mode
         : 'blue_express',
     shippingGroupId: productShippingGroups[0]?.shipping_group_id ?? null,
+    skinNotes: row.skin_notes ?? '',
     status:
       row.status === 'draft'
         ? 'draft'

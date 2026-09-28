@@ -15,3 +15,13 @@ CREATE INDEX IF NOT EXISTS idx_shared_checkout_sessions_expires_at ON shared_che
 -- Auto-cleanup policy: delete expired sessions older than 7 days
 -- (You can run this manually or set up a cron job)
 COMMENT ON TABLE shared_checkout_sessions IS 'Stores shared checkout session data with short tokens for buyer preview links';
+ALTER TABLE public.shared_checkout_sessions ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.shared_checkout_sessions TO anon;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.shared_checkout_sessions TO authenticated;
+GRANT SELECT,
+  INSERT,
+  UPDATE,
+  DELETE ON public.shared_checkout_sessions TO service_role;

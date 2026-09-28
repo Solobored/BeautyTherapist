@@ -17,41 +17,6 @@ export type SeoLandingPage = {
 
 export const seoLandingPages: SeoLandingPage[] = [
   {
-    slug: 'productos-profesionales-belleza',
-    title: 'Productos profesionales de belleza en Chile',
-    shortTitle: 'Belleza profesional',
-    description:
-      'Compra productos profesionales de belleza, skincare y maquillaje seleccionados por marcas especialistas en Beauty & Therapy Chile.',
-    heroEyebrow: 'Marketplace de belleza',
-    heroTitle: 'Productos profesionales de belleza para rutinas reales',
-    heroDescription:
-      'Encuentra skincare, maquillaje y marcas premium en un solo lugar, con fichas claras, reseñas y compra directa online.',
-    keywords: [
-      'productos profesionales de belleza',
-      'productos de belleza profesional',
-      'tienda de belleza online chile',
-      'skincare profesional',
-      'maquillaje profesional',
-    ],
-    searchIntents: [
-      'Comprar productos profesionales de belleza en Chile',
-      'Encontrar marcas de skincare y maquillaje premium',
-      'Comparar productos de belleza con información clara',
-    ],
-    faq: [
-      {
-        question: '¿Dónde comprar productos profesionales de belleza online?',
-        answer:
-          'En Beauty & Therapy puedes explorar productos de belleza, skincare y maquillaje de marcas seleccionadas, revisar detalles y comprar online.',
-      },
-      {
-        question: '¿Beauty & Therapy vende skincare y maquillaje?',
-        answer:
-          'Sí. El catálogo reúne productos de skincare, maquillaje y marcas de belleza con foco en calidad y experiencia de compra.',
-      },
-    ],
-  },
-  {
     slug: 'skincare-profesional',
     title: 'Skincare profesional en Chile',
     shortTitle: 'Skincare profesional',

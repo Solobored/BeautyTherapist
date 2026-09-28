@@ -7,6 +7,8 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
 import Script from 'next/script'
 import { CookieConsentBanner } from '@/components/cookie-consent-banner'
+import { MaienFloatingAssistant } from '@/components/skin-analysis/maien-floating-assistant'
+import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
 import { buildOrganizationSchema, buildWebsiteSchema } from '@/lib/seo'
 import './globals.css'
@@ -129,6 +131,8 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               {children}
+              <MaienFloatingAssistant />
+              <MobileBottomNav />
             </CartProvider>
           </AuthProvider>
         </LanguageProvider>
