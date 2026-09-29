@@ -14,6 +14,7 @@ export interface StoreProduct {
   ingredients: string
   howToUse: string
   howToUseEs: string
+  skinTags?: string[]
   images: string[]
   imageUrl?: string
   rating: number

@@ -15,18 +15,10 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const SYSTEM_PROMPT = `
-Eres "Maien", la asistente de recomendaciones de una tienda de cosmetica.
-Recibes una foto de rostro o una descripcion en texto de como el usuario siente su piel.
-Tu trabajo es inferir tipo de piel, preocupaciones y objetivos para recomendar productos.
-Reglas estrictas:
-- Nunca des un diagnostico medico ni afirmes una enfermedad de piel.
-- Aclara que esto NO reemplaza a un dermatologo.
-- Usa solo estas categorias:
-  skin_type: seca | grasa | mixta | normal | sensible
-  concerns: rosacea, acne, manchas, deshidratacion, poros_dilatados
-  goals: hidratar, reducir_brillo, antiedad, calmar_rojeces
-- Responde solo JSON valido, sin texto adicional:
-  { "skin_type": string, "concerns": string[], "goals": string[], "observations": string }
+Analiza una descripcion o foto para orientar recomendaciones cosmeticas; no diagnostiques enfermedades.
+Usa solo skin_type: seca|grasa|mixta|normal|sensible; concerns: rosacea|acne|manchas|deshidratacion|poros_dilatados; goals: hidratar|reducir_brillo|antiedad|calmar_rojeces.
+Elige solo categorias respaldadas por la entrada. Escribe observations en el idioma del usuario, breve y concreta, sin diagnosticos.
+Responde solo JSON: {"skin_type":"...","concerns":[],"goals":[],"observations":"..."}
 `
 
 const unavailableMessage = 'Maien no está disponible en este momento, intenta el formulario rápido.'
@@ -76,7 +68,7 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({
       model: process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' },
+      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 256, temperature: 0.2 },
     })
     const inputPart = imageBase64
       ? { inlineData: { mimeType, data: imageBase64 } }
@@ -95,7 +87,7 @@ export async function POST(request: NextRequest) {
   const skinType = result.skin_type
   const concerns = normalizeAllowedValues(result.concerns, SKIN_CONCERNS)
   const goals = normalizeAllowedValues(result.goals, SKIN_GOALS)
-  const observations = typeof result.observations === 'string' ? result.observations.trim().slice(0, 1200) : ''
+  const observations = typeof result.observations === 'string' ? result.observations.trim().slice(0, 600) : ''
   if (!SKIN_TYPES.includes(skinType as SkinType) || !concerns || !goals || !observations) {
     return NextResponse.json({ error: 'La IA no devolvió un análisis válido' }, { status: 502 })
   }

@@ -13,6 +13,45 @@ export function MaienFloatingAssistant() {
   const [open, setOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [showHint, setShowHint] = useState(true)
+  const [cookieBannerHeight, setCookieBannerHeight] = useState(0)
+
+  useEffect(() => {
+    let banner: HTMLElement | null = null
+    let resizeObserver: ResizeObserver | null = null
+
+    const updateBanner = () => {
+      const nextBanner = document.querySelector<HTMLElement>('[data-cookie-consent-banner]')
+      if (nextBanner !== banner) {
+        resizeObserver?.disconnect()
+        banner = nextBanner
+        if (banner) {
+          resizeObserver = new ResizeObserver(() => {
+            setCookieBannerHeight(banner?.getBoundingClientRect().height ?? 0)
+          })
+          resizeObserver.observe(banner)
+        }
+      }
+
+      setCookieBannerHeight(banner?.getBoundingClientRect().height ?? 0)
+    }
+
+    const mutationObserver = new MutationObserver(updateBanner)
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
+    let resizeFrame = 0
+    const handleResize = () => {
+      cancelAnimationFrame(resizeFrame)
+      resizeFrame = requestAnimationFrame(updateBanner)
+    }
+    window.addEventListener('resize', handleResize)
+    updateBanner()
+
+    return () => {
+      mutationObserver.disconnect()
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', handleResize)
+      cancelAnimationFrame(resizeFrame)
+    }
+  }, [])
 
   useEffect(() => {
     const handleOpenAssistant = () => {
@@ -43,7 +82,13 @@ export function MaienFloatingAssistant() {
     <>
       <div
         id="maien-assistant-panel"
-        className={`fixed bottom-23 left-3 right-3 z-40 max-h-[min(74vh,620px)] w-auto overflow-hidden border border-border bg-card shadow-2xl sm:bottom-20 sm:left-auto sm:right-6 sm:w-[min(31rem,calc(100vw-3rem))] ${open ? 'block' : 'hidden'}`}
+        style={{
+          '--cookie-banner-height': `${cookieBannerHeight}px`,
+          maxHeight: cookieBannerHeight > 0
+            ? `min(74vh, 620px, calc(100dvh - ${cookieBannerHeight}px - 10rem))`
+            : undefined,
+        } as React.CSSProperties}
+        className={`fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom)_+_var(--cookie-banner-height)_+_3.5rem)] left-3 right-3 z-40 max-h-[min(74vh,620px)] w-auto overflow-hidden border border-border bg-card shadow-2xl md:bottom-[calc(1.75rem_+_var(--cookie-banner-height)_+_3.5rem)] md:left-auto md:right-6 md:w-[min(31rem,calc(100vw-3rem))] ${open ? 'block' : 'hidden'}`}
         role="dialog"
         aria-label={isEnglish ? 'Maien product assistant' : 'Asistente de productos Maien'}
         aria-modal="false"
@@ -51,8 +96,11 @@ export function MaienFloatingAssistant() {
         <MaienCard onClose={() => setOpen(false)} />
       </div>
 
-      <div className={`fixed bottom-[5.7rem] z-50 flex max-w-[calc(100vw-1.5rem)] items-end gap-2 sm:bottom-6 sm:left-auto sm:right-6 ${moreOpen ? 'left-3 right-auto' : 'left-auto right-3'}`}>
-        {!open && showHint && (
+      <div
+        style={{ '--cookie-banner-height': `${cookieBannerHeight}px` } as React.CSSProperties}
+        className={`fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom)_+_var(--cookie-banner-height))] z-50 flex max-w-[calc(100vw-1.5rem)] items-end gap-2 md:bottom-[calc(1.75rem_+_var(--cookie-banner-height))] ${moreOpen ? 'left-3 right-auto md:left-auto md:right-6' : 'left-auto right-3 md:right-6'}`}
+      >
+        {!open && showHint && cookieBannerHeight === 0 && (
           <div className="mb-1 max-w-56 border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-lg">
             {isEnglish ? 'I can analyze your skin and find products that suit you.' : 'Analizo tu piel y te digo qué productos te sirven.'}
           </div>

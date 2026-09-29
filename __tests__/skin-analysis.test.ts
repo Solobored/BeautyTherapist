@@ -2,6 +2,8 @@ import {
   getAnalysisTagSlugs,
   isSkinSessionToken,
   normalizeAllowedValues,
+  prefersLowerPrice,
+  rankSkinProductMatches,
   scoreSkinTagMatches,
 } from '@/lib/skin-analysis'
 
@@ -25,7 +27,24 @@ describe('skin analysis helpers', () => {
     ])
   })
 
-  it('weights a matching skin type twice as much as other tags', () => {
-    expect(scoreSkinTagMatches(['piel_grasa', 'acne', 'hidratar'], ['piel_grasa', 'acne'])).toBe(3)
+  it('prioritizes skin type and concerns over general goals', () => {
+    expect(scoreSkinTagMatches(['piel_grasa', 'acne', 'hidratar'], ['piel_grasa', 'acne', 'hidratar'])).toBe(6)
+    expect(scoreSkinTagMatches(['acne', 'hidratar'], ['acne', 'hidratar'])).toBe(3)
+  })
+
+  it('recognizes price requests without matching ordinary skin descriptions', () => {
+    expect(prefersLowerPrice('Quiero la opción más económica para mi piel')).toBe(true)
+    expect(prefersLowerPrice('I want the cheapest option')).toBe(true)
+    expect(prefersLowerPrice('Mi piel es mixta y sensible')).toBe(false)
+  })
+
+  it('keeps skin match first unless the user prioritizes price', () => {
+    const matches = [
+      { product: { id: 'best', price: 25000 }, score: 5, createdAt: '2026-01-01' },
+      { product: { id: 'cheap', price: 10000 }, score: 2, createdAt: '2026-01-02' },
+    ]
+
+    expect(rankSkinProductMatches(matches).map(({ id }) => id)).toEqual(['best', 'cheap'])
+    expect(rankSkinProductMatches(matches, true).map(({ id }) => id)).toEqual(['cheap', 'best'])
   })
 })

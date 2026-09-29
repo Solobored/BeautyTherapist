@@ -5,6 +5,7 @@ import {
   getAnalysisTagSlugs,
   isSkinSessionToken,
   rankRelevantBlogPosts,
+  rankSkinProductMatches,
   scoreProductTextForSkinProfile,
   scoreSkinTagMatches,
 } from '@/lib/skin-analysis'
@@ -141,15 +142,13 @@ export async function GET(request: NextRequest) {
             .limit(100)
           if (error) throw error
 
-          products = (data ?? [])
+          products = rankSkinProductMatches((data ?? [])
             .map((row) => ({
               product: mapDbProductToProduct(row as Parameters<typeof mapDbProductToProduct>[0]),
               score: scoreSkinTagMatches(matchedByProduct.get(row.id) ?? [], requestedSlugs),
               createdAt: row.created_at,
             }))
-            .filter((item) => item.score > 0)
-            .sort((a, b) => b.score - a.score || b.createdAt.localeCompare(a.createdAt))
-            .map((item) => item.product)
+            .filter((item) => item.score > 0))
         }
       }
     }
@@ -163,7 +162,7 @@ export async function GET(request: NextRequest) {
         .limit(40)
       if (error) throw error
 
-      products = (data ?? [])
+      products = rankSkinProductMatches((data ?? [])
         .map((row) => ({
           product: mapDbProductToProduct(row as Parameters<typeof mapDbProductToProduct>[0]),
           score: scoreProductTextForSkinProfile(
@@ -182,9 +181,7 @@ export async function GET(request: NextRequest) {
           ),
           createdAt: row.created_at,
         }))
-        .filter((item) => item.score > 0)
-        .sort((a, b) => b.score - a.score || b.createdAt.localeCompare(a.createdAt))
-        .map((item) => item.product)
+        .filter((item) => item.score > 0))
         .slice(0, 8)
     }
 

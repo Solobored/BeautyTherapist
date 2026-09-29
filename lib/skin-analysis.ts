@@ -54,6 +54,27 @@ function normalizeText(value: string) {
     .trim()
 }
 
+export function prefersLowerPrice(value: string) {
+  const normalized = normalizeText(value)
+  return /\b(?:barat[oa]s?|mas\s+barat[oa]s?|economic[oa]s?|mas\s+economic[oa]s?|de\s+menor\s+precio|precio\s+(?:mas\s+bajo|menor)|menos\s+caro|(?:que|el)\s+cueste\s+menos|cheap(?:est)?|lowest\s+price|less\s+expensive|affordable|budget)\b/.test(normalized)
+}
+
+export function rankSkinProductMatches<T extends { price: number }>(
+  matches: Array<{ product: T; score: number; createdAt: string }>,
+  prioritizePrice = false,
+) {
+  return [...matches]
+    .sort((left, right) => {
+      const scoreDifference = right.score - left.score
+      const priceDifference = left.product.price - right.product.price
+      const recencyDifference = right.createdAt.localeCompare(left.createdAt)
+      return prioritizePrice
+        ? priceDifference || scoreDifference || recencyDifference
+        : scoreDifference || priceDifference || recencyDifference
+    })
+    .map(({ product }) => product)
+}
+
 export function buildSkinProfileText(skinType: SkinType | null, concerns: string[] = [], goals: string[] = [], notes?: string | null) {
   const context = [
     skinType ? `piel ${skinType}` : '',
@@ -80,7 +101,15 @@ export function scoreSkinTagMatches(matchedSlugs: string[], requestedSlugs: stri
   const requested = new Set(requestedSlugs)
   const weightedSkinTypes = new Set(Object.values(SKIN_TYPE_TAGS))
   return matchedSlugs.reduce(
-    (score, slug) => score + (requested.has(slug) ? (weightedSkinTypes.has(slug) ? 2 : 1) : 0),
+    (score, slug) => score + (
+      !requested.has(slug)
+        ? 0
+        : weightedSkinTypes.has(slug)
+          ? 3
+          : SKIN_CONCERNS.includes(slug as typeof SKIN_CONCERNS[number])
+            ? 2
+            : 1
+    ),
     0,
   )
 }

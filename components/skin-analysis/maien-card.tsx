@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLanguage } from '@/contexts/language-context'
-import { SKIN_CONCERNS, SKIN_GOALS } from '@/lib/skin-analysis'
+import { prefersLowerPrice, SKIN_CONCERNS, SKIN_GOALS } from '@/lib/skin-analysis'
 import type { StoreProduct } from '@/lib/product-types'
 
 type ApiMessage = { error?: string }
@@ -59,6 +59,9 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState('')
   const [summary, setSummary] = useState<AnalysisSummary | null>(null)
   const [products, setProducts] = useState<StoreProduct[]>([])
+  const [prioritizePrice, setPrioritizePrice] = useState(false)
+  const [preferenceMessage, setPreferenceMessage] = useState('')
+  const [preferenceFeedback, setPreferenceFeedback] = useState('')
   const [blogPosts, setBlogPosts] = useState<Array<{ id: string; title: string; slug: string; content: string; coverImage: string; category: string; author: string; publishedAt: string }>>([])
   const [resultMode, setResultMode] = useState('matched')
   const [reportFileUrl, setReportFileUrl] = useState('')
@@ -118,6 +121,8 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
     setBusy(true)
     setError('')
     setSummary(null)
+    setPrioritizePrice(prefersLowerPrice(description))
+    setPreferenceFeedback('')
     try {
       const response = await fetch('/api/skin-analysis/analyze', {
         method: 'POST',
@@ -174,11 +179,33 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
     setShowResults(true)
   }
 
+  const updateRecommendationPreference = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (prefersLowerPrice(preferenceMessage)) {
+      setPrioritizePrice(true)
+      setPreferenceFeedback(isEnglish
+        ? 'Showing the lowest-priced products that match your skin profile.'
+        : 'Ordené primero las opciones más económicas que coinciden con tu perfil.')
+      return
+    }
+
+    setPreferenceFeedback(isEnglish
+      ? 'Try asking for the cheapest or most affordable option.'
+      : 'Prueba con “la opción más económica” o “lo más barato para mi piel”.')
+  }
+
+  const displayedProducts = prioritizePrice
+    ? [...products].sort((left, right) => left.price - right.price)
+    : products
+
   const resetAnalysis = () => {
     setAnalysisId('')
     setShowResults(false)
     setSummary(null)
     setProducts([])
+    setPrioritizePrice(false)
+    setPreferenceMessage('')
+    setPreferenceFeedback('')
     setError('')
     setDescription('')
     setBlogPosts([])
@@ -257,10 +284,29 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
                   {reportFileUrl && <a className="ml-2 underline" href={reportFileUrl} target="_blank" rel="noreferrer">{isEnglish ? 'View report' : 'Ver informe'}</a>}
                 </div>
               )}
-              {products.length ? (
+              <form onSubmit={updateRecommendationPreference} className="mb-5 flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={preferenceMessage}
+                  onChange={(event) => setPreferenceMessage(event.target.value)}
+                  placeholder={isEnglish ? 'Want the most affordable option?' : '¿Prefieres la opción más económica?'}
+                  aria-label={isEnglish ? 'Adjust recommendation preference' : 'Ajustar preferencia de recomendación'}
+                />
+                <Button type="submit" variant="outline" disabled={!preferenceMessage.trim()}>
+                  {isEnglish ? 'Update' : 'Ajustar'}
+                </Button>
+              </form>
+              {preferenceFeedback && <p role="status" className="mb-4 text-sm text-muted-foreground">{preferenceFeedback}</p>}
+              {displayedProducts.length ? (
                 <div className="grid grid-cols-1 gap-3">
-                  {products.map((product) => (
+                  {displayedProducts.map((product, index) => (
                     <div key={product.id}>
+                      {index === 0 && (
+                        <p className="mb-2 text-xs font-semibold uppercase text-accent">
+                          {prioritizePrice
+                            ? (isEnglish ? 'Most affordable matching option' : 'Opción más económica compatible')
+                            : (isEnglish ? 'Best match for your skin' : 'Mejor coincidencia para tu piel')}
+                        </p>
+                      )}
                       <ProductCard product={product} layout="horizontal" />
                       {product.skinNotes && (
                         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">

@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { matchesProductSearch } from '@/lib/product-search'
 
 describe('Products', () => {
   const mockProducts = [
@@ -62,6 +63,21 @@ describe('Products', () => {
   });
 
   describe('Search Filter', () => {
+    it('finds products by skin tags, including accents and tag slugs', () => {
+      const product = {
+        name: 'Calming moisturizer',
+        nameEs: 'Crema calmante',
+        brand: 'AngeBae',
+        brandSlug: 'ange-bae',
+        skinTags: ['Piel seca', 'Deshidratación', 'piel_sensible'],
+      }
+
+      expect(matchesProductSearch(product, 'deshidratacion')).toBe(true)
+      expect(matchesProductSearch(product, 'piel sensible')).toBe(true)
+      expect(matchesProductSearch(product, '#piel_sensible')).toBe(false)
+      expect(matchesProductSearch(product, 'piel grasa')).toBe(false)
+    })
+
     it('should filter products matching search query', () => {
       const searchQuery = 'Vitamin';
       const filtered = mockProducts.filter((p) =>

@@ -369,12 +369,12 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
 
           <div className="bg-card rounded-2xl p-6 border border-border/50">
             <h2 className="font-semibold mb-2">
-              {language === 'en' ? 'Which skin types is this product for?' : '¿Para qué tipo de piel sirve este producto?'}
+              {language === 'en' ? 'Skin tags for recommendations and search' : 'Etiquetas para recomendaciones y búsqueda'}
             </h2>
             <p className="text-sm text-muted-foreground mb-5">
               {language === 'en'
-                ? 'Choose all tags that accurately describe the product.'
-                : 'Selecciona todas las etiquetas que describan el producto.'}
+                ? 'Choose accurate tags so shoppers can find this product and Maien can recommend it.'
+                : 'Selecciona etiquetas precisas para que encuentren este producto y Maien pueda recomendarlo.'}
             </p>
             <div className="space-y-5">
               {(['skin_type', 'concern', 'goal'] as const).map((tagCategory) => {
@@ -408,6 +408,23 @@ export function SellerProductForm({ seller, mode, productId }: Props) {
                   </fieldset>
                 )
               })}
+            </div>
+            <div className="mt-5">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
+                {language === 'en' ? 'Selected tags' : 'Etiquetas seleccionadas'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {skinTags.filter((tag) => skinTagIds.includes(tag.id)).map((tag) => (
+                  <span key={tag.id} className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs text-foreground">
+                    {language === 'en' ? tag.label_en : tag.label_es}
+                  </span>
+                ))}
+                {skinTagIds.length === 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {language === 'en' ? 'No tags selected' : 'Aún no hay etiquetas'}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="mt-5">
               <Label htmlFor="skinNotes">

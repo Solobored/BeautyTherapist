@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useLanguage } from '@/contexts/language-context'
 import { useProducts } from '@/hooks/use-products'
+import { matchesProductSearch } from '@/lib/product-search'
 import { formatClp } from '@/lib/utils'
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular'
@@ -36,12 +37,7 @@ export default function ShopPage() {
     
     // Search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(query) ||
-        (p.nameEs && p.nameEs.toLowerCase().includes(query)) ||
-        p.brand.toLowerCase().includes(query)
-      )
+      result = result.filter((product) => matchesProductSearch(product, searchQuery))
     }
     
     // Category

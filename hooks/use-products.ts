@@ -51,10 +51,25 @@ export function useProducts() {
         }
         const mapped = data.map((row) => mapStorefrontProduct(row))
         const productIds = mapped.map((product) => product.id)
-        const { data: reviewRows } = await supabase
-          .from('reviews')
-          .select('product_id, rating')
-          .in('product_id', productIds)
+        const [{ data: reviewRows }, { data: skinTagRows, error: skinTagsError }] = await Promise.all([
+          supabase
+            .from('reviews')
+            .select('product_id, rating')
+            .in('product_id', productIds),
+          supabase
+            .from('product_skin_tags')
+            .select('product_id, skin_tags (slug, label_es, label_en)')
+            .in('product_id', productIds),
+        ])
+
+        if (skinTagsError) console.error('product skin tags lookup', skinTagsError)
+
+        const skinTagsByProduct = new Map<string, string[]>()
+        for (const row of skinTagRows ?? []) {
+          const relatedTags = Array.isArray(row.skin_tags) ? row.skin_tags : row.skin_tags ? [row.skin_tags] : []
+          const labels = relatedTags.flatMap((tag) => [tag.slug, tag.label_es, tag.label_en].filter(Boolean))
+          skinTagsByProduct.set(row.product_id, [...new Set([...(skinTagsByProduct.get(row.product_id) ?? []), ...labels])])
+        }
 
         const stats = new Map<string, { total: number; count: number }>()
         for (const row of reviewRows ?? []) {
@@ -70,13 +85,16 @@ export function useProducts() {
         setProducts(
           mapped.map((product) => {
             const stat = stats.get(product.id)
-            return stat
-              ? {
-                  ...product,
-                  rating: Number((stat.total / stat.count).toFixed(1)),
-                  reviewCount: stat.count,
-                }
-              : product
+            return {
+              ...product,
+              skinTags: skinTagsByProduct.get(product.id) ?? [],
+              ...(stat
+                ? {
+                    rating: Number((stat.total / stat.count).toFixed(1)),
+                    reviewCount: stat.count,
+                  }
+                : {}),
+            }
           })
         )
       } catch (err) {
