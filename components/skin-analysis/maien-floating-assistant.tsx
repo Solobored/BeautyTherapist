@@ -88,7 +88,7 @@ export function MaienFloatingAssistant() {
             ? `min(74vh, 620px, calc(100dvh - ${cookieBannerHeight}px - 10rem))`
             : undefined,
         } as React.CSSProperties}
-        className={`fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom)_+_var(--cookie-banner-height)_+_3.5rem)] left-3 right-3 z-40 max-h-[min(74vh,620px)] w-auto overflow-hidden border border-border bg-card shadow-2xl md:bottom-[calc(1.75rem_+_var(--cookie-banner-height)_+_3.5rem)] md:left-auto md:right-6 md:w-[min(31rem,calc(100vw-3rem))] ${open ? 'block' : 'hidden'}`}
+        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom)+var(--cookie-banner-height)+3.5rem)] left-3 right-3 top-[calc(env(safe-area-inset-top)+4.5rem)] z-40 w-auto flex-col overflow-hidden border border-border bg-card shadow-2xl md:bottom-[calc(1.75rem+var(--cookie-banner-height)+3.5rem)] md:left-auto md:right-6 md:top-auto md:w-[min(31rem,calc(100vw-3rem))] ${open ? 'flex' : 'hidden'}`}
         role="dialog"
         aria-label={isEnglish ? 'Maien product assistant' : 'Asistente de productos Maien'}
         aria-modal="false"
@@ -98,7 +98,7 @@ export function MaienFloatingAssistant() {
 
       <div
         style={{ '--cookie-banner-height': `${cookieBannerHeight}px` } as React.CSSProperties}
-        className={`fixed bottom-[calc(5.25rem_+_env(safe-area-inset-bottom)_+_var(--cookie-banner-height))] z-50 flex max-w-[calc(100vw-1.5rem)] items-end gap-2 md:bottom-[calc(1.75rem_+_var(--cookie-banner-height))] ${moreOpen ? 'left-3 right-auto md:left-auto md:right-6' : 'left-auto right-3 md:right-6'}`}
+        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom)+var(--cookie-banner-height))] z-50 flex max-w-[calc(100vw-1.5rem)] items-end gap-2 md:bottom-[calc(1.75rem+var(--cookie-banner-height))] ${moreOpen ? 'left-3 right-auto md:left-auto md:right-6' : 'left-auto right-3 md:right-6'}`}
       >
         {!open && showHint && cookieBannerHeight === 0 && (
           <div className="mb-1 max-w-56 border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-lg">

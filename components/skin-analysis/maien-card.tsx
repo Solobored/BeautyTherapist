@@ -181,17 +181,51 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
 
   const updateRecommendationPreference = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (prefersLowerPrice(preferenceMessage)) {
-      setPrioritizePrice(true)
+    const wantsLowerPrice = prefersLowerPrice(preferenceMessage)
+    setPrioritizePrice(wantsLowerPrice)
+
+    if (wantsLowerPrice) {
       setPreferenceFeedback(isEnglish
         ? 'Showing the lowest-priced products that match your skin profile.'
         : 'Ordené primero las opciones más económicas que coinciden con tu perfil.')
       return
     }
 
+    const terms = preferenceMessage
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((term) => term.length > 2)
+    const matches = products.filter((product) => {
+      const searchableText = [
+        product.name,
+        product.nameEs,
+        product.brand,
+        product.category,
+        product.description,
+        product.descriptionEs,
+        product.ingredients,
+        product.howToUse,
+        product.howToUseEs,
+        product.skinNotes,
+        ...(product.skinTags ?? []),
+      ].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      return terms.some((term) => searchableText.includes(term))
+    })
+
+    if (matches.length) {
+      const matchedIds = new Set(matches.map((product) => product.id))
+      setProducts([...matches, ...products.filter((product) => !matchedIds.has(product.id))])
+      setPreferenceFeedback(isEnglish
+        ? `Prioritized ${matches.length} product${matches.length === 1 ? '' : 's'} matching your request.`
+        : `Priorizamos ${matches.length} producto${matches.length === 1 ? '' : 's'} que coincide${matches.length === 1 ? '' : 'n'} con lo que buscas.`)
+      return
+    }
+
     setPreferenceFeedback(isEnglish
-      ? 'Try asking for the cheapest or most affordable option.'
-      : 'Prueba con “la opción más económica” o “lo más barato para mi piel”.')
+      ? 'No exact matches found. Try a product type, ingredient, or skin concern.'
+      : 'No encontré coincidencias exactas. Prueba con un tipo de producto, ingrediente o preocupación de piel.')
   }
 
   const displayedProducts = prioritizePrice
@@ -238,12 +272,11 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <section className={`w-full ${showResults || showManual ? 'max-h-[min(78vh,720px)] overflow-y-auto' : 'overflow-hidden'}`}>
-      <div className="flex justify-end border-b border-border px-4 py-2">
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={isEnglish ? 'Close Maien' : 'Cerrar Maien'} onClick={onClose}>
-          <X className="size-4" />
-        </Button>
-      </div>
+    <section className="relative flex h-full min-h-0 w-full flex-col overflow-hidden md:h-auto md:max-h-[min(74vh,620px)]">
+      <Button type="button" variant="ghost" size="icon-sm" className="absolute right-2 top-2 z-10" aria-label={isEnglish ? 'Close Maien' : 'Cerrar Maien'} onClick={onClose}>
+        <X className="size-4" />
+      </Button>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain md:max-h-[min(74vh,620px)] md:flex-none">
       {showResults ? (
         <div className="p-4 sm:p-6">
           <Button variant="ghost" onClick={resetAnalysis} className="mb-5 px-0 text-foreground hover:bg-transparent">
@@ -288,11 +321,11 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
                 <Input
                   value={preferenceMessage}
                   onChange={(event) => setPreferenceMessage(event.target.value)}
-                  placeholder={isEnglish ? 'Want the most affordable option?' : '¿Prefieres la opción más económica?'}
+                  placeholder={isEnglish ? 'e.g. fragrance-free, lightweight, for redness...' : 'Ej: sin fragancia, textura ligera, para rojeces...'}
                   aria-label={isEnglish ? 'Adjust recommendation preference' : 'Ajustar preferencia de recomendación'}
                 />
                 <Button type="submit" variant="outline" disabled={!preferenceMessage.trim()}>
-                  {isEnglish ? 'Update' : 'Ajustar'}
+                  {isEnglish ? 'Refine' : 'Afinar'}
                 </Button>
               </form>
               {preferenceFeedback && <p role="status" className="mb-4 text-sm text-muted-foreground">{preferenceFeedback}</p>}
@@ -307,7 +340,7 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
                             : (isEnglish ? 'Best match for your skin' : 'Mejor coincidencia para tu piel')}
                         </p>
                       )}
-                      <ProductCard product={product} layout="horizontal" />
+                      <ProductCard product={product} layout="horizontal" showAddToCart={false} showRating={false} showCartOverlay />
                       {product.skinNotes && (
                         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                           {isEnglish ? 'Seller note:' : 'Recomendado por el vendedor para:'} {product.skinNotes}
@@ -473,6 +506,7 @@ export function MaienCard({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       )}
+      </div>
     </section>
   )
 }

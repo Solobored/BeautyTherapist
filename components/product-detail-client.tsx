@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
+import { useAuth } from '@/contexts/auth-context'
 import type { StoreProduct } from '@/lib/product-types'
 import { nationalFlatClp } from '@/lib/shipping'
 import { formatClp } from '@/lib/utils'
@@ -22,8 +23,9 @@ interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { addItem } = useCart()
+  const { isAuthenticated, userType, toggleWishlist, isInWishlist } = useAuth()
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
 
@@ -33,6 +35,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const shippingPrice = formatClp(nationalFlatClp())
 
   const mainImage = product.images[selectedImage] || product.images[0] || '/placeholder.svg'
+  const isWishlisted = isInWishlist(product.id)
 
   const stockStatus =
     product.stock === 0
@@ -52,6 +55,10 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         image: product.images[0] || '/placeholder.svg',
       })
     }
+  }
+
+  const handleToggleWishlist = () => {
+    if (isAuthenticated && userType === 'buyer') toggleWishlist(product.id)
   }
 
   return (
@@ -75,6 +82,19 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
             <div className="space-y-4">
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
                 <Image src={mainImage} alt={displayName} fill className="object-cover" priority sizes="(min-width: 1024px) 50vw, 100vw" />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  type="button"
+                  className="absolute right-4 top-4 z-10 rounded-full bg-background/95 text-accent shadow-md hover:bg-background"
+                  onClick={handleToggleWishlist}
+                  aria-label={isWishlisted
+                    ? (language === 'en' ? 'Remove from wishlist' : 'Quitar de favoritos')
+                    : (language === 'en' ? 'Save to wishlist' : 'Guardar en favoritos')}
+                  aria-pressed={isWishlisted}
+                >
+                  <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                </Button>
               </div>
               {product.images.length > 1 && (
                 <div className="flex gap-3 flex-wrap">
@@ -180,9 +200,6 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                   {t('product.addToCart')}
                 </Button>
 
-                <Button variant="outline" size="icon" type="button">
-                  <Heart className="h-4 w-4" />
-                </Button>
               </div>
 
               <Button variant="outline" className="w-full" asChild disabled={product.stock === 0}>

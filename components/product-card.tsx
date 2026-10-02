@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, Star, ShoppingBag } from 'lucide-react'
+import { Heart, Plus, ShoppingBag, ShoppingCart, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
 import { useCart } from '@/contexts/cart-context'
@@ -14,9 +14,12 @@ interface ProductCardProps {
   product: StoreProduct
   compact?: boolean
   layout?: 'grid' | 'horizontal'
+  showAddToCart?: boolean
+  showRating?: boolean
+  showCartOverlay?: boolean
 }
 
-export function ProductCard({ product, compact = false, layout = 'grid' }: ProductCardProps) {
+export function ProductCard({ product, compact = false, layout = 'grid', showAddToCart = true, showRating = true, showCartOverlay = false }: ProductCardProps) {
   const { t, language } = useLanguage()
   const { addItem } = useCart()
   const { user, isAuthenticated, userType, toggleWishlist, isInWishlist } = useAuth()
@@ -57,7 +60,7 @@ export function ProductCard({ product, compact = false, layout = 'grid' }: Produ
       )}>
         <div className={cn(
           'relative overflow-hidden bg-muted',
-          horizontal ? 'size-20 shrink-0 sm:size-24' : 'aspect-square'
+          horizontal ? 'w-[42%] min-h-40 shrink-0 sm:min-h-44' : 'aspect-square'
         )}>
           <Image
             src={cardImage}
@@ -67,6 +70,24 @@ export function ProductCard({ product, compact = false, layout = 'grid' }: Produ
             loading="lazy"
             sizes="(min-width: 1280px) 25vw, (min-width: 640px) 33vw, 100vw"
           />
+
+          {showCartOverlay && (
+            <Button
+              type="button"
+              className="absolute bottom-3 right-3 z-10 size-11 rounded-full border border-border bg-card p-0 text-accent shadow-md hover:bg-card"
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+              aria-label={product.stock === 0
+                ? language === 'en' ? 'Out of stock' : 'Agotado'
+                : language === 'en' ? 'Add to cart' : 'Agregar al carrito'}
+              title={product.stock === 0 ? 'Agotado' : t('featured.addToCart')}
+            >
+              <ShoppingCart className="size-5" />
+              <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-card">
+                <Plus className="size-3" />
+              </span>
+            </Button>
+          )}
 
           {!horizontal && (
             <button
@@ -95,7 +116,7 @@ export function ProductCard({ product, compact = false, layout = 'grid' }: Produ
               Pocas unidades
             </span>
           )}
-          {compact && (
+          {compact && !showCartOverlay && (
             <Button
               type="button"
               className="absolute bottom-2 right-2 size-8 rounded-full bg-primary p-0 text-primary-foreground shadow-sm hover:bg-primary/90"
@@ -135,7 +156,7 @@ export function ProductCard({ product, compact = false, layout = 'grid' }: Produ
             )}
           </div>
 
-          <div className={cn('mt-2 flex items-center gap-1', compact && 'hidden')}>
+          <div className={cn('mt-2 flex items-center gap-1', (compact || !showRating) && 'hidden')}>
             <Star className="h-3.5 w-3.5 fill-accent text-accent" />
             {product.rating > 0 && (
               <>
@@ -152,7 +173,7 @@ export function ProductCard({ product, compact = false, layout = 'grid' }: Produ
             )}
           </div>
 
-          {!compact && (
+          {!compact && showAddToCart && (
             <Button
               className={cn('mt-4 w-full bg-primary text-primary-foreground hover:bg-primary/90', horizontal && 'mt-3 h-9')}
               onClick={handleAddToCart}
