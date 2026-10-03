@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Clock3, Play } from 'lucide-react'
@@ -28,6 +28,7 @@ export function FeaturedProducts() {
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPostRecord[]>([])
   const [spotlight, setSpotlight] = useState<StoreSpotlight | null>(null)
+  const mobileDealsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -127,11 +128,37 @@ export function FeaturedProducts() {
   const filteredProducts = skincareOnlyProducts.slice(0, 8)
   const discountedProducts = skincareOnlyProducts
     .filter((product) => product.comparePrice != null && product.comparePrice > product.price)
-    .slice(0, 3)
+    .slice(0, 8)
+  const desktopDiscountedProducts = discountedProducts.slice(0, 3)
+  const mobileDealSlides = discountedProducts.length > 1
+    ? [...discountedProducts, discountedProducts[0]]
+    : discountedProducts
   const firstGrid = filteredProducts.slice(0, 4)
   const secondGrid = filteredProducts.slice(4, 8)
+  const extraMobileProducts = skincareOnlyProducts.slice(8, 16)
   const topVideo = videos[0]
   const topBlog = blogPosts[0]
+
+  useEffect(() => {
+    const carousel = mobileDealsRef.current
+    if (!carousel || discountedProducts.length < 2) return
+
+    let slideIndex = 0
+    const interval = window.setInterval(() => {
+      slideIndex += 1
+      carousel.scrollTo({ left: slideIndex * carousel.clientWidth, behavior: 'smooth' })
+
+      if (slideIndex === discountedProducts.length) {
+        window.setTimeout(() => {
+          if (!mobileDealsRef.current) return
+          mobileDealsRef.current.scrollLeft = 0
+          slideIndex = 0
+        }, 550)
+      }
+    }, 3800)
+
+    return () => window.clearInterval(interval)
+  }, [discountedProducts.length])
 
   if (loading) {
     return (
@@ -179,22 +206,43 @@ export function FeaturedProducts() {
         </div>
 
         {discountedProducts.length > 0 && (
-          <section className="mb-4 rounded-xl bg-secondary/70 p-1 md:mb-10 md:p-4" aria-label="Ofertas">
-            <div className="mb-0.5 flex items-center justify-between md:mb-2">
-              <h3 className="text-sm font-semibold text-foreground md:text-lg">{isEnglish ? 'Deals' : 'Ofertas'}</h3>
-              <Link href="/shop" className="text-[10px] font-medium text-accent md:text-xs">{isEnglish ? 'View all' : 'Ver todo'}</Link>
+          <section className="mb-4 rounded-xl bg-secondary/70 p-2 sm:p-3 md:mb-10 md:p-4" aria-label="Ofertas">
+            <div className="mb-2 flex items-center justify-between md:mb-2">
+              <h3 className="text-base font-semibold text-foreground md:text-lg">{isEnglish ? 'Deals' : 'Ofertas'}</h3>
+              <Link href="/shop" className="text-xs font-medium text-accent">{isEnglish ? 'View all' : 'Ver todo'}</Link>
             </div>
-            <div className="scrollbar-hide flex snap-x snap-mandatory gap-2 overflow-x-auto md:grid md:grid-cols-3 md:overflow-visible md:gap-4">
-              {discountedProducts.map((product) => {
+            <div ref={mobileDealsRef} className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto lg:hidden">
+              {mobileDealSlides.map((product, index) => {
                 const originalPrice = Number(product.comparePrice ?? 0)
                 const discount = Math.round(((originalPrice - product.price) / originalPrice) * 100)
                 return (
-                  <Link key={product.id} href={`/shop/${product.id}`} className="snap-start flex h-16 min-w-40 shrink-0 items-center gap-2 rounded-lg bg-card p-1 text-left md:h-18 md:min-w-0 md:p-1.5">
+                  <Link key={`${product.id}-${index}`} href={`/shop/${product.id}`} aria-hidden={index === discountedProducts.length ? 'true' : undefined} tabIndex={index === discountedProducts.length ? -1 : undefined} className="snap-start flex h-28 w-full min-w-full shrink-0 items-center gap-4 rounded-xl bg-card p-3 text-left sm:h-32 sm:gap-5 sm:p-4">
+                    <span className="relative block size-22 shrink-0 overflow-hidden rounded-lg bg-secondary sm:size-26">
+                      <Image src={product.images[0] || '/placeholder.svg'} alt={product.nameEs || product.name} fill sizes="(max-width: 1023px) 104px, 0px" className="object-cover" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block line-clamp-2 text-sm font-semibold leading-snug text-foreground sm:text-base">{product.nameEs || product.name}</span>
+                      <span className="mt-1 inline-block rounded-sm bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">{discount}% OFF</span>
+                      <span className="mt-1 flex flex-wrap items-baseline gap-x-2 leading-tight">
+                        <span className="text-xs text-muted-foreground line-through sm:text-sm">{formatClp(originalPrice)}</span>
+                        <span className="text-base font-bold text-foreground sm:text-lg">{formatClp(product.price)}</span>
+                      </span>
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+            <div className="hidden snap-none grid-cols-3 gap-4 lg:grid">
+              {desktopDiscountedProducts.map((product) => {
+                const originalPrice = Number(product.comparePrice ?? 0)
+                const discount = Math.round(((originalPrice - product.price) / originalPrice) * 100)
+                return (
+                  <Link key={product.id} href={`/shop/${product.id}`} className="flex h-18 min-w-0 items-center gap-2 rounded-lg bg-card p-1.5 text-left">
                     <span className="relative block size-16 shrink-0 overflow-hidden rounded-md bg-secondary">
                       <Image src={product.images[0] || '/placeholder.svg'} alt={product.nameEs || product.name} fill sizes="80px" className="object-cover" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[10px] font-medium leading-[1.2] text-foreground max-[844px]:truncate max-[844px]:whitespace-normal max-[844px]:break-words max-[844px]:text-[11px] max-[844px]:leading-[1.25]">{product.nameEs || product.name}</span>
+                      <span className="block truncate text-[10px] font-medium leading-[1.2] text-foreground">{product.nameEs || product.name}</span>
                       <span className="mt-0.5 inline-block bg-accent px-1 text-[9px] font-semibold text-accent-foreground">{discount}% OFF</span>
                       <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1 leading-tight">
                         <span className="text-[9px] text-muted-foreground line-through">{formatClp(originalPrice)}</span>
@@ -293,6 +341,14 @@ export function FeaturedProducts() {
         {secondGrid.length > 0 && (
           <div className="home-product-grid mt-5 grid grid-cols-2 gap-2 md:mt-8 md:grid-cols-4 md:gap-4">
             {secondGrid.map((product) => (
+              <ProductCard key={product.id} product={product} compact />
+            ))}
+          </div>
+        )}
+
+        {extraMobileProducts.length > 0 && (
+          <div className="home-product-grid mt-5 grid grid-cols-2 gap-2 lg:hidden">
+            {extraMobileProducts.map((product) => (
               <ProductCard key={product.id} product={product} compact />
             ))}
           </div>

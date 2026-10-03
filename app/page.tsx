@@ -17,7 +17,9 @@ export default async function HomePage() {
           <Testimonials />
         </div>
       </main>
-      <Footer />
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   )
 }

@@ -313,13 +313,14 @@ function RegisterContent() {
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-2 pt-2">
+                <div className="flex items-start gap-3 pt-2 sm:gap-2">
                   <Checkbox
                     id="terms"
                     checked={buyerData.acceptTerms}
                     onCheckedChange={(checked) => setBuyerData({ ...buyerData, acceptTerms: checked as boolean })}
+                    className="mt-1 shrink-0 sm:mt-0"
                   />
-                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  <Label htmlFor="terms" className="block min-w-0 flex-1 text-sm leading-6 text-muted-foreground cursor-pointer sm:flex sm:items-center sm:gap-2 sm:leading-relaxed">
                     {language === 'es' ? (
                       <>
                         Acepto las{' '}
@@ -528,13 +529,14 @@ function RegisterContent() {
                   />
                 </div>
                 
-                <div className="flex items-start gap-2 pt-2">
+                <div className="flex items-start gap-3 pt-2 sm:gap-2">
                   <Checkbox
                     id="sellerTerms"
                     checked={sellerData.acceptTerms}
                     onCheckedChange={(checked) => setSellerData({ ...sellerData, acceptTerms: checked as boolean })}
+                    className="mt-1 shrink-0 sm:mt-0"
                   />
-                  <Label htmlFor="sellerTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  <Label htmlFor="sellerTerms" className="block min-w-0 flex-1 text-sm leading-6 text-muted-foreground cursor-pointer sm:flex sm:items-center sm:gap-2 sm:leading-relaxed">
                     {language === 'es' ? (
                       <>
                         Acepto las{' '}
