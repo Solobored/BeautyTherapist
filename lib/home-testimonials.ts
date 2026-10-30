@@ -1,41 +1,40 @@
 import { supabaseServer } from '@/lib/supabase'
-import { testimonials as fallbackTestimonials } from '@/lib/data'
 
 export type HomeTestimonial = {
   id: string
   customerName: string
-  customerImage: string
   rating: number
   text: string
-  brandName?: string
+  productId: string
+  verifiedPurchase: boolean
 }
 
 export async function fetchHomeTestimonials(): Promise<HomeTestimonial[]> {
   try {
     const { data, error } = await supabaseServer
-      .from('brands')
-      .select('id, brand_name, logo_url, custom_reviews')
-      .eq('is_active', true)
+      .from('reviews')
+      .select('id, reviewer_name, rating, content, product_id, verified_purchase')
+      .not('product_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(3)
 
     if (error) {
-      return fallbackTestimonials
+      console.error('Error loading home reviews:', error)
+      return []
     }
 
-    const customReviews = (data ?? []).flatMap((brand) =>
-      Array.isArray(brand.custom_reviews)
-        ? brand.custom_reviews.map((review: any, index: number) => ({
-            id: `${brand.id}-${review.id ?? index}`,
-            customerName: String(review.customerName ?? 'Cliente'),
-            customerImage: brand.logo_url || '/placeholder-user.jpg',
-            rating: Number(review.rating ?? 5),
-            text: String(review.text ?? ''),
-            brandName: brand.brand_name ?? undefined,
-          }))
-        : []
-    )
-
-    return customReviews.length > 0 ? customReviews : fallbackTestimonials
-  } catch {
-    return fallbackTestimonials
+    return (data ?? [])
+      .filter((review) => review.product_id && review.content.trim())
+      .map((review) => ({
+        id: review.id,
+        customerName: review.reviewer_name,
+        rating: Number(review.rating),
+        text: review.content,
+        productId: review.product_id!,
+        verifiedPurchase: Boolean(review.verified_purchase),
+      }))
+  } catch (error) {
+    console.error('Error loading home reviews:', error)
+    return []
   }
 }

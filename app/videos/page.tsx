@@ -1,5 +1,4 @@
 import { Navbar } from '@/components/navbar'
-import { Footer } from '@/components/footer'
 import { VideosPageClient } from '@/components/videos/VideosPageClient'
 
 export const metadata = {
@@ -23,7 +22,6 @@ export default function VideosPage() {
       <main className="flex-1">
         <VideosPageClient />
       </main>
-      <Footer />
     </div>
   )
 }

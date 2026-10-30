@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Clock3, Play } from 'lucide-react'
+import { Clock3, Play, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/product-card'
 import { useLanguage } from '@/contexts/language-context'
@@ -21,11 +21,21 @@ type StoreSpotlight = {
   products: Array<{ id: string; name: string; image: string; price: number; comparePrice?: number }>
 }
 
+type HomeReview = {
+  id: string
+  reviewerName: string
+  rating: number
+  content: string
+  productId: string
+  verifiedPurchase: boolean
+}
+
 export function FeaturedProducts() {
   const { t, language } = useLanguage()
   const isEnglish = language === 'en'
   const { products, loading } = useProducts()
   const [videos, setVideos] = useState<VideoItem[]>([])
+  const [reviews, setReviews] = useState<HomeReview[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPostRecord[]>([])
   const [spotlight, setSpotlight] = useState<StoreSpotlight | null>(null)
   const mobileDealsRef = useRef<HTMLDivElement>(null)
@@ -35,7 +45,7 @@ export function FeaturedProducts() {
 
     ;(async () => {
       try {
-        const [{ data: videoRows }, { data: blogRows }, { data: brandRows }] = await Promise.all([
+        const [{ data: videoRows }, { data: blogRows }, { data: brandRows }, reviewResult] = await Promise.all([
           supabase
             .from('seller_videos')
             .select('id, title, description, cloudinary_url, thumbnail_url, views_count, likes_count, duration_seconds, brand_id, featured_product_ids, brands (id, brand_name, logo_url)')
@@ -53,7 +63,17 @@ export function FeaturedProducts() {
             .eq('brand_slug', 'angebae')
             .eq('is_active', true)
             .maybeSingle(),
+          supabase
+            .from('reviews')
+            .select('id, reviewer_name, rating, content, product_id, verified_purchase')
+            .not('product_id', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(2),
         ])
+
+        if (reviewResult.error) {
+          console.error('Error loading featured product reviews:', reviewResult.error)
+        }
 
         if (!cancelled) {
           const mappedVideos = (videoRows ?? []).map((video) => {
@@ -91,6 +111,18 @@ export function FeaturedProducts() {
 
           setVideos(mappedVideos)
           setBlogPosts(mappedPosts)
+          setReviews(
+            (reviewResult.data ?? [])
+              .filter((review) => review.product_id && review.content.trim())
+              .map((review) => ({
+                id: review.id,
+                reviewerName: review.reviewer_name,
+                rating: Number(review.rating),
+                content: review.content,
+                productId: review.product_id!,
+                verifiedPurchase: Boolean(review.verified_purchase),
+              }))
+          )
 
           if (brandRows) {
             const brandProducts = products.filter((product) => product.brandSlug === brandRows.brand_slug).slice(0, 3)
@@ -270,7 +302,7 @@ export function FeaturedProducts() {
               <h3 className="text-sm font-semibold text-foreground md:text-lg">{isEnglish ? 'Videos' : 'Videos'}</h3>
               <Link href="/videos" className="text-[10px] font-medium text-accent md:text-xs">{isEnglish ? 'View all' : 'Ver todo'}</Link>
             </div>
-            <div className="grid items-stretch gap-3 md:grid-cols-[1.2fr_0.8fr]">
+            <div className={`grid items-stretch gap-3 ${reviews.length > 0 ? 'md:grid-cols-[1.2fr_0.8fr]' : ''}`}>
               <Link href="/videos" className="group block overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
                 <div className="relative aspect-[9/16] overflow-hidden bg-muted md:aspect-auto md:h-[420px] lg:h-[480px]">
                   <Image
@@ -300,19 +332,37 @@ export function FeaturedProducts() {
                 </div>
               </Link>
 
-              <div className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                <div>
-                  <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-accent">Opiniones</p>
-                  <div className="space-y-4">
-                    <blockquote className="rounded-xl bg-secondary/60 p-3 text-sm leading-relaxed text-foreground">
-                      “La rutina quedó mucho más suave, y el resultado se ve más uniforme. Me encantó la recomendación del suero.”
-                    </blockquote>
-                    <blockquote className="rounded-xl bg-secondary/60 p-3 text-sm leading-relaxed text-foreground">
-                      “Los productos tienen buena formulación y no me irritaron. Lo volvería a comprar.”
-                    </blockquote>
+              {reviews.length > 0 && (
+                <section className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm" aria-label={isEnglish ? 'Recent reviews' : 'Reseñas recientes'}>
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-accent">
+                      {isEnglish ? 'Real reviews' : 'Reseñas reales'}
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      {reviews.map((review) => (
+                        <article key={review.id} className="rounded-xl bg-secondary/60 p-3">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="truncate text-sm font-medium text-foreground">{review.reviewerName}</span>
+                            <span className="flex shrink-0 items-center gap-1 text-xs text-accent" aria-label={`${review.rating} ${isEnglish ? 'out of 5 stars' : 'de 5 estrellas'}`}>
+                              <Star className="size-3 fill-current" aria-hidden="true" />
+                              {review.rating}/5
+                            </span>
+                          </div>
+                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground">{review.content}</p>
+                          {review.verifiedPurchase && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {isEnglish ? 'Verified purchase' : 'Compra verificada'}
+                            </p>
+                          )}
+                          <Link href={`/shop/${review.productId}`} className="mt-2 inline-block text-xs font-medium text-accent hover:underline">
+                            {isEnglish ? 'View product' : 'Ver producto'}
+                          </Link>
+                        </article>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </section>
+              )}
             </div>
           </section>
         )}

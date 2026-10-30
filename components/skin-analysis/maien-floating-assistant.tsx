@@ -76,7 +76,12 @@ export function MaienFloatingAssistant() {
     }
   }, [pathname])
 
-  if (pathname.startsWith('/auth/') || pathname.startsWith('/seller')) return null
+  if (
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/seller') ||
+    pathname.startsWith('/videos') ||
+    pathname === '/mas'
+  ) return null
 
   return (
     <>

@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Link from 'next/link'
 import { unstable_noStore as noStore } from 'next/cache'
 import { Star } from 'lucide-react'
 import { fetchHomeTestimonials } from '@/lib/home-testimonials'
@@ -6,6 +6,8 @@ import { fetchHomeTestimonials } from '@/lib/home-testimonials'
 export async function Testimonials() {
   noStore()
   const testimonials = await fetchHomeTestimonials()
+
+  if (testimonials.length === 0) return null
 
   return (
     <section className="py-16 md:py-24 bg-background">
@@ -23,10 +25,7 @@ export async function Testimonials() {
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonials.map((testimonial) => (
-            <div 
-              key={testimonial.id}
-              className="bg-primary/10 rounded-2xl p-6 md:p-8"
-            >
+            <article key={testimonial.id} className="bg-primary/10 rounded-2xl p-6 md:p-8">
               {/* Stars */}
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -44,22 +43,20 @@ export async function Testimonials() {
               
               {/* Customer */}
               <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted">
-                  <Image
-                    src={testimonial.customerImage}
-                    alt={testimonial.customerName}
-                    fill
-                    className="object-cover"
-                  />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-medium text-foreground">
+                  {testimonial.customerName.trim().charAt(0).toUpperCase()}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <span className="block font-medium text-foreground">{testimonial.customerName}</span>
-                  {testimonial.brandName ? (
-                    <span className="block text-xs text-muted-foreground">{testimonial.brandName}</span>
-                  ) : null}
+                  {testimonial.verifiedPurchase && (
+                    <span className="block text-xs text-muted-foreground">Compra verificada</span>
+                  )}
                 </div>
+                <Link href={`/shop/${testimonial.productId}`} className="text-xs font-medium text-accent hover:underline">
+                  Ver producto
+                </Link>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>
