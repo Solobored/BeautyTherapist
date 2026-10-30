@@ -5,12 +5,11 @@ import { LanguageProvider } from '@/contexts/language-context'
 import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
-import Script from 'next/script'
 import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import { MaienFloatingAssistant } from '@/components/skin-analysis/maien-floating-assistant'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
-import { buildOrganizationSchema, buildWebsiteSchema } from '@/lib/seo'
+import { buildOrganizationSchema, buildWebsiteSchema, jsonLd } from '@/lib/seo'
 import './globals.css'
 
 const playfair = Playfair_Display({ 
@@ -40,6 +39,16 @@ export const metadata: Metadata = {
   description:
     'Skincare y maquillaje seleccionados por expertos. Marcas premium en un solo lugar.',
   keywords: ['belleza', 'skincare', 'maquillaje', 'cosmética', 'marketplace', 'Chile'],
+  applicationName: 'Beauty & Therapy',
+  category: 'beauty',
+  formatDetection: { telephone: false, email: false, address: false },
+  // Pega aquí el código de Google Search Console / Bing (variables de entorno, sin tocar código).
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : undefined,
+  },
   alternates: {
     canonical: '/',
   },
@@ -77,6 +86,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
   openGraph: {
     type: 'website',
@@ -117,16 +133,8 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true} className={`${playfair.variable} ${dmSans.variable} ${josefin.variable} font-sans antialiased bg-background text-foreground`}>
-        <Script
-          id="organization-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
-        <Script
-          id="website-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(websiteSchema) }} />
         <LanguageProvider>
           <AuthProvider>
             <CartProvider>

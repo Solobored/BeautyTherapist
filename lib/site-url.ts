@@ -18,6 +18,8 @@ export function getSiteUrl() {
   return (
     normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL) ??
     normalizeBaseUrl(process.env.APP_URL) ??
+    // Dominio de producción estable de Vercel (VERCEL_URL cambia en cada deploy y apunta a *.vercel.app)
+    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
     normalizeBaseUrl(process.env.VERCEL_URL) ??
     LOCAL_FALLBACK_URL
   )

@@ -76,7 +76,7 @@ export function MaienFloatingAssistant() {
     }
   }, [pathname])
 
-  if (pathname.startsWith('/auth/')) return null
+  if (pathname.startsWith('/auth/') || pathname.startsWith('/seller')) return null
 
   return (
     <>

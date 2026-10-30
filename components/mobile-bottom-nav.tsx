@@ -17,6 +17,9 @@ export function MobileBottomNav() {
     { href: '/videos', label: 'Videos', icon: Clapperboard },
   ]
 
+  // El panel del vendedor tiene su propia navegación inferior.
+  if (pathname.startsWith('/seller')) return null
+
   return (
     <>
       <nav
