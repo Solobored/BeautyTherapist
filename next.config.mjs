@@ -11,11 +11,11 @@ const supabaseHostname = (() => {
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com https://*.google-analytics.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.supabase.co https://api.cloudinary.com https://api.mercadopago.com https://nominatim.openstreetmap.org https://vitals.vercel-insights.com${isDev ? ' ws: http://localhost:*' : ''}`,
+  `connect-src 'self' https://*.supabase.co https://api.cloudinary.com https://api.mercadopago.com https://nominatim.openstreetmap.org https://vitals.vercel-insights.com https://*.google-analytics.com https://www.googletagmanager.com${isDev ? ' ws: http://localhost:*' : ''}`,
   "frame-src 'self' https://www.mercadopago.com https://*.mercadopago.com",
   "media-src 'self' blob: https://res.cloudinary.com",
   "object-src 'none'",

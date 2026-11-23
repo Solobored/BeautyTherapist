@@ -15,7 +15,7 @@ export const policyPages: PolicyPage[] = [
     title: 'Política de privacidad',
     description:
       'Conoce cómo Beauty & Therapy trata datos personales, pedidos, medios de contacto y seguridad de la información, conforme a la Ley 21.719.',
-    updatedAt: '2026-09-27',
+    updatedAt: '2026-11-23',
     sections: [
       {
         title: 'Responsable del tratamiento',
@@ -41,7 +41,7 @@ export const policyPages: PolicyPage[] = [
           'Comunicaciones operativas sobre tu pedido (confirmación, envío, problemas de stock, garantía o devolución).',
           'Comunicaciones de marketing (newsletter, ofertas) solo si diste tu consentimiento expreso al suscribirte; puedes retirarlo en cualquier momento.',
           'Prevención de fraude, seguridad de la plataforma y cumplimiento de obligaciones legales y tributarias.',
-          'Métricas agregadas y estadísticas de uso del sitio, sin identificarte individualmente.',
+          'Medir visitas y uso del sitio mediante Vercel Analytics y Google Analytics 4, únicamente si aceptas las cookies de analítica; no usamos estos datos para publicidad.',
         ],
       },
       {
@@ -58,7 +58,7 @@ export const policyPages: PolicyPage[] = [
         title: 'Con quién compartimos tus datos',
         body: [
           'Con la marca vendedora correspondiente, solo la información necesaria para preparar y despachar tu pedido.',
-          'Con proveedores tecnológicos que actúan como encargados de tratamiento bajo contrato: hosting y base de datos (Supabase), infraestructura y analítica (Vercel), procesamiento de pagos (Mercado Pago), almacenamiento de archivos (Cloudinary) y, si usas Maien, Google Gemini para generar observaciones a partir de tu foto o descripción.',
+          'Con proveedores tecnológicos que actúan como encargados de tratamiento bajo contrato: hosting y base de datos (Supabase), infraestructura y analítica (Vercel), Google Analytics 4 (Google LLC, solo si aceptas las cookies de analítica), procesamiento de pagos (Mercado Pago), almacenamiento de archivos (Cloudinary) y, si usas Maien, Google Gemini para generar observaciones a partir de tu foto o descripción.',
           'No vendemos ni arrendamos tus datos personales a terceros para fines publicitarios ajenos a Beauty & Therapy.',
         ],
       },
@@ -94,7 +94,7 @@ export const policyPages: PolicyPage[] = [
       {
         title: 'Cookies',
         body: [
-          'Usamos cookies esenciales y de analítica agregada. Puedes ver el detalle completo en nuestra Política de Cookies y gestionar tus preferencias desde el aviso que aparece en tu primera visita.',
+          'Las herramientas de analítica solo se activan si aceptas esa categoría. Puedes ver el detalle en nuestra Política de Cookies y cambiar o retirar tu elección desde Preferencias de cookies, en el pie de página.',
         ],
       },
       {
@@ -146,7 +146,7 @@ export const policyPages: PolicyPage[] = [
     slug: 'cookies',
     title: 'Política de Cookies',
     description: 'Qué cookies usa Beauty & Therapy, para qué y cómo puedes gestionarlas.',
-    updatedAt: '2026-07-31',
+    updatedAt: '2026-11-23',
     sections: [
       {
         title: '¿Qué son las cookies?',
@@ -158,13 +158,13 @@ export const policyPages: PolicyPage[] = [
         title: 'Cookies que usamos',
         body: [
           'Esenciales: mantienen tu sesión iniciada, tu carrito de compras y el proceso de pago con Mercado Pago. Sin estas, el sitio no funciona correctamente y no requieren consentimiento previo.',
-          'Analítica: usamos Vercel Analytics para medir visitas y uso agregado del sitio, sin identificarte individualmente. Puedes rechazarlas desde el aviso de cookies sin afectar la compra.',
+          'Analítica: Vercel Analytics y Google Analytics 4 de Google se cargan solo después de que aceptas las cookies de analítica. Miden visitas y páginas públicas; en Google Analytics 4 enviamos solo la ruta, sin parámetros de consulta. Ninguna se ejecuta en páginas de cuenta, autenticación, pedidos ni checkout. No vinculamos esta propiedad con Google Ads ni activamos señales publicitarias.',
         ],
       },
       {
         title: 'Cómo gestionar tus preferencias',
         body: [
-          'Puedes aceptar o rechazar cookies no esenciales desde el aviso que aparece en tu primera visita, y cambiar tu elección borrando los datos de navegación de tu navegador para este sitio.',
+          'Puedes aceptar o rechazar la analítica desde el aviso inicial. Para cambiar o retirar tu elección, usa Preferencias de cookies en el pie de página. También puedes borrar los datos de navegación de tu navegador para este sitio.',
           'La mayoría de los navegadores permite bloquear o eliminar cookies desde su configuración de privacidad.',
         ],
       },

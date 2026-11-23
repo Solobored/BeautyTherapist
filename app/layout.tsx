@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans, Josefin_Sans } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/contexts/language-context'
 import { CartProvider } from '@/contexts/cart-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
 import { CookieConsentBanner } from '@/components/cookie-consent-banner'
+import { ConsentedAnalytics } from '@/components/consented-analytics'
 import { MaienFloatingAssistant } from '@/components/skin-analysis/maien-floating-assistant'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { getSiteUrl, toAbsoluteUrl } from '@/lib/site-url'
@@ -144,7 +144,7 @@ export default function RootLayout({
             </CartProvider>
           </AuthProvider>
         </LanguageProvider>
-        <Analytics />
+        <ConsentedAnalytics />
         <Toaster richColors position="top-center" />
         <CookieConsentBanner />
       </body>

@@ -1,7 +1,7 @@
 import { nationalFlatClp } from '@/lib/shipping'
 import { toAbsoluteUrl } from '@/lib/site-url'
 
-const RETURN_DAYS = 30
+const RETURN_DAYS = 10
 
 export function buildOfferShippingDetails() {
   return {
@@ -39,8 +39,6 @@ export function buildMerchantReturnPolicy() {
     applicableCountry: 'CL',
     returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
     merchantReturnDays: RETURN_DAYS,
-    returnMethod: 'https://schema.org/ReturnByMail',
-    returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
   }
 }
 

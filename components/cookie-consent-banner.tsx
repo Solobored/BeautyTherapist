@@ -3,21 +3,34 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-
-const CONSENT_KEY = 'bt_cookie_consent_v1'
-
-type ConsentValue = 'accepted' | 'rejected'
+import {
+  COOKIE_CONSENT_CHANGED_EVENT,
+  COOKIE_CONSENT_KEY,
+  COOKIE_PREFERENCES_REQUESTED_EVENT,
+  readStoredCookieConsent,
+  type CookieConsentValue,
+} from '@/lib/cookie-consent'
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(CONSENT_KEY) : null
-    if (!stored) setVisible(true)
+    if (!readStoredCookieConsent()) setVisible(true)
+
+    function openPreferences() {
+      setVisible(true)
+    }
+
+    window.addEventListener(COOKIE_PREFERENCES_REQUESTED_EVENT, openPreferences)
+    return () => window.removeEventListener(COOKIE_PREFERENCES_REQUESTED_EVENT, openPreferences)
   }, [])
 
-  function setConsent(value: ConsentValue) {
-    localStorage.setItem(CONSENT_KEY, JSON.stringify({ value, date: new Date().toISOString() }))
+  function setConsent(value: CookieConsentValue) {
+    localStorage.setItem(
+      COOKIE_CONSENT_KEY,
+      JSON.stringify({ value, date: new Date().toISOString() }),
+    )
+    window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_CHANGED_EVENT, { detail: value }))
     setVisible(false)
   }
 
@@ -32,9 +45,8 @@ export function CookieConsentBanner() {
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-muted-foreground max-w-2xl">
-          Usamos cookies esenciales para el funcionamiento de la tienda (sesión, carrito, pagos) y
-          cookies de analítica agregada para entender el uso del sitio. Puedes revisar el detalle en
-          nuestra{' '}
+          Usamos cookies esenciales para el funcionamiento de la tienda. La analítica de Vercel y
+          Google Analytics solo se activa si la aceptas. Puedes revisar los detalles en nuestra{' '}
           <Link href="/politicas/cookies" className="underline hover:text-foreground">
             Política de Cookies
           </Link>

@@ -5,6 +5,7 @@ import { Instagram, Send } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/language-context'
+import { COOKIE_PREFERENCES_REQUESTED_EVENT } from '@/lib/cookie-consent'
 
 export function Footer() {
   const { t } = useLanguage()
@@ -89,6 +90,15 @@ export function Footer() {
                 <Link href="/politicas/cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Política de Cookies
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => window.dispatchEvent(new Event(COOKIE_PREFERENCES_REQUESTED_EVENT))}
+                >
+                  Preferencias de cookies
+                </button>
               </li>
               <li>
                 <Link href="/politicas/derechos-arco" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
